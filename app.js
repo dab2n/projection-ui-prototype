@@ -37,10 +37,7 @@ function show(i) {
   flowbar.classList.toggle('is-on', step !== undefined);
   if (step !== undefined) {
     const n = +step;
-    steps.forEach((li, k) => {
-      li.classList.toggle('is-now', k === n);
-      li.classList.toggle('is-done', k < n);
-    });
+    steps.forEach((li, k) => li.classList.toggle('is-now', k === n));
     flowbar.querySelector('#btnNext').firstChild.nodeValue =
       n === steps.length - 1 ? 'Done ' : 'Next ';
   }
@@ -79,25 +76,87 @@ addEventListener('keydown', e => {
 });
 
 /* ── selection groups ───────────────────────────────────── */
+const onSelect = [];
+
 document.querySelectorAll('[data-select]').forEach(group => {
   const multi = group.dataset.select === 'multi';
   group.querySelectorAll('.opt').forEach(opt => {
     opt.onclick = () => {
-      if (!multi) {
+      if (multi) {
+        // a [data-exclusive] option (e.g. "None") clears the rest, and vice versa
+        const on = !opt.classList.contains('is-on');
+        if (opt.hasAttribute('data-exclusive') && on) {
+          group.querySelectorAll('.opt').forEach(o => o.classList.remove('is-on'));
+        } else if (on) {
+          group.querySelectorAll('.opt[data-exclusive]').forEach(o => o.classList.remove('is-on'));
+        }
+        opt.classList.toggle('is-on', on);
+      } else {
         group.querySelectorAll('.opt').forEach(o => o.classList.toggle('is-on', o === opt));
-        return;
       }
-      // multi: a [data-exclusive] option (e.g. "None") clears the rest, and vice versa
-      const on = !opt.classList.contains('is-on');
-      if (opt.hasAttribute('data-exclusive') && on) {
-        group.querySelectorAll('.opt').forEach(o => o.classList.remove('is-on'));
-      } else if (on) {
-        group.querySelectorAll('.opt[data-exclusive]').forEach(o => o.classList.remove('is-on'));
-      }
-      opt.classList.toggle('is-on', on);
+      onSelect.forEach(fn => fn());
     };
   });
 });
+
+/* ── injury check: keyed silhouette + body-region hotspots ───────────────
+   Positions are normalised to the silhouette box — nudge them here if the clip
+   is re-shot; nothing else depends on the numbers. */
+const PARTS = [
+  { id: 'lower-back', x: 0.64, y: 0.52 },
+  { id: 'right-arm',  x: 0.62, y: 0.27 },
+  { id: 'left-arm',   x: 0.26, y: 0.28 },
+  { id: 'knee',       x: 0.60, y: 0.685 },
+  { id: 'calf',       x: 0.65, y: 0.755 },
+  { id: 'ankle',      x: 0.62, y: 0.845 },
+];
+
+const hits = document.getElementById('figureHits');
+const chipFor = id => document.querySelector(`.chip[data-part="${id}"]`);
+
+PARTS.forEach(p => {
+  const b = document.createElement('button');
+  b.className = 'hit';
+  b.dataset.part = p.id;
+  b.style.left = `${p.x * 100}%`;
+  b.style.top = `${p.y * 100}%`;
+  b.setAttribute('aria-label', chipFor(p.id).textContent);
+  b.innerHTML = '<span class="hit-marker"></span>';
+  b.onclick = () => chipFor(p.id).click();
+  hits.append(b);
+});
+
+const syncMarkers = () => hits.querySelectorAll('.hit').forEach(h =>
+  h.classList.toggle('is-on', chipFor(h.dataset.part).classList.contains('is-on')));
+onSelect.push(syncMarkers);
+
+/* The clip is an orange silhouette on a white matte. Turn the matte into alpha so
+   the figure survives any projection background the colour panel dials in. */
+{
+  const video = document.querySelector('.figure-src');
+  const canvas = document.querySelector('.figure-body');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const { width: W, height: H } = canvas;
+  const FLOOR = 18, GAMMA = 0.55;   // tune: FLOOR = how much off-white is background
+
+  const key = () => {
+    ctx.drawImage(video, 0, 0, W, H);
+    const img = ctx.getImageData(0, 0, W, H);
+    const p = img.data;
+    for (let i = 0; i < p.length; i += 4) {
+      // luminance key: the matte is off-white (~#f4f4f4) and compression adds noise,
+      // so anything within FLOOR of white drops out and the rest is curved up so the
+      // pale head and arms stay readable. Colours are left alone — the clip already
+      // carries the gradient the design wants.
+      const d = (255 - Math.min(p[i], p[i + 1], p[i + 2]) - FLOOR) / (255 - FLOOR);
+      p[i + 3] = d <= 0 ? 0 : Math.min(255, 255 * Math.pow(d, GAMMA));
+    }
+    ctx.putImageData(img, 0, 0);
+    video.requestVideoFrameCallback ? video.requestVideoFrameCallback(key) : requestAnimationFrame(key);
+  };
+
+  video.addEventListener('loadeddata', () => { video.play().catch(() => {}); key(); }, { once: true });
+}
 
 /* ── rounds stepper (drives the Total readout) ──────────── */
 const rounds   = document.getElementById('rounds');
@@ -119,6 +178,76 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   };
 });
 
+/* ── projection background picker ───────────────────────── */
+{
+  const sv = document.getElementById('sv'), hue = document.getElementById('hue');
+  const svDot = document.getElementById('svDot'), hueDot = document.getElementById('hueDot');
+  const hex = document.getElementById('pickerHex');
+  let h = 0, s = 0, v = 8;                                   // #141414
+
+  const hsv2hex = (h, s, v) => {
+    const f = n => {
+      const k = (n + h / 60) % 6;
+      return Math.round(255 * (v / 100) * (1 - (s / 100) * Math.max(0, Math.min(k, 4 - k, 1))));
+    };
+    return '#' + [f(5), f(3), f(1)].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+  };
+
+  const hex2hsv = str => {
+    const m = /^#?([\da-f]{6})$/i.exec(str.trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    const r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+    const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
+    let hh = 0;
+    if (d) hh = mx === r ? 60 * (((g - b) / d) % 6) : mx === g ? 60 * ((b - r) / d + 2) : 60 * ((r - g) / d + 4);
+    return { h: (hh + 360) % 360, s: mx ? (d / mx) * 100 : 0, v: mx * 100 };
+  };
+
+  const paint = (typing = false) => {
+    const c = hsv2hex(h, s, v);
+    stage.style.setProperty('--bg', c);
+    document.documentElement.style.setProperty('--bg', c);
+    sv.style.setProperty('--h', h);
+    svDot.style.left = `${s}%`;
+    svDot.style.top = `${100 - v}%`;
+    hueDot.style.left = `${(h / 360) * 100}%`;
+    if (!typing) hex.value = c;
+  };
+
+  // pointer drag on either strip; ratio() clamps so dragging outside still tracks
+  const drag = (el, move) => {
+    const at = e => {
+      const r = el.getBoundingClientRect();
+      move(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+           Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)));
+      paint();
+    };
+    el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); at(e); });
+    el.addEventListener('pointermove', e => { if (el.hasPointerCapture(e.pointerId)) at(e); });
+  };
+  drag(sv, (x, y) => { s = x * 100; v = 100 - y * 100; });
+  drag(hue, x => { h = x * 360; });
+
+  hex.oninput = () => {
+    const got = hex2hsv(hex.value);
+    if (got) { ({ h, s, v } = got); paint(true); }
+  };
+
+  document.querySelectorAll('#pickerPresets button').forEach(b => {
+    b.style.setProperty('--c', b.dataset.c);
+    b.onclick = () => { ({ h, s, v } = hex2hsv(b.dataset.c)); paint(); };
+  });
+
+  const panel = document.getElementById('picker');
+  document.getElementById('pickerFold').onclick = function () {
+    panel.classList.toggle('is-folded');
+    this.textContent = panel.classList.contains('is-folded') ? '+' : '–';
+  };
+
+  paint();
+}
+
 /* ── boot ───────────────────────────────────────────────── */
 show(Math.max(0, order.indexOf(location.hash.slice(1))));
 
@@ -129,14 +258,19 @@ if (location.search.includes('selftest')) {
   const ok = (name, cond) => console[cond ? 'log' : 'error'](`${cond ? 'PASS' : 'FAIL'} — ${name}`);
   const chips = [...document.querySelectorAll('.chips .opt')];
   const on = () => chips.filter(c => c.classList.contains('is-on')).length;
+  const marker = id => document.querySelector(`.hit[data-part="${id}"]`).classList.contains('is-on');
 
   chips.forEach(c => c.classList.remove('is-on'));
   chips[3].click(); chips[5].click();
   ok('multi-select keeps both', on() === 2);
+  ok('marker follows chip', marker('knee') && marker('left-arm'));
   chips[0].click();
   ok('"None" clears the rest', on() === 1 && chips[0].classList.contains('is-on'));
+  ok('markers cleared by "None"', !marker('knee'));
+  document.querySelector('.hit[data-part="calf"]').click();
+  ok('hotspot selects its chip', chips[4].classList.contains('is-on') && on() === 1);
   chips[1].click();
-  ok('a body part clears "None"', on() === 1 && chips[1].classList.contains('is-on'));
+  ok('a body part clears "None"', on() === 2);
 
   const dec = document.querySelector('[data-step-delta="-1"]');
   rounds.textContent = 1;

@@ -6,7 +6,6 @@
 <title>Projection UI — Prototype</title>
 <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
 <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=supreme@400,500,700&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@700&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -81,20 +80,53 @@
         </button>
       </div>
 
-      <dl class="watch-stats" data-anim style="--i:4">
-        <div><dt>Sport</dt><dd>Boxing</dd></div>
-        <div><dt>Joined</dt><dd>5602</dd></div>
-        <div><dt>Recommended</dt><dd>Quiet On</dd></div>
-      </dl>
+      <!-- Figma marks this 360×221 frame as the scrolling viewport; its content is 860 tall -->
+      <div class="watch-scroll" data-anim style="--i:4">
+        <dl class="watch-stats">
+          <div><dt>Sport</dt><dd>Boxing</dd></div>
+          <div><dt>Joined</dt><dd>5602</dd></div>
+          <div><dt>Recommended</dt><dd>Quiet On</dd></div>
+        </dl>
 
-      <div class="watch-process" data-anim style="--i:5">
-        <p class="label">Process</p>
-        <div class="graph">
-          <div class="graph-num"><b class="pixel">12</b><span>min</span></div>
-          <div class="graph-bars">
-            <div class="bar bar--stretch"><span>5min</span><b>STRETCH</b></div>
-            <div class="bar bar--learn"><span>7min</span><b>LEARN</b></div>
-            <div class="bar bar--run"><span>You Can Choose</span><b>RUN!</b></div>
+        <div class="watch-block">
+          <p class="blocktitle">Process</p>
+          <div class="graph">
+            <div class="graph-num"><b class="pixel">12</b><span>min</span></div>
+            <div class="graph-bars">
+              <div class="bar bar--stretch"><span>5min</span><b>STRETCH</b></div>
+              <div class="bar bar--learn"><span>7min</span><b>LEARN</b></div>
+              <div class="bar bar--run"><span>You Can Choose</span><b>RUN!</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="factgrid">
+          <div><p>Entry Level</p><b>Basics Recommended</b></div>
+          <div><p>Sensory Focus</p><b>Rhythm<br>·Agility</b></div>
+          <div><p>Environment</p><b>Indoor</b></div>
+          <div><p>Pack Source</p><b>Creator</b></div>
+        </div>
+
+        <div class="watch-block">
+          <p class="blocktitle">You might also like</p>
+          <div class="rellist">
+            <a class="rel">
+              <img src="assets/rel-boxer.png" alt="">
+              <span><b>The Boxer’s Stpes</b><i>Skilled<em></em>12m</i></span>
+            </a>
+            <a class="rel">
+              <img src="assets/rel-challenge.png" alt="">
+              <span><b>Boxing Beginner Challenge</b><i>Creator<em></em>12m</i></span>
+            </a>
+          </div>
+        </div>
+
+        <div class="watch-block">
+          <p class="blocktitle blocktitle--row">More Packs from Iaan <img src="assets/icon-chevron.svg" alt=""></p>
+          <div class="morelist">
+            <a class="more"><span class="more-img"><img src="assets/more-footwork.png" alt=""></span><b>Footwork for<br>Small Spaces</b><i>Creator<em></em>15m</i></a>
+            <a class="more"><span class="more-img"><img src="assets/more-shadow.png" alt=""></span><b>Your First Shadowboxing Flow</b><i>Creator<em></em>23m</i></a>
+            <a class="more"><span class="more-img"><img src="assets/more-round.png" alt=""></span><b>The First Round</b><i>Creator<em></em>31m</i></a>
           </div>
         </div>
       </div>
@@ -159,16 +191,20 @@
       </div>
 
       <div class="figure" data-anim style="--i:2">
-        <img class="figure-body" src="assets/body-figure.png" alt="Standing figure">
+        <!-- the source clip is an orange silhouette on a white matte; app.js keys the
+             white out to alpha so it sits on any projection background -->
+        <video class="figure-src" src="assets/injury-silhouette.mp4" muted loop playsinline preload="auto"></video>
+        <canvas class="figure-body" width="300" height="532" aria-label="Standing figure"></canvas>
+        <div class="figure-hits" id="figureHits"></div>
         <img class="figure-ring" src="assets/floor-ring.svg" alt="">
         <img class="figure-axis" src="assets/icon-leftright.svg" alt="">
       </div>
       <img class="floorglow floorglow--figure" src="assets/floor-glow.svg" alt="">
 
       <div class="chips" data-select="multi" data-anim style="--i:3">
-        <div class="chiprow"><button class="chip opt" data-exclusive><span>None</span></button><button class="chip opt"><span>Lower Back</span></button></div>
-        <div class="chiprow"><button class="chip opt"><span>Ankle · Sole</span></button><button class="chip opt chip--fill"><span>Knee</span></button><button class="chip opt chip--fill"><span>Calf</span></button></div>
-        <div class="chiprow"><button class="chip opt"><span>Left Arm</span></button><button class="chip opt"><span>Right Arm</span></button></div>
+        <div class="chiprow"><button class="chip opt" data-exclusive><span>None</span></button><button class="chip opt" data-part="lower-back"><span>Lower Back</span></button></div>
+        <div class="chiprow"><button class="chip opt" data-part="ankle"><span>Ankle · Sole</span></button><button class="chip opt chip--fill" data-part="knee"><span>Knee</span></button><button class="chip opt chip--fill" data-part="calf"><span>Calf</span></button></div>
+        <div class="chiprow"><button class="chip opt" data-part="left-arm"><span>Left Arm</span></button><button class="chip opt" data-part="right-arm"><span>Right Arm</span></button></div>
       </div>
     </section>
 
@@ -271,6 +307,31 @@
 </div>
 
 <p class="hint">← → 방향키 · 클릭으로 이동 &nbsp;|&nbsp; 1060 × 663 projection frame</p>
+
+<!-- projection-surface colour test: the UI lands on a white desk, so the background
+     is the one value that has to be tried against the real thing -->
+<aside class="picker" id="picker">
+  <header class="picker-head">
+    <b>Projection background</b>
+    <button class="picker-fold" id="pickerFold" aria-label="Fold panel">–</button>
+  </header>
+  <div class="picker-body">
+    <div class="sv" id="sv"><i class="dot" id="svDot"></i></div>
+    <div class="hue" id="hue"><i class="dot" id="hueDot"></i></div>
+    <div class="picker-row">
+      <span class="picker-chip" id="pickerChip"></span>
+      <input class="picker-hex" id="pickerHex" value="#141414" spellcheck="false" aria-label="Hex">
+    </div>
+    <div class="picker-presets" id="pickerPresets">
+      <button data-c="#141414" title="Design default"></button>
+      <button data-c="#050A0A" title="Neutral/Black"></button>
+      <button data-c="#222A2A" title="Neutral/800"></button>
+      <button data-c="#FFFFFF" title="White desk"></button>
+      <button data-c="#EFE9E1" title="Warm desk"></button>
+      <button data-c="#C7B49A" title="Wood desk"></button>
+    </div>
+  </div>
+</aside>
 
 <script src="app.js"></script>
 </body>

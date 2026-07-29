@@ -33,8 +33,29 @@ localhost에서 열면 `index.html` / `style.css` / `app.js`의 `Last-Modified`�
 
 - `←` `→` 방향키, 또는 Next / Skip / 뒤로가기 버튼
 - 카드·칩 클릭 → 선택 상태 전환 (Injury check만 다중 선택, "None"은 배타적)
+- **Injury check**: 칩으로도, 실루엣 위의 부위를 직접 눌러서도 선택된다. 선택된 부위에는
+  `신체 영역` 마커가 올라간다
+- **팩 시청**: 오른쪽 정보 영역은 스크롤된다 (Figma에서 프레임으로 표시해둔 360×221 뷰포트, 콘텐츠 860)
 - Main workout의 `−` `+` → 라운드 수와 Total 분이 함께 변함
 - URL 해시로 특정 화면 직접 열기 (`#level` 등)
+
+## 프로젝션 배경색 테스트
+
+이 UI는 웹이 아니라 **흰 책상 위에 투사**되는 것이 최종 형태라, 배경색은 실제 환경에
+올려보고 정해야 하는 값이다. 우측 하단 패널(Figma 컬러 피커와 같은 SV 사각형 + 색상 슬라이더
++ HEX + 프리셋)로 프레임 배경을 실시간으로 바꿔볼 수 있다.
+
+프리셋: Design default(#141414) · Neutral/Black · Neutral/800 · White desk · Warm desk · Wood desk.
+헤더의 `–`로 접힌다. 배경은 `--bg` 하나만 바꾸므로 나머지 토큰은 그대로다.
+
+## 실루엣
+
+Injury check의 인물은 `assets/injury-silhouette.mp4`. 원본이 **흰 매트 위 주황 실루엣**이라
+`app.js`가 매 프레임 캔버스에서 흰 배경을 알파로 키잉한다 (`FLOOR`/`GAMMA`로 조절).
+덕분에 배경색을 어떤 색으로 바꿔도 실루엣이 살아있다.
+
+부위별 위치는 `app.js`의 `PARTS` 테이블 하나에 정규화 좌표로 모여 있다. 클립을 다시 찍으면
+이 표만 고치면 된다.
 
 ## 구조
 
@@ -54,12 +75,18 @@ localhost에서 열면 `index.html` / `style.css` / `app.js`의 `Last-Modified`�
 - 프로젝터 앰비언스: 상단 빔 + 미세 플리커
 - `prefers-reduced-motion` 존중
 
+## 폰트
+
+- 본문 전체 **Supreme** (Fontshare)
+- 큰 분(minute) 숫자만 **OffBit Trial Dot Bold** — Figma에서 지정한 그 스타일 하나만 쓴다.
+  `assets/fonts/OffBitTrial-DotBold.otf`로 번들되어 있다. 트라이얼 폰트이므로 배포 전
+  라이선스 확인 필요.
+
 ## 알려진 차이
 
-- **OffBit Trial** (Figma의 `18` / `12` 픽셀 숫자)은 유료 트라이얼 폰트라 **Pixelify Sans**로 대체.
-  라이선스 확보 시 `style.css`의 `.pixel` 한 줄만 바꾸면 된다.
 - Assist Mode 카드의 `plus-lighter` 틴트는 브라우저와 Figma의 블렌드 공간 차이로 Load/Boost가
   Figma보다 약간 어둡게 나온다.
-- 팩 시청 화면에서 Figma상 프레임 밖으로 잘려 보이지 않는 영역(You might also like, More Packs)은
-  구현하지 않았다.
-- 아이콘 중 체크·북마크·공유는 인라인 SVG, 나머지(발자국·바닥 링·화살표·±·뒤로)는 Figma 내보내기 에셋.
+- 실루엣 부위 좌표(`PARTS`)는 클립의 한 프레임 기준 고정값이다. 영상 속 인물이 움직이므로
+  팔·다리가 크게 움직이는 구간에서는 마커가 살짝 어긋난다.
+- 아이콘 중 체크·북마크·공유는 인라인 SVG, 나머지(발자국·바닥 링·화살표·±·뒤로·셰브론)는
+  Figma 내보내기 에셋.
