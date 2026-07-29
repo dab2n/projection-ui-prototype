@@ -182,40 +182,34 @@ onSelect.push(syncMarkers);
    the number and grow back out while the total counts up. */
 const rounds   = document.getElementById('rounds');
 const totalMin = document.getElementById('totalMin');
-const STRETCH = 4, LEARN = 8;             // fixed pack minutes, from the design
-const PER_ROUND = 1;                      // one "You Can Choose" minute per round → 6 = 18 total
-const MIN_BAR = 56;
-/* The design's 8-minute LEARN bar is 210 of the 352px track, which fixes the scale at
-   26.25px per minute. Stretch and learn are drawn at that scale; the third bar stays a
-   full-width track until the stepper is touched, then takes its own minutes. */
-const PX_PER_MIN = k => k * (210 / 352) / LEARN;
+const STRETCH = 5, LEARN = 7;             // the pack's fixed minutes (node 143:7373)
+const WORK = 3, REST = 1;                 // "3m Work · 1m Rest" — one round is 4 minutes
+const MAX_ROUNDS = 20;
 
-const bars = { stretch: STRETCH, learn: LEARN, run: +rounds.textContent * PER_ROUND };
-const barEl = k => document.querySelector(`.tbar--${k}`);
-const graphEl = document.querySelector('.total-bars');
-let runChosen = false;
+const runRow = document.querySelector('.tbar--run');
+const runLabel = document.getElementById('runLabel');
+const strike = document.getElementById('strike');
+let strikeMin = 0;                        // 0 until Set up is touched
 
-function layoutBars() {
-  const full = graphEl.clientWidth;
-  const px = m => Math.max(MIN_BAR, Math.min(full, Math.round(PX_PER_MIN(m) * full)));
-  barEl('stretch').style.width = px(STRETCH) + 'px';
-  barEl('learn').style.width = px(LEARN) + 'px';
-  barEl('run').style.width = (runChosen ? px(bars.run) : full) + 'px';
-  barEl('run').querySelector('span').textContent = runChosen ? `${bars.run}m` : 'You Can Choose';
-  totalMin.textContent = STRETCH + LEARN + bars.run;
+const strikeFor = r => r * (WORK + REST);
+const total = () => STRETCH + LEARN + strikeMin;
+
+/* The Strike chip is the run row's fill — it grows leftward with the chosen minutes,
+   from its label width at 1 round to the whole row at the maximum. */
+function layoutStrike() {
+  const full = runRow.clientWidth;
+  const min = 74;
+  strike.style.width = strikeMin
+    ? `${Math.round(min + (strikeMin / strikeFor(MAX_ROUNDS)) * (full - min))}px`
+    : `${min}px`;
+  runLabel.textContent = strikeMin ? `${strikeMin}m` : 'You Can Choose';
+  runRow.classList.toggle('is-set', strikeMin > 0);
 }
 
-function introBars() {
-  for (const k of ['stretch', 'learn', 'run']) {
-    const b = barEl(k);
-    b.style.transition = 'none';
-    b.style.width = MIN_BAR + 'px';
-  }
-  void graphEl.offsetWidth;                                   // commit the collapsed start
-  for (const k of ['stretch', 'learn', 'run']) barEl(k).style.transition = '';
-  layoutBars();
-  const t = STRETCH + LEARN + bars.run;
-  let start = null;                                           // …and count the total up to it
+/* Entering the step, the total counts up to its current value. */
+function countTotal() {
+  const t = total();
+  let start = null;
   requestAnimationFrame(function step(ts) {
     if (start === null) start = ts;
     const p = Math.min((ts - start) / 700, 1);
@@ -223,17 +217,16 @@ function introBars() {
     if (p < 1) requestAnimationFrame(step);
   });
 }
-onShow.push(name => { if (name === 'main') introBars(); });
+onShow.push(name => { if (name === 'main') { layoutStrike(); countTotal(); } });
 
 document.querySelectorAll('[data-step-delta]').forEach(btn => {
   btn.onclick = () => {
-    const next = Math.max(1, Math.min(20, +rounds.textContent + +btn.dataset.stepDelta));
-    if (next === +rounds.textContent) return;
+    const next = Math.max(1, Math.min(MAX_ROUNDS, +rounds.textContent + +btn.dataset.stepDelta));
+    if (next === +rounds.textContent && strikeMin) return;
     rounds.textContent = next;
-    runChosen = true;
-    document.querySelector('.tbar--run').classList.add('is-set');
-    bars.run = next * PER_ROUND;
-    layoutBars();
+    strikeMin = strikeFor(next);
+    layoutStrike();
+    totalMin.textContent = total();
     [rounds, totalMin].forEach(n => {
       n.classList.remove('is-pop');
       void n.offsetWidth;
@@ -363,14 +356,24 @@ if (location.search.includes('selftest')) {
 
   show(order.indexOf('main'));
 
-  const dec = document.querySelector('[data-step-delta="-1"]');
+  // geometry that kept drifting away from the Figma nodes — offsetWidth ignores the
+  // scale transform the inactive screens carry, so it reads the design units directly
+  const box = s => { const e = document.querySelector(s); return [e.offsetWidth, e.offsetHeight]; };
+  const is = (s, w, h) => { const [a, b] = box(s); return a === w && (h === undefined || b === h); };
+  ok('pack detail scrolls in its 360×221 frame', is('.watch-scroll', 360, 221));
+  ok('hero is 360×519 r40', is('.hero', 360, 519));
+  ok('Total card is 360×171', is('.total', 360, 171));
+  ok('graph bars are 105 / 210', is('.tbar--stretch', 105) && is('.tbar--learn', 210));
+
+  ok('Total starts at the pack minutes', totalMin.textContent === String(STRETCH + LEARN));
+  ok('run row starts as a placeholder', runLabel.textContent === 'You Can Choose');
   rounds.textContent = 1;
-  dec.click();
+  document.querySelector('[data-step-delta="-1"]').click();
   ok('stepper floors at 1', rounds.textContent === '1');
-  rounds.textContent = 6;
+  rounds.textContent = 5;
   document.querySelector('[data-step-delta="1"]').click();
-  ok('total tracks rounds', rounds.textContent === '7' && totalMin.textContent === '19');
-  ok('run bar leaves its placeholder', document.querySelector('.tbar--run').classList.contains('is-set'));
+  ok('Set up drives Total', rounds.textContent === '6' && totalMin.textContent === '36');
+  ok('Strike shows its minutes', runLabel.textContent === '24m' && parseFloat(strike.style.width) > 74);
 }
 
 /* ── dev-only live reload: poll Last-Modified, no deps ──── */

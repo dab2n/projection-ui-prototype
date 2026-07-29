@@ -3,7 +3,8 @@
 Figma `2026 개인 / UI` 섹션의 프로젝션 온보딩 플로우를 웹으로 옮긴 인터랙티브 프로토타입.
 빌드 없음, 의존성 없음 — `index.html` / `style.css` / `app.js` 세 파일.
 
-원본: [Figma 파일](https://www.figma.com/design/lTomHBHHNWFzzYtoGEL5Zt/2026-%EA%B0%9C%EC%9D%B8?node-id=2312-1311)
+원본: [NEWTON GUI 작업](https://www.figma.com/design/m8cFjM9O4KoY3BeJswU1rJ/NEWTON-GUI-%EC%9E%91%EC%97%85) — 팩 시청 `705:7647`,
+Level/Mode `205:10018`, Main workout `143:7373`, Total 컨테이너 `759:8520`.
 
 ## 실행
 
@@ -15,7 +16,9 @@ python3 -m http.server 5555
 localhost에서 열면 `index.html` / `style.css` / `app.js`의 `Last-Modified`를 1초마다 폴링해
 자동 새로고침한다. 파일 저장하면 브라우저에 바로 반영됨.
 
-자체 점검: `http://localhost:5555/index.html?selftest` → 콘솔에 PASS/FAIL 14줄.
+자체 점검: `http://localhost:5555/index.html?selftest` → 콘솔에 PASS/FAIL.
+동작뿐 아니라 **핵심 치수(스크롤 프레임 360×221, 히어로 360×519, Total 360×171, 바 105/210)**도
+같이 검사한다 — 이 값들이 계속 어긋났기 때문.
 
 ## 화면 (7개)
 
@@ -50,23 +53,26 @@ localhost에서 열면 `index.html` / `style.css` / `app.js`의 `Last-Modified`�
 프리셋: Design default(#141414) · Neutral/Black · Neutral/800 · White desk · Warm desk · Wood desk.
 헤더의 `–`로 접힌다. 배경은 `--bg` 하나만 바꾸므로 나머지 토큰은 그대로다.
 
-## 팩 시청 (pack detail)
+## 팩 시청 (`705:7647`)
 
-- 상단 뒤로가기 바만 고정, **그 아래 전 영역이 하나로 스크롤**된다 (콘텐츠 높이 1320)
-- 히어로는 썸네일 이미지로 시작해 **1초 뒤 클립이 크로스 디졸브**로 들어오고, 이후 새로고침
-  전까지 계속 반복 재생된다
-- Start 버튼은 스크롤 위에 고정되고, 그 아래에 Figma `blur` 레이어를 구현한 스크림이 깔린다
-  (462×154 타원 backdrop-blur + 옅은 #F2F2F2 글로우, 가장자리는 마스크로 페이드)
+레이아웃은 노드 좌표 그대로다. 히어로 360×519.5 @(140,72) r40, 정보 블록 @(576,124),
+Start 버튼 328폭 @(576,521).
 
-## Main workout
+- **스크롤 영역은 (560,316)의 360×221 프레임 하나뿐**이다. Figma가 그 프레임만 클립하고
+  안쪽 콘텐츠를 흘려보내므로, 화면 전체가 스크롤되지 않는다
+- 히어로는 썸네일로 시작해 **1초 뒤 클립이 크로스 디졸브**로 들어오고, 새로고침 전까지 반복 재생
+- 프레임 하단의 흐린 효과는 32px 배경 블러 + 낮은 불투명도의 갈색 그라디언트를 위로 페이드시킨 것
+- 불 아이콘은 `solar:fire-bold-duotone` 에셋 2개 (24px, 18.67px 13.68° 회전)
 
-Newton 앱 `setup-main`의 원리를 그대로 가져왔다:
+## Main workout (`143:7373` · `759:8520`)
 
-- 팩의 stretch/learn 분은 고정, 세 번째 바만 사용자가 정한다
-- 세 번째 바는 손대기 전까지 **전체 폭의 플레이스홀더 트랙**("You Can Choose")이고,
-  스테퍼를 움직이는 순간 자기 분(minute)만큼의 폭 + 그라디언트를 갖는다
-- 스케일은 디자인이 정한 값(LEARN 8분 = 트랙의 210/352)에서 나온 26.25px/분
-- 스텝 진입 시 바가 숫자 쪽으로 접혔다가 펴지고, Total은 700ms 동안 카운트업한다
+**Total은 조작란이 아니라 표시용**이다. 오른쪽 Set up의 Rounds / Time이 Strike 시간을 정한다.
+
+- 팩의 STRETCH 5분 · LEARN 7분은 고정 (바 폭도 105 / 210으로 고정)
+- 한 라운드 = 3m Work + 1m Rest = 4분. `−` `+`로 라운드를 바꾸면 Strike 시간이 바뀌고
+  Total이 자동으로 다시 계산된다
+- Strike! 칩이 run 행의 채움 역할을 해서, 라운드가 늘어나면 왼쪽으로 자란다 (0.55s)
+- 스텝 진입 시 Total이 700ms 동안 카운트업한다
 
 ## 실루엣
 
@@ -91,7 +97,8 @@ Injury check의 인물은 `assets/injury-silhouette.mp4`. 원본이 **흰 매트
 - 진입: `[data-anim]` 요소가 `--i` 순서대로 stagger fade-up
 - 선택: 흰 카드 → 레드 그라디언트 크로스페이드 + 스케일 팝 + inner glow.
   Assist Mode는 디폴트 아트와 그라디언트가 구워진 선택 아트를 교체한다
-- Injury check: 실루엣 클립 재생, 바닥 링 펄스, 좌우 축 아이콘 왕복, 마커 펄스
+- Injury check: 실루엣 클립 재생, 바닥 링 펄스, 좌우 축 아이콘 왕복, 마커 펄스.
+  **부위 좌표는 미리 노출하지 않는다** — 탭 영역은 투명하고, 고른 부위에만 마커가 뜬다
 - 팩 제안: 중앙 카드 부유, 양옆 고스트 카드 드리프트
 - 프로젝터 앰비언스: 상단 빔 + 미세 플리커
 - `prefers-reduced-motion` 존중

@@ -151,10 +151,7 @@ img{display:block}
   position:absolute;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;
   pointer-events:auto;cursor:pointer;background:none;
 }
-.hit::before{                       /* always-on target ring — a projection has no hover */
-  content:'';position:absolute;inset:8px;border-radius:50%;
-  border:1.5px solid rgba(255,255,255,.28);transition:opacity .2s var(--ease);
-}
+/* nothing is drawn until a region is picked — the tap targets stay invisible */
 .hit-marker{
   position:absolute;inset:6px;background:url(assets/body-marker.png) center/contain no-repeat;
   opacity:0;transform:scale(.5);transition:opacity .25s var(--ease),transform .35s var(--ease);
@@ -197,9 +194,8 @@ img{display:block}
   background:var(--white);transition:transform .3s var(--ease),box-shadow .3s var(--ease);
 }
 .assist > .badge,.assist > .assist-txt{position:relative;z-index:2}
-/* tighter elevation than the shared library shadow — the 58px/10px-spread one reads as a
-   grey band around a card this small (same call the Newton app made) */
-.assist.is-on{box-shadow:0 5px 14px rgba(0,0,0,.10),var(--sel-inner);transform:translateY(-3px)}
+/* 직사각형_Selected: drop shadow + the white inner shadow, straight from the library */
+.assist.is-on{box-shadow:var(--sel-shadow),var(--sel-inner);transform:translateY(-3px)}
 /* the check takes the Recommended badge's place */
 .assist::after{
   content:'';position:absolute;top:4px;right:4px;z-index:3;width:52px;height:52px;
@@ -232,34 +228,30 @@ img{display:block}
 }
 
 /* ── 6. Main workout ─────────────────────────────────────── */
-.total{position:relative;width:360px;height:171px;padding:4px;border-radius:20px;background:var(--white);display:flex;justify-content:flex-end}
-.total-bars{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:1;border-radius:18px;overflow:hidden}
-/* widths come from JS and stay proportional to the minutes; the transition is what
-   makes them grow out of the number on entry */
+/* Total (node 759:8520) — display only, driven by Set up.
+   card 360×171 p4 r20 · graph gap 2 r18 · rows p10 r12 · stretch 105 · learn 210 · run full */
+.total{position:relative;width:360px;height:171px;padding:4px;border-radius:20px;background:var(--white);display:flex;gap:10px;justify-content:flex-end}
+.total-bars{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:1;min-width:0;height:100%;border-radius:18px;overflow:hidden}
 .tbar{
   flex:1;display:flex;align-items:center;justify-content:space-between;
-  padding:10px 8px;border-radius:12px;color:var(--white);overflow:hidden;white-space:nowrap;
-  transition:width .62s var(--ease);
+  padding:10px;border-radius:12px;color:var(--white);white-space:nowrap;
 }
 .tbar span{font-size:15px;line-height:1.4;letter-spacing:-.5px}
 .tbar b{font-weight:700;font-size:13px;line-height:1.2;letter-spacing:-.5px;opacity:.9}
-.tbar--stretch{background:linear-gradient(-89.87deg,#d1feff 14.046%,#fec389 4.61%,#fe6e3c 10.42%,#fa3030 46.55%)}
-.tbar--learn{background:linear-gradient(90deg,#fa3030 63.04%,#fe6e3c 89.9%,#fec389 101.08%,#d1feff 108.1%)}
-/* untouched, the third bar is a placeholder; once the stepper moves it joins the ramp */
-.tbar--run{
-  position:relative;background:var(--n100);color:var(--n400);
-  transition:width .62s var(--ease),background .4s var(--ease),color .4s var(--ease);
+.tbar--stretch{width:105px;background:linear-gradient(-90deg,#d1feff 0%,#fec389 6.49%,#fe6e3c 16.831%,#fa3030 41.678%)}
+.tbar--learn{width:210px;background:linear-gradient(90deg,#fa3030 63.043%,#fe6e3c 89.902%,#fec389 101.08%,#d1feff 108.1%)}
+.tbar--run{position:relative;width:100%;background:var(--n100);color:var(--n400)}
+/* the Strike chip is the run row's fill: it grows leftward as rounds are added */
+.strike{
+  position:absolute;right:0;top:0;height:48px;min-width:74px;
+  display:flex;align-items:center;justify-content:flex-end;padding:10px;border-radius:12px;
+  background:linear-gradient(90deg,#fa3030 8.368%,#fe6e3c 68.788%,#fec389 100.9%,#d1feff 121.05%);
+  transition:width .55s var(--ease);
 }
-.tbar--run.is-set{background:linear-gradient(90deg,#fa3030 8.37%,#fe6e3c 68.79%,#fec389 100.9%,#d1feff 121.05%);color:var(--white)}
-.tbar--run em{
-  flex:none;font-style:normal;font-weight:700;font-size:13px;letter-spacing:-.5px;color:var(--white);
-  padding:6px 10px;border-radius:9px;
-  background:linear-gradient(90deg,#fa3030 8.37%,#fe6e3c 68.79%,#fec389 100.9%,#d1feff 121.05%);
-  transition:opacity .3s var(--ease);
-}
-.tbar--run.is-set em{background:none;padding:0;opacity:.7}
+.strike b{font-style:normal;font-weight:700;font-size:13px;line-height:1.2;letter-spacing:-.5px;color:var(--white);opacity:1}
+.tbar--run.is-set span{color:var(--black)}
 
-.total-num{position:absolute;left:0;top:0;width:100px;height:156px;padding:10px;color:var(--black)}
+.total-num{position:absolute;left:4px;top:4px;width:100px;height:156px;padding:10px;color:var(--black)}
 .total-num b{display:block;font-size:60px;line-height:1}
 .total-num span{display:block;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;opacity:.6;text-align:center}
 
@@ -324,87 +316,109 @@ img{display:block}
 .btn:active{transform:scale(.97)}
 .btn--primary{height:40px;padding:0 18px;font-size:16px;background:#fa3030}
 .btn--start{position:absolute;left:576px;top:521px;width:328px;height:54px;font-size:20px;background:#fa3030;z-index:8}
-/* Figma's blur behind the button: a 462×154 ellipse that background-blurs what scrolls
-   under it, plus the faint #F2F2F2 glow on top. Masked so the ellipse has no visible edge. */
-.start-blur{position:absolute;left:463px;top:412px;width:585px;height:277px;z-index:7;pointer-events:none}
-.start-blur::before{
-  content:'';position:absolute;left:61.4px;top:61.4px;width:462px;height:154px;border-radius:50%;
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-  mask:radial-gradient(closest-side,#000 58%,transparent);
-  -webkit-mask:radial-gradient(closest-side,#000 58%,transparent);
-}
-.start-blur::after{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(50% 50% at 50% 52%,rgba(242,242,242,.16),rgba(242,242,242,0) 72%);
-}
 
-/* ── 1. Pack detail ──────────────────────────────────────── */
-.hero{position:absolute;left:140px;top:72px;width:360px;height:519px;margin:0;border-radius:24px;overflow:hidden;background:#e9e4de}
+/* ── 1. Pack detail (node 705:7647) ───────────────────────
+   Right column is 560–920. The 360×221 frame at y=316 is the only thing that
+   scrolls; hero, info block and Start button are fixed where the design puts them. */
+.hero{position:absolute;left:140px;top:72px;width:360px;height:519.5px;margin:0;border-radius:40px;overflow:hidden;background:#fff}
 .hero-still,.hero-clip{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
 /* 1s on the still, then a 900ms cross-dissolve into the clip, which then loops */
 .hero-clip{opacity:0;transition:opacity .9s ease}
 .hero.is-playing .hero-clip{opacity:1}
 .hero.is-playing .hero-still{opacity:0;transition:opacity .9s ease}
-.hero-foot{position:absolute;left:16px;bottom:24px;display:flex;align-items:center;gap:6px;font-size:15px;color:var(--black)}
-.stack{display:flex}
-.stack img{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.9);margin-left:-16px}
-.stack img:first-child{margin-left:0}
-.hero-flame{position:absolute;font-size:20px;animation:emberA 3s ease-in-out infinite}
-.hero-flame--a{left:39px;bottom:48px}
-.hero-flame--b{left:61px;bottom:80px;font-size:18px;animation-name:emberB;animation-duration:3.6s}
-@keyframes emberA{0%,100%{transform:translateY(0) scale(1);opacity:.95}50%{transform:translateY(-5px) scale(1.08);opacity:1}}
-@keyframes emberB{0%,100%{transform:translateY(0) scale(1);opacity:.8}50%{transform:translateY(-7px) scale(1.05);opacity:1}}
 
-.watch-info{position:absolute;left:576px;top:124px;width:202px}
-.watch-creator{display:flex;align-items:center;gap:8px;height:24px;font-size:15px;color:var(--white)}
-.watch-info .d2{margin-top:8px;font-size:32px;letter-spacing:-1.2px}   /* 202px column, 2 lines */
-.watch-desc{margin:12px 0 0;font-size:15px;line-height:1.35;letter-spacing:-.3px;color:var(--n400)}
+/* the warm blurred wash Figma stacks at the foot of the frame — a 32px background blur
+   under a low-opacity brown gradient, faded in from above so it has no edge */
+.hero-haze{
+  position:absolute;left:0;right:0;bottom:0;pointer-events:none;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  mask:linear-gradient(transparent,#000 55%);-webkit-mask:linear-gradient(transparent,#000 55%);
+}
+.hero-haze--a{height:180px;background:linear-gradient(rgba(108,94,67,.22),rgba(210,183,130,.28))}
+.hero-haze--b{height:124px;background:linear-gradient(rgba(163,124,89,.18),rgba(120,86,56,.34))}
 
-.watch-actions{position:absolute;left:856px;top:132px;display:flex;flex-direction:column;gap:11px}
+.hero-fire{position:absolute;pointer-events:none}
+.hero-fire--a{left:39px;top:446.63px;width:24px;height:24px;animation:ember 3s ease-in-out infinite}
+.hero-fire--b{left:56.37px;top:417px;width:18.67px;height:18.67px;rotate:13.68deg;animation:ember 3.6s ease-in-out infinite .4s}
+@keyframes ember{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.06)}}
+
+.hero-foot{
+  position:absolute;left:0;bottom:0;width:360px;height:80px;padding:8px 16px;
+  display:flex;align-items:center;gap:6px;
+  font-size:15px;line-height:1.4;letter-spacing:-.5px;color:var(--white);
+}
+.stack{display:flex;isolation:isolate}
+.stack img{width:32px;height:32px;border-radius:999px;object-fit:cover;border:1px solid var(--white);margin-right:-16px}
+.stack img:last-child{margin-right:0}
+
+/* info block: 202px text column + a 48px action column, 576–904 at y=124 */
+.watch-info{position:absolute;left:576px;top:124px;width:328px;height:160px;display:flex;align-items:flex-start;justify-content:space-between}
+.watch-text{display:flex;flex-direction:column;gap:12px;width:202px;height:100%}
+.watch-creator{display:flex;align-items:center;gap:4px;margin-bottom:-4px}
+.watch-creator img{width:24px;height:24px;border-radius:999px;object-fit:cover}
+.watch-creator span{font-weight:700;font-size:16px;line-height:1.2;letter-spacing:-.48px;color:var(--white)}
+.watch-title{margin:0;font-weight:700;font-size:34.473px;line-height:1.1;letter-spacing:-.6895px;color:var(--white)}
+.watch-desc{
+  margin:0;height:40px;overflow:hidden;text-overflow:ellipsis;
+  font-size:16px;line-height:1.2;letter-spacing:-.48px;color:var(--white);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+.watch-actions{display:flex;flex-direction:column;gap:11px;width:48px;padding:8px 0;align-self:flex-end}
 .iconbtn{
-  width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.1);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--white);
-  transition:background .25s var(--ease),transform .25s var(--ease);
+  width:48px;height:48px;border-radius:9999px;background:rgba(243,243,243,.2);overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;padding:6px 5px;
 }
-.iconbtn svg{width:17px;height:17px}
-.iconbtn span{font-size:11px;letter-spacing:-.3px;opacity:.9}
+.iconbtn--mid{justify-content:center;padding:3px 5px;gap:0}
+.iconbtn img{width:12px;height:15.43px}
+.iconbtn--mid img{width:18px;height:18px}
+.iconbtn span{font-size:11px;line-height:1.2;color:var(--white)}
 
-/* Everything under the back bar scrolls as one page; the bar, the Start button and its
-   scrim stay put. The page keeps the Figma coordinates, it just runs taller than the frame. */
-.watch-scroll{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+/* the scrolling frame */
+.watch-scroll{
+  position:absolute;left:560px;top:316px;width:360px;height:221px;
+  overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;
+}
 .watch-scroll::-webkit-scrollbar{display:none}
-.watch-page{position:relative;width:1060px;height:1320px}
+.watch-stats{margin:0;padding:8px 40px 0;display:flex;align-items:center;justify-content:center;gap:4px}
+.watch-stats > div{display:flex;flex-direction:column;gap:6px;width:93px;text-align:center}
+.watch-stats dt{margin:0;font-size:13px;line-height:1.2;letter-spacing:-.5px;color:var(--white);opacity:.7}
+.watch-stats dd{margin:0;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;color:var(--white)}
+.statdiv{width:1px;height:33px;background:rgba(255,255,255,.2)}
 
-/* right column, from the stats row down */
-.watch-detail{
-  position:absolute;left:560px;top:316px;width:360px;
-  display:flex;flex-direction:column;gap:40px;padding:8px 0 0;
-}
-.watch-block{padding:0 16px}
+.watch-detail{margin-top:44px;padding:0 16px;display:flex;flex-direction:column;align-items:center;gap:48px}
+.watch-block{width:100%}
 .blocktitle{margin:0 0 8px;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;color:var(--n50)}
 .blocktitle--row{display:flex;align-items:center;justify-content:space-between}
-.blocktitle--row img{width:26px;height:26px;opacity:.8}
+.blocktitle--row img{width:26px;height:26px}
 
-.watch-stats{margin:0;padding:0 16px;display:flex;flex:none}
-.watch-stats > div{width:93px;padding-right:4px}
-.watch-stats > div + div{border-left:1px solid rgba(255,255,255,.14);padding-left:8px;margin-left:4px}
-.watch-stats dt{font-size:13px;letter-spacing:-.3px;color:var(--n400)}
-.watch-stats dd{margin:6px 0 0;font-weight:700;font-size:17px;letter-spacing:-.6px;color:var(--white)}
+/* Process graph — 759:8520 geometry, run row is Neutral/400 here */
+.graph{position:relative;padding:4px;border-radius:20px;background:var(--white);overflow:hidden;box-shadow:0 0 64px 18px rgba(255,255,255,.10)}
+.graph-bars{display:flex;flex-direction:column;align-items:flex-end;gap:2px;height:156px;border-radius:18px;overflow:hidden}
+.bar{
+  flex:1;display:flex;align-items:center;justify-content:space-between;
+  padding:10px;border-radius:12px;color:var(--white);white-space:nowrap;
+}
+.bar span{font-size:15px;line-height:1.4;letter-spacing:-.5px}
+.bar b{font-weight:700;font-size:13px;line-height:1.2;letter-spacing:-.5px;opacity:.7}
+.bar--stretch{width:170px;background:linear-gradient(-90deg,#d1feff 0%,#fec389 6.49%,#fe6e3c 16.831%,#fa3030 41.678%)}
+.bar--learn{width:210px;background:linear-gradient(90deg,#fa3030 58.322%,#fe6e3c 83.169%,#fec389 93.51%,#d1feff 100%)}
+.bar--run{width:100%;background:var(--n400)}
+.graph-num{position:absolute;left:4px;top:4px;width:100px;height:156px;padding:10px;color:var(--black)}
+.graph-num b{display:block;font-size:60px;line-height:1}
+.graph-num span{display:block;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;opacity:.6;text-align:center}
 
 /* 2×2 fact cards */
-.factgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 16px}
+.factgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%}
 .factgrid > div{display:flex;flex-direction:column;gap:4px;padding:12px;border-radius:20px;background:var(--white)}
 .factgrid p{margin:0;font-size:13px;line-height:1.2;letter-spacing:-.5px;color:var(--n500)}
 .factgrid b{font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;color:var(--black)}
 
-/* "You might also like" */
 .rellist{display:flex;gap:8px}
 .rel{display:flex;align-items:center;gap:8px;padding:8px 32px 8px 8px;border-radius:12px;background:var(--white);flex:none}
 .rel img{width:48px;height:48px;border-radius:6px;object-fit:cover}
 .rel span{display:flex;flex-direction:column;gap:4px}
 .rel b{font-weight:700;font-size:15px;line-height:1.4;letter-spacing:-.5px;color:var(--black);white-space:nowrap}
 
-/* "More Packs from Iaan" */
 .morelist{display:flex;gap:8px}
 .more{display:flex;flex-direction:column;gap:8px;width:140px;flex:none}
 .more-img{display:block;width:140px;height:140px;border-radius:16px;overflow:hidden}
@@ -415,21 +429,14 @@ img{display:block}
   font-size:13px;line-height:1.2;letter-spacing:-.5px;color:var(--n400);
 }
 .rel em,.more em{width:3px;height:3px;border-radius:50%;background:currentColor}
-.graph{position:relative;height:164px;flex:none;padding:4px;border-radius:20px;background:var(--white);display:flex;justify-content:flex-end;overflow:hidden}
-.graph-bars{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:1;border-radius:16px;overflow:hidden}
-.bar{flex:1;display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:12px;color:var(--white);animation:barIn .6s var(--ease) both}
-.bar span{font-size:15px;letter-spacing:-.5px}
-.bar b{font-weight:700;font-size:13px;letter-spacing:-.5px;opacity:.7}
-.bar--stretch{width:170px;background:linear-gradient(-90deg,#d1feff 0%,#fec389 6.49%,#fe6e3c 16.831%,#fa3030 41.678%);animation-delay:.2s}
-.bar--learn{width:210px;background:linear-gradient(90deg,#fa3030 58.322%,#fe6e3c 83.169%,#fec389 93.51%,#d1feff 100%);animation-delay:.3s}
-.bar--run{width:100%;background:var(--n400);animation-delay:.4s}
-.graph-num{position:absolute;left:0;top:0;width:100px;padding:10px;color:var(--black)}
-.graph-num b{display:block;font-size:60px;line-height:1}
-.graph-num span{display:block;font-weight:700;font-size:18px;letter-spacing:-.54px;opacity:.6}
-.watch-glow{
-  position:absolute;left:959px;top:618px;width:462px;height:154px;pointer-events:none;
-  background:radial-gradient(50% 50% at 50% 50%,rgba(250,48,48,.55),transparent 70%);filter:blur(30px);
+
+/* glow behind the Start button, then the button itself */
+.watch-glow{position:absolute;left:435.5px;top:402.5px;width:585px;height:277px;transform:rotate(180deg);pointer-events:none;z-index:3}
+.btn--start{
+  position:absolute;left:576px;top:521px;width:328px;
+  padding:16px 20px;border-radius:999px;background:var(--brand);font-size:18px;letter-spacing:-.54px;z-index:4;
 }
+.btn--start img{width:20px;height:20px;filter:none}
 
 /* ── shared chrome ───────────────────────────────────────── */
 .appbar{

@@ -49,100 +49,98 @@
 
     <!-- ─────────────── 1. 팩 시청 / Pack detail ─────────────── -->
     <section class="screen" data-screen="watch" data-appbar="back">
-      <!-- everything below the back bar scrolls together -->
-      <div class="watch-scroll">
-      <div class="watch-page">
-
+      <!-- media frame, 360×519.5 at (140,72), r40 — the clip fades in over the still -->
       <figure class="hero" data-anim style="--i:0">
-        <!-- still first, then the clip cross-dissolves in after a beat and loops -->
         <img class="hero-still" src="assets/hero-boxing.png" alt="Creator in boxing stance">
         <video class="hero-clip" src="assets/pack-hero.mp4" muted loop playsinline preload="auto"></video>
+        <!-- the two blurred warm gradients Figma stacks at the foot of the frame -->
+        <div class="hero-haze hero-haze--a"></div>
+        <div class="hero-haze hero-haze--b"></div>
+        <img class="hero-fire hero-fire--a" src="assets/icon-fire.svg" alt="">
+        <img class="hero-fire hero-fire--b" src="assets/icon-fire-sm.svg" alt="">
         <figcaption class="hero-foot">
           <span class="stack">
-            <img src="assets/avatar-1.png" alt=""><img src="assets/avatar-2.png" alt=""><img src="assets/avatar-laan.png" alt="">
+            <img src="assets/joined-1.png" alt=""><img src="assets/joined-2.png" alt=""><img src="assets/joined-3.png" alt="">
           </span>
-          8602 joined this week
+          <span>8602 joined this week</span>
         </figcaption>
-        <span class="hero-flame hero-flame--a">🔥</span>
-        <span class="hero-flame hero-flame--b">🔥</span>
       </figure>
 
-      <div class="watch-info">
-        <div class="watch-creator" data-anim style="--i:1">
-          <img class="avatar" src="assets/avatar-laan.png" alt=""><span>Iaan</span>
+      <div class="watch-info" data-anim style="--i:1">
+        <div class="watch-text">
+          <div class="watch-creator">
+            <img src="assets/creator-avatar.png" alt=""><span>Iaan</span>
+          </div>
+          <h1 class="watch-title">7m Indoor Boxing Steps</h1>
+          <p class="watch-desc">Learn the basic boxing steps beginners can practice indoors in just 7 minutes. Build a steady rhythm through simple footwork, then move quietly and confidently with Quiet On.</p>
         </div>
-        <h1 class="d2" data-anim style="--i:2">7m Indoor<br>Boxing Steps</h1>
-        <p class="watch-desc" data-anim style="--i:3">Learn the basic boxing steps beginners can practice indoo…</p>
+        <div class="watch-actions">
+          <button class="iconbtn" aria-label="Save pack">
+            <img src="assets/icon-bookmark.svg" alt=""><span>124</span>
+          </button>
+          <button class="iconbtn iconbtn--mid" aria-label="Share pack">
+            <img src="assets/icon-share.svg" alt=""><span>888+</span>
+          </button>
+        </div>
       </div>
 
-      <div class="watch-actions" data-anim style="--i:2">
-        <button class="iconbtn" aria-label="Save pack">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
-          <span>124</span>
-        </button>
-        <button class="iconbtn" aria-label="Share pack">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m8.4 10.7 7.2-4.2m0 11-7.2-4.2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-          <span>888+</span>
-        </button>
-      </div>
-
-      <div class="watch-detail" data-anim style="--i:4">
+      <!-- Figma clips this 360×221 frame at (560,316); its content runs on past it -->
+      <div class="watch-scroll" data-anim style="--i:2">
         <dl class="watch-stats">
           <div><dt>Sport</dt><dd>Boxing</dd></div>
+          <i class="statdiv"></i>
           <div><dt>Joined</dt><dd>5602</dd></div>
+          <i class="statdiv"></i>
           <div><dt>Recommended</dt><dd>Quiet On</dd></div>
         </dl>
 
-        <div class="watch-block">
-          <p class="blocktitle">Process</p>
-          <div class="graph">
-            <div class="graph-num"><b class="pixel">12</b><span>min</span></div>
-            <div class="graph-bars">
-              <div class="bar bar--stretch"><span>5min</span><b>STRETCH</b></div>
-              <div class="bar bar--learn"><span>7min</span><b>LEARN</b></div>
-              <div class="bar bar--run"><span>You Can Choose</span><b>RUN!</b></div>
+        <div class="watch-detail">
+          <div class="watch-block">
+            <p class="blocktitle">Process</p>
+            <div class="graph">
+              <div class="graph-num"><b class="pixel">12</b><span>min</span></div>
+              <div class="graph-bars">
+                <div class="bar bar--stretch"><span>5min</span><b>STRETCH</b></div>
+                <div class="bar bar--learn"><span>7min</span><b>LEARN</b></div>
+                <div class="bar bar--run"><span>You Can Choose</span><b>RUN!</b></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="factgrid">
+            <div><p>Entry Level</p><b>Basics Recommended</b></div>
+            <div><p>Sensory Focus</p><b>Rhythm<br>·Agility</b></div>
+            <div><p>Environment</p><b>Indoor</b></div>
+            <div><p>Pack Source</p><b>Creator</b></div>
+          </div>
+
+          <div class="watch-block">
+            <p class="blocktitle">You might also like</p>
+            <div class="rellist">
+              <a class="rel">
+                <img src="assets/rel-boxer.png" alt="">
+                <span><b>The Boxer’s Stpes</b><i>Skilled<em></em>12m</i></span>
+              </a>
+              <a class="rel">
+                <img src="assets/rel-challenge.png" alt="">
+                <span><b>Boxing Beginner Challenge</b><i>Creator<em></em>12m</i></span>
+              </a>
+            </div>
+          </div>
+
+          <div class="watch-block">
+            <p class="blocktitle blocktitle--row">More Packs from Iaan <img src="assets/icon-chevron2.svg" alt=""></p>
+            <div class="morelist">
+              <a class="more"><span class="more-img"><img src="assets/more-footwork.png" alt=""></span><b>Footwork for<br>Small Spaces</b><i>Creator<em></em>15m</i></a>
+              <a class="more"><span class="more-img"><img src="assets/more-shadow.png" alt=""></span><b>Your First Shadowboxing Flow</b><i>Creator<em></em>23m</i></a>
+              <a class="more"><span class="more-img"><img src="assets/more-round.png" alt=""></span><b>The First Round</b><i>Creator<em></em>31m</i></a>
             </div>
           </div>
         </div>
-
-        <div class="factgrid">
-          <div><p>Entry Level</p><b>Basics Recommended</b></div>
-          <div><p>Sensory Focus</p><b>Rhythm<br>·Agility</b></div>
-          <div><p>Environment</p><b>Indoor</b></div>
-          <div><p>Pack Source</p><b>Creator</b></div>
-        </div>
-
-        <div class="watch-block">
-          <p class="blocktitle">You might also like</p>
-          <div class="rellist">
-            <a class="rel">
-              <img src="assets/rel-boxer.png" alt="">
-              <span><b>The Boxer’s Stpes</b><i>Skilled<em></em>12m</i></span>
-            </a>
-            <a class="rel">
-              <img src="assets/rel-challenge.png" alt="">
-              <span><b>Boxing Beginner Challenge</b><i>Creator<em></em>12m</i></span>
-            </a>
-          </div>
-        </div>
-
-        <div class="watch-block">
-          <p class="blocktitle blocktitle--row">More Packs from Iaan <img src="assets/icon-chevron.svg" alt=""></p>
-          <div class="morelist">
-            <a class="more"><span class="more-img"><img src="assets/more-footwork.png" alt=""></span><b>Footwork for<br>Small Spaces</b><i>Creator<em></em>15m</i></a>
-            <a class="more"><span class="more-img"><img src="assets/more-shadow.png" alt=""></span><b>Your First Shadowboxing Flow</b><i>Creator<em></em>23m</i></a>
-            <a class="more"><span class="more-img"><img src="assets/more-round.png" alt=""></span><b>The First Round</b><i>Creator<em></em>31m</i></a>
-          </div>
-        </div>
       </div>
 
-      </div>
-      </div>
-
-      <div class="watch-glow"></div>
-      <!-- the Start button rides above the scroll on its own blurred scrim -->
-      <div class="start-blur"></div>
-      <button class="btn btn--start" data-go="location">Start <img src="assets/arrow-right.svg" alt=""></button>
+      <img class="watch-glow" src="assets/watch-glow.svg" alt="">
+      <button class="btn btn--start" data-go="location">Start <img src="assets/arrow-sm-right.svg" alt=""></button>
     </section>
 
     <!-- ─────────────── 2. Location / Goal ─────────────── -->
@@ -272,13 +270,17 @@
 
       <div class="col col--l" data-anim style="--i:2">
         <p class="label">Total</p>
+        <!-- read-only: Set up on the right is what drives it -->
         <div class="total">
-          <div class="total-num"><b class="pixel" id="totalMin">18</b><span>min</span></div>
           <div class="total-bars">
-            <div class="tbar tbar--stretch"><span>4m</span><b>STRETCH</b></div>
-            <div class="tbar tbar--learn"><span>8m</span><b>LEARN</b></div>
-            <div class="tbar tbar--run"><span>You Can Choose</span><em>Strike!</em></div>
+            <div class="tbar tbar--stretch"><span>5m</span><b>STRETCH</b></div>
+            <div class="tbar tbar--learn"><span>7m</span><b>LEARN</b></div>
+            <div class="tbar tbar--run">
+              <span id="runLabel">You Can Choose</span>
+              <em class="strike" id="strike"><b>Strike!</b></em>
+            </div>
           </div>
+          <div class="total-num"><b class="pixel" id="totalMin">12</b><span>min</span></div>
         </div>
       </div>
 
@@ -296,7 +298,7 @@
             </div>
             <div class="stepper-ctl">
               <button class="step" data-step-delta="-1" aria-label="Decrease"><img src="assets/icon-minus.svg" alt=""></button>
-              <output class="stepper-val" id="rounds">6</output>
+              <output class="stepper-val" id="rounds">4</output>
               <button class="step" data-step-delta="1" aria-label="Increase"><img src="assets/icon-plus.svg" alt=""></button>
             </div>
           </div>
