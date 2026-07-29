@@ -15,7 +15,7 @@ python3 -m http.server 5555
 localhost에서 열면 `index.html` / `style.css` / `app.js`의 `Last-Modified`를 1초마다 폴링해
 자동 새로고침한다. 파일 저장하면 브라우저에 바로 반영됨.
 
-자체 점검: `http://localhost:5555/index.html?selftest` → 콘솔에 PASS/FAIL 5줄.
+자체 점검: `http://localhost:5555/index.html?selftest` → 콘솔에 PASS/FAIL 14줄.
 
 ## 화면 (7개)
 
@@ -37,7 +37,7 @@ localhost에서 열면 `index.html` / `style.css` / `app.js`의 `Last-Modified`�
 - Next는 그 스텝의 모든 그룹에 답이 있어야 흰색으로 켜진다 (그 전엔 Neutral/500)
 - **Injury check**: 칩으로도, 실루엣 위의 부위를 직접 눌러서도 선택된다. 선택된 부위에는
   `신체 영역` 마커가 올라간다
-- **팩 시청**: 오른쪽 정보 영역은 스크롤된다 (Figma에서 프레임으로 표시해둔 360×221 뷰포트, 콘텐츠 860)
+- **팩 시청**: 상단 뒤로가기 바를 뺀 아래 영역 전체가 스크롤된다
 - Main workout의 `−` `+` → 라운드 수와 Total 분이 함께 변함
 - URL 해시로 특정 화면 직접 열기 (`#level` 등)
 
@@ -49,6 +49,24 @@ localhost에서 열면 `index.html` / `style.css` / `app.js`의 `Last-Modified`�
 
 프리셋: Design default(#141414) · Neutral/Black · Neutral/800 · White desk · Warm desk · Wood desk.
 헤더의 `–`로 접힌다. 배경은 `--bg` 하나만 바꾸므로 나머지 토큰은 그대로다.
+
+## 팩 시청 (pack detail)
+
+- 상단 뒤로가기 바만 고정, **그 아래 전 영역이 하나로 스크롤**된다 (콘텐츠 높이 1320)
+- 히어로는 썸네일 이미지로 시작해 **1초 뒤 클립이 크로스 디졸브**로 들어오고, 이후 새로고침
+  전까지 계속 반복 재생된다
+- Start 버튼은 스크롤 위에 고정되고, 그 아래에 Figma `blur` 레이어를 구현한 스크림이 깔린다
+  (462×154 타원 backdrop-blur + 옅은 #F2F2F2 글로우, 가장자리는 마스크로 페이드)
+
+## Main workout
+
+Newton 앱 `setup-main`의 원리를 그대로 가져왔다:
+
+- 팩의 stretch/learn 분은 고정, 세 번째 바만 사용자가 정한다
+- 세 번째 바는 손대기 전까지 **전체 폭의 플레이스홀더 트랙**("You Can Choose")이고,
+  스테퍼를 움직이는 순간 자기 분(minute)만큼의 폭 + 그라디언트를 갖는다
+- 스케일은 디자인이 정한 값(LEARN 8분 = 트랙의 210/352)에서 나온 26.25px/분
+- 스텝 진입 시 바가 숫자 쪽으로 접혔다가 펴지고, Total은 700ms 동안 카운트업한다
 
 ## 실루엣
 
@@ -71,8 +89,9 @@ Injury check의 인물은 `assets/injury-silhouette.mp4`. 원본이 **흰 매트
 
 - 화면 전환: 크로스페이드 + 미세 스케일
 - 진입: `[data-anim]` 요소가 `--i` 순서대로 stagger fade-up
-- 선택: 흰 카드 → 레드 그라디언트 크로스페이드 + 스케일 팝 + inner glow
-- Injury check: 인물 호흡, 바닥 링 펄스, 좌우 축 아이콘 왕복
+- 선택: 흰 카드 → 레드 그라디언트 크로스페이드 + 스케일 팝 + inner glow.
+  Assist Mode는 디폴트 아트와 그라디언트가 구워진 선택 아트를 교체한다
+- Injury check: 실루엣 클립 재생, 바닥 링 펄스, 좌우 축 아이콘 왕복, 마커 펄스
 - 팩 제안: 중앙 카드 부유, 양옆 고스트 카드 드리프트
 - 프로젝터 앰비언스: 상단 빔 + 미세 플리커
 - `prefers-reduced-motion` 존중
@@ -83,8 +102,8 @@ Injury check의 인물은 `assets/injury-silhouette.mp4`. 원본이 **흰 매트
 이미 개발된 규칙을 그대로 가져왔다 (원본은 읽기만 했고 아무것도 바꾸지 않았다):
 
 - **체크 배지** — `assets/check-circle.png`. 에셋이 그림자를 투명 여백으로 갖고 있어
-  52px 박스가 28px 원을 그린다. 카드형 선택(Today's Goal, Condition)과 Assist Mode 카드에만
-  붙고, 아이콘 토글·난이도 세그먼트·칩에는 붙지 않는다 — 앱과 동일한 규칙
+  52px 박스가 28px 원을 그린다. 모든 카드(Location·Today's Goal·Condition·Assist Mode)에
+  일관되게 붙고, 난이도 세그먼트와 부위 칩에는 붙지 않는다
 - **선택 토글 방식** — 한 번 더 누르면 해제. 단일 선택 그룹도 라디오처럼 동작하되 끌 수 있다
 - **Assist Mode 선택 그림자** — 라이브러리의 58px/10px 그림자는 작은 카드에서 회색 띠로 보여서
   앱과 같이 `0 5px 14px rgba(0,0,0,.10)` + 흰 inner glow로 좁혔다. 선택되면 Recommended
@@ -102,9 +121,9 @@ Injury check의 인물은 `assets/injury-silhouette.mp4`. 원본이 **흰 매트
 
 ## 알려진 차이
 
-- Assist Mode 카드의 `plus-lighter` 틴트는 브라우저와 Figma의 블렌드 공간 차이로 Load/Boost가
-  Figma보다 약간 어둡게 나온다.
 - 실루엣 부위 좌표(`PARTS`)는 클립의 한 프레임 기준 고정값이다. 영상 속 인물이 움직이므로
   팔·다리가 크게 움직이는 구간에서는 마커가 살짝 어긋난다.
-- 아이콘 중 체크·북마크·공유는 인라인 SVG, 나머지(발자국·바닥 링·화살표·±·뒤로·셰브론)는
-  Figma 내보내기 에셋.
+- 아이콘 중 북마크·공유는 인라인 SVG, 나머지(체크·신발/맨발·바닥 링·화살표·±·뒤로·셰브론)는
+  전달받은 에셋 또는 Figma 내보내기.
+- 프로젝션-터치 환경이라 **호버 애니메이션은 전부 제거**했다 (우측 하단 컬러 패널은 개발용
+  크롬이라 예외).

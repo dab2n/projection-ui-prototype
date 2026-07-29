@@ -49,8 +49,14 @@
 
     <!-- ─────────────── 1. 팩 시청 / Pack detail ─────────────── -->
     <section class="screen" data-screen="watch" data-appbar="back">
+      <!-- everything below the back bar scrolls together -->
+      <div class="watch-scroll">
+      <div class="watch-page">
+
       <figure class="hero" data-anim style="--i:0">
-        <img src="assets/hero-boxing.png" alt="Creator in boxing stance">
+        <!-- still first, then the clip cross-dissolves in after a beat and loops -->
+        <img class="hero-still" src="assets/hero-boxing.png" alt="Creator in boxing stance">
+        <video class="hero-clip" src="assets/pack-hero.mp4" muted loop playsinline preload="auto"></video>
         <figcaption class="hero-foot">
           <span class="stack">
             <img src="assets/avatar-1.png" alt=""><img src="assets/avatar-2.png" alt=""><img src="assets/avatar-laan.png" alt="">
@@ -80,8 +86,7 @@
         </button>
       </div>
 
-      <!-- Figma marks this 360×221 frame as the scrolling viewport; its content is 860 tall -->
-      <div class="watch-scroll" data-anim style="--i:4">
+      <div class="watch-detail" data-anim style="--i:4">
         <dl class="watch-stats">
           <div><dt>Sport</dt><dd>Boxing</dd></div>
           <div><dt>Joined</dt><dd>5602</dd></div>
@@ -131,8 +136,13 @@
         </div>
       </div>
 
+      </div>
+      </div>
+
       <div class="watch-glow"></div>
-      <button class="btn btn--start" data-go="location" data-anim style="--i:6">Start <img src="assets/arrow-right.svg" alt=""></button>
+      <!-- the Start button rides above the scroll on its own blurred scrim -->
+      <div class="start-blur"></div>
+      <button class="btn btn--start" data-go="location">Start <img src="assets/arrow-right.svg" alt=""></button>
     </section>
 
     <!-- ─────────────── 2. Location / Goal ─────────────── -->
@@ -145,13 +155,11 @@
       <div class="col col--l" data-anim style="--i:2">
         <p class="label">Location</p>
         <div class="list" data-select="single">
-          <button class="card card--icon opt is-on">
-            <span class="feet">
-              <img src="assets/footprint-indoor.svg" alt=""><img src="assets/footprint-indoor.svg" alt="">
-            </span><span class="t2">Indoor</span>
+          <button class="card card--icon opt">
+            <img class="card-ico" src="assets/icon-barefoot.png" alt=""><span class="t2">Indoor</span>
           </button>
           <button class="card card--icon opt">
-            <img class="card-ico" src="assets/footprint-outdoor.svg" alt=""><span class="t2">Outdoor</span>
+            <img class="card-ico" src="assets/icon-shoe.png" alt=""><span class="t2">Outdoor</span>
           </button>
         </div>
       </div>
@@ -159,7 +167,7 @@
       <div class="col col--r" data-anim style="--i:3">
         <p class="label">Today’s Goal</p>
         <div class="list" data-select="single">
-          <button class="card opt is-on"><span class="t2">Beginner</span><span class="desc">Following along fot the first time</span></button>
+          <button class="card opt"><span class="t2">Beginner</span><span class="desc">Following along fot the first time</span></button>
           <button class="card opt"><span class="t2">Standard</span><span class="desc">Getting used to the flow</span></button>
           <button class="card opt"><span class="t2">Near-Original</span><span class="desc">Performing close to the real movement</span></button>
         </div>
@@ -177,7 +185,7 @@
 
       <div class="grid2" data-select="single" data-anim style="--i:2">
         <button class="card card--wide opt"><span class="t2">Feeling light</span><span class="desc">My body feels loose and ready</span></button>
-        <button class="card card--wide opt is-on"><span class="t2">About the Same as Usual</span><span class="desc">Neither great nor bad</span></button>
+        <button class="card card--wide opt"><span class="t2">About the Same as Usual</span><span class="desc">Neither great nor bad</span></button>
         <button class="card card--wide opt"><span class="t2">Feeling Heavy</span><span class="desc">A little tired or stiff</span></button>
         <button class="card card--wide opt"><span class="t2">Very Tired</span><span class="desc">I only want to move lightly</span></button>
       </div>
@@ -219,29 +227,35 @@
           <p class="label" style="width:336px">Difficulty</p>
           <div class="segrow" data-select="single">
             <button class="chip chip--sq opt"><span>Guided</span></button>
-            <button class="chip chip--sq opt is-on"><span>Standard</span></button>
+            <button class="chip chip--sq opt"><span>Standard</span></button>
             <button class="chip chip--sq opt"><span>Near-Pro</span></button>
           </div>
         </div>
 
         <div class="group" data-anim style="--i:2">
           <p class="label" style="width:336px">Assist Mode</p>
+          <!-- default art sits on the white card; the selected art is a full-card image
+               with the gradient already baked in (same split as the Newton app) -->
           <div class="assistrow" data-select="single">
-            <button class="assist opt is-on">
-              <img class="assist-img assist-img--quiet" src="assets/assist-quiet.png" alt="">
+            <button class="assist opt">
+              <span class="fig" style="background-image:url(assets/assist-quiet.png)"></span>
+              <span class="fig-sel" style="background-image:url(assets/assist-quiet-sel.png)"></span>
               <span class="badge">Recommended</span>
               <span class="assist-txt"><b>Quiet On</b><i>Reduced landing impact ·minimal indoor noise</i></span>
             </button>
             <button class="assist opt">
-              <span class="assist-fig assist-fig--pace"><img src="assets/assist-pace.png" alt=""></span>
+              <span class="fig" style="background-image:url(assets/assist-pace.png)"></span>
+              <span class="fig-sel" style="background-image:url(assets/assist-pace-sel.png)"></span>
               <span class="assist-txt"><b>Pace On</b><i>Auto-corrects<br>knee and ankle wobble</i></span>
             </button>
             <button class="assist opt">
-              <span class="assist-fig assist-fig--load"><img src="assets/assist-load.png" alt=""></span>
+              <span class="fig" style="background-image:url(assets/assist-load.png)"></span>
+              <span class="fig-sel" style="background-image:url(assets/assist-load-sel.png)"></span>
               <span class="assist-txt"><b>Load On</b><i>Build strength<br>with added resistance</i></span>
             </button>
             <button class="assist opt">
-              <span class="assist-fig assist-fig--boost"><img src="assets/assist-boost.png" alt=""></span>
+              <span class="fig" style="background-image:url(assets/assist-boost.png)"></span>
+              <span class="fig-sel" style="background-image:url(assets/assist-boost-sel.png)"></span>
               <span class="assist-txt"><b>Boost On</b><i>Automatic pace support<br>in the final stretch</i></span>
             </button>
           </div>

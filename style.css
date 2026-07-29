@@ -99,28 +99,21 @@ img{display:block}
 .card.is-on{color:var(--white);box-shadow:var(--sel-shadow),var(--sel-inner);transform:scale(1.012)}
 .card.is-on .t2{color:var(--white)}
 .card.is-on .desc{color:var(--n100)}
-.card:not(.is-on):hover{transform:translateY(-2px)}
 .card:active{transform:scale(.985)}
 
 /* Selected card carries the check badge, same convention as the Newton app: the asset
    holds its soft shadow as transparent padding, so a 52px box draws a 28px circle.
-   Icon toggles (Indoor/Outdoor, difficulty, chips) don't take it — only cards do. */
-.card:not(.card--icon)::after{
+   Every card carries it; the difficulty segments and injury chips don't. */
+.card::after{
   content:'';position:absolute;right:8px;top:50%;margin-top:-26px;width:52px;height:52px;
   background:url(assets/check-circle.png) center/contain no-repeat;pointer-events:none;
   opacity:0;transform:scale(.5);transition:opacity .25s var(--ease),transform .35s var(--ease);
 }
-.card:not(.card--icon).is-on::after{opacity:1;transform:scale(1);transition-delay:.06s}
+.card.is-on::after{opacity:1;transform:scale(1);transition-delay:.06s}
 
 .card--icon{flex-direction:row;align-items:center;justify-content:flex-start;gap:12px}
 .card-ico{width:34px;height:34px;object-fit:contain;transition:filter .3s var(--ease)}
 .card.is-on .card-ico{filter:brightness(0) invert(1)}
-/* Indoor uses one exported foot placed twice, mirrored — same as the Figma layer */
-.feet{position:relative;flex:0 0 34px;width:34px;height:34px}
-.feet img{position:absolute;top:5.88%;height:87.15%;width:36.53%;transition:filter .3s var(--ease)}
-.feet img:first-child{left:8.82%}
-.feet img:last-child{left:55.88%;transform:scaleX(-1)}
-.card.is-on .feet img{filter:brightness(0) invert(1)}
 
 .list{display:flex;flex-direction:column;gap:4px}
 .col{position:absolute;top:240px;width:360px}
@@ -158,11 +151,10 @@ img{display:block}
   position:absolute;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;
   pointer-events:auto;cursor:pointer;background:none;
 }
-.hit::before{
+.hit::before{                       /* always-on target ring — a projection has no hover */
   content:'';position:absolute;inset:8px;border-radius:50%;
-  border:1.5px solid rgba(255,255,255,.45);opacity:0;transition:opacity .2s var(--ease),transform .2s var(--ease);
+  border:1.5px solid rgba(255,255,255,.28);transition:opacity .2s var(--ease);
 }
-.hit:hover::before{opacity:1;transform:scale(1.15)}
 .hit-marker{
   position:absolute;inset:6px;background:url(assets/body-marker.png) center/contain no-repeat;
   opacity:0;transform:scale(.5);transition:opacity .25s var(--ease),transform .35s var(--ease);
@@ -190,7 +182,6 @@ img{display:block}
 .chip > *{position:relative}
 .chip.is-on{color:var(--white);box-shadow:var(--sel-shadow),var(--sel-inner);transform:scale(1.02)}
 .chip.is-on::before{opacity:1}
-.chip:not(.is-on):hover{transform:translateY(-2px)}
 .chip:active{transform:scale(.97)}
 .chip--sq{flex:1;height:66px;padding:12px;border-radius:16px}
 
@@ -205,7 +196,6 @@ img{display:block}
   display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-end;
   background:var(--white);transition:transform .3s var(--ease),box-shadow .3s var(--ease);
 }
-.assist::before{content:'';position:absolute;inset:0;background:var(--sel);opacity:0;transition:opacity .3s var(--ease)}
 .assist > .badge,.assist > .assist-txt{position:relative;z-index:2}
 /* tighter elevation than the shared library shadow — the 58px/10px-spread one reads as a
    grey band around a card this small (same call the Newton app made) */
@@ -218,29 +208,16 @@ img{display:block}
 }
 .assist.is-on::after{opacity:1;transform:scale(1);transition-delay:.06s}
 .assist.is-on .badge{opacity:0}
-.assist.is-on::before{opacity:1}
-.assist:not(.is-on):hover{transform:translateY(-3px)}
 
-/* The "Quiet On" photo blends straight onto the red card. The other three are dark
-   source photos tinted by a plus-lighter gradient laid over them — same as Figma. */
-.assist-img{position:absolute;z-index:1;pointer-events:none;mix-blend-mode:plus-lighter;object-fit:cover;transition:transform .5s var(--ease)}
-.assist-img--quiet{left:35px;top:-59px;width:116px;height:175px}
-.assist:hover .assist-img{transform:translateY(-4px) scale(1.03)}
-
-.assist-fig{position:absolute;z-index:1;pointer-events:none;transition:transform .5s var(--ease)}
-.assist-fig img{width:100%;height:100%;object-fit:cover;object-position:bottom}
-/* the tint is masked by the photo's own alpha, so it only lands on the subject */
-.assist-fig::after{
-  content:'';position:absolute;inset:0;mix-blend-mode:plus-lighter;
-  mask:var(--src) center/100% 100% no-repeat;-webkit-mask:var(--src) center/100% 100% no-repeat;
-}
-.assist-fig--pace {--src:url(assets/assist-pace.png); left:0;      top:-56.3px;width:204px;   height:177.73px;rotate:8.89deg}
-.assist-fig--load {--src:url(assets/assist-load.png); left:33px;   top:-56px;  width:155px;   height:176px;scale:-1 1}
-.assist-fig--boost{--src:url(assets/assist-boost.png);left:26.7px; top:-50.8px;width:147.07px;height:169.31px;rotate:-3.05deg}
-.assist-fig--pace::after {background:linear-gradient(#fa3030,#fe6e3c)}
-.assist-fig--load::after {background:linear-gradient(#fa3a3a,#fe6e3c)}
-.assist-fig--boost::after{background:linear-gradient(#fa3030,#feb179)}
-.assist:hover .assist-fig{transform:translateY(-4px)}
+/* Default art: pre-tinted subject, card width, pinned to the top edge. */
+.assist .fig{position:absolute;inset:0;z-index:1;background-size:100% auto;background-position:center top;background-repeat:no-repeat}
+/* Selected art: one full-card image with the gradient baked in. The export carries its
+   drop shadow as transparent padding, so the artwork square is inset 20.3%/15.9% — blow
+   it up until that square is exactly the card. */
+.assist .fig-sel{position:absolute;left:-34.35%;top:-26.9%;width:169.2%;height:169.2%;z-index:1;
+  background-size:100% 100%;background-repeat:no-repeat;display:none}
+.assist.is-on .fig{display:none}
+.assist.is-on .fig-sel{display:block}
 
 .assist-txt{display:flex;flex-direction:column;gap:4px;width:100%}
 .assist-txt b{font-weight:700;font-size:20px;line-height:1.2;letter-spacing:-1px;color:var(--black);transition:color .3s var(--ease)}
@@ -257,22 +234,30 @@ img{display:block}
 /* ── 6. Main workout ─────────────────────────────────────── */
 .total{position:relative;width:360px;height:171px;padding:4px;border-radius:20px;background:var(--white);display:flex;justify-content:flex-end}
 .total-bars{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:1;border-radius:18px;overflow:hidden}
+/* widths come from JS and stay proportional to the minutes; the transition is what
+   makes them grow out of the number on entry */
 .tbar{
   flex:1;display:flex;align-items:center;justify-content:space-between;
-  padding:10px;border-radius:12px;color:var(--white);
-  animation:barIn .6s var(--ease) both;transform-origin:right center;
+  padding:10px 8px;border-radius:12px;color:var(--white);overflow:hidden;white-space:nowrap;
+  transition:width .62s var(--ease);
 }
 .tbar span{font-size:15px;line-height:1.4;letter-spacing:-.5px}
 .tbar b{font-weight:700;font-size:13px;line-height:1.2;letter-spacing:-.5px;opacity:.9}
-.tbar--stretch{width:105px;background:linear-gradient(-89.87deg,#d1feff 14.046%,#fec389 4.61%,#fe6e3c 10.42%,#fa3030 46.55%);animation-delay:.15s}
-.tbar--learn{width:210px;background:linear-gradient(90deg,#fa3030 63.04%,#fe6e3c 89.9%,#fec389 101.08%,#d1feff 108.1%);animation-delay:.25s}
-.tbar--run{position:relative;width:100%;background:var(--n100);color:var(--n400);animation-delay:.35s}
-.tbar--run em{
-  position:absolute;right:0;top:0;height:48px;display:flex;align-items:center;padding:10px;
-  border-radius:12px;font-style:normal;font-weight:700;font-size:13px;letter-spacing:-.5px;color:var(--white);
-  background:linear-gradient(90deg,#fa3030 8.37%,#fe6e3c 68.79%,#fec389 100.9%,#d1feff 121.05%);
+.tbar--stretch{background:linear-gradient(-89.87deg,#d1feff 14.046%,#fec389 4.61%,#fe6e3c 10.42%,#fa3030 46.55%)}
+.tbar--learn{background:linear-gradient(90deg,#fa3030 63.04%,#fe6e3c 89.9%,#fec389 101.08%,#d1feff 108.1%)}
+/* untouched, the third bar is a placeholder; once the stepper moves it joins the ramp */
+.tbar--run{
+  position:relative;background:var(--n100);color:var(--n400);
+  transition:width .62s var(--ease),background .4s var(--ease),color .4s var(--ease);
 }
-@keyframes barIn{from{opacity:0;transform:scaleX(.2)}to{opacity:1;transform:none}}
+.tbar--run.is-set{background:linear-gradient(90deg,#fa3030 8.37%,#fe6e3c 68.79%,#fec389 100.9%,#d1feff 121.05%);color:var(--white)}
+.tbar--run em{
+  flex:none;font-style:normal;font-weight:700;font-size:13px;letter-spacing:-.5px;color:var(--white);
+  padding:6px 10px;border-radius:9px;
+  background:linear-gradient(90deg,#fa3030 8.37%,#fe6e3c 68.79%,#fec389 100.9%,#d1feff 121.05%);
+  transition:opacity .3s var(--ease);
+}
+.tbar--run.is-set em{background:none;padding:0;opacity:.7}
 
 .total-num{position:absolute;left:0;top:0;width:100px;height:156px;padding:10px;color:var(--black)}
 .total-num b{display:block;font-size:60px;line-height:1}
@@ -296,7 +281,6 @@ img{display:block}
 .stepper-ctl{display:flex;align-items:center;justify-content:center;gap:93px;width:100%}
 .step{width:28px;height:28px;border-radius:50%;transition:transform .2s var(--ease)}
 .step img{width:28px;height:28px}
-.step:hover{transform:scale(1.12)}
 .step:active{transform:scale(.9)}
 .stepper-val{font-weight:700;font-size:40px;line-height:1;letter-spacing:-1.6px;color:var(--black);font-family:inherit}
 .is-pop{animation:pop .3s var(--ease)}
@@ -337,14 +321,30 @@ img{display:block}
   transition:transform .25s var(--ease),filter .25s var(--ease);
 }
 .btn img{width:14px;height:14px;filter:brightness(0) invert(1)}
-.btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
 .btn:active{transform:scale(.97)}
 .btn--primary{height:40px;padding:0 18px;font-size:16px;background:#fa3030}
-.btn--start{position:absolute;left:576px;top:521px;width:328px;height:54px;font-size:20px;background:#fa3030;z-index:3}
+.btn--start{position:absolute;left:576px;top:521px;width:328px;height:54px;font-size:20px;background:#fa3030;z-index:8}
+/* Figma's blur behind the button: a 462×154 ellipse that background-blurs what scrolls
+   under it, plus the faint #F2F2F2 glow on top. Masked so the ellipse has no visible edge. */
+.start-blur{position:absolute;left:463px;top:412px;width:585px;height:277px;z-index:7;pointer-events:none}
+.start-blur::before{
+  content:'';position:absolute;left:61.4px;top:61.4px;width:462px;height:154px;border-radius:50%;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  mask:radial-gradient(closest-side,#000 58%,transparent);
+  -webkit-mask:radial-gradient(closest-side,#000 58%,transparent);
+}
+.start-blur::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(50% 50% at 50% 52%,rgba(242,242,242,.16),rgba(242,242,242,0) 72%);
+}
 
 /* ── 1. Pack detail ──────────────────────────────────────── */
 .hero{position:absolute;left:140px;top:72px;width:360px;height:519px;margin:0;border-radius:24px;overflow:hidden;background:#e9e4de}
-.hero > img{width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.hero-still,.hero-clip{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+/* 1s on the still, then a 900ms cross-dissolve into the clip, which then loops */
+.hero-clip{opacity:0;transition:opacity .9s ease}
+.hero.is-playing .hero-clip{opacity:1}
+.hero.is-playing .hero-still{opacity:0;transition:opacity .9s ease}
 .hero-foot{position:absolute;left:16px;bottom:24px;display:flex;align-items:center;gap:6px;font-size:15px;color:var(--black)}
 .stack{display:flex}
 .stack img{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.9);margin-left:-16px}
@@ -366,17 +366,20 @@ img{display:block}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--white);
   transition:background .25s var(--ease),transform .25s var(--ease);
 }
-.iconbtn:hover{background:rgba(255,255,255,.18);transform:translateY(-2px)}
 .iconbtn svg{width:17px;height:17px}
 .iconbtn span{font-size:11px;letter-spacing:-.3px;opacity:.9}
 
-/* Figma frame 2147232558 — 360×221 viewport, 860px of content inside */
-.watch-scroll{
-  position:absolute;left:560px;top:316px;width:360px;height:221px;
-  overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;
-  display:flex;flex-direction:column;gap:40px;padding:8px 0 24px;
-}
+/* Everything under the back bar scrolls as one page; the bar, the Start button and its
+   scrim stay put. The page keeps the Figma coordinates, it just runs taller than the frame. */
+.watch-scroll{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
 .watch-scroll::-webkit-scrollbar{display:none}
+.watch-page{position:relative;width:1060px;height:1320px}
+
+/* right column, from the stats row down */
+.watch-detail{
+  position:absolute;left:560px;top:316px;width:360px;
+  display:flex;flex-direction:column;gap:40px;padding:8px 0 0;
+}
 .watch-block{padding:0 16px}
 .blocktitle{margin:0 0 8px;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;color:var(--n50)}
 .blocktitle--row{display:flex;align-items:center;justify-content:space-between}
@@ -438,9 +441,7 @@ img{display:block}
 .appbar[data-pos="right"]{left:560px;width:360px;transform:none}   /* pack detail keeps it over the info column */
 .appbar-back{width:24px;height:24px;transition:transform .2s var(--ease)}
 .appbar-back img{width:24px;height:24px;transform:rotate(180deg)}
-.appbar-back:hover{transform:translateX(-3px)}
 .appbar-skip{font-size:16px;line-height:1.5;letter-spacing:-.5px;color:var(--white);opacity:.9}
-.appbar-skip:hover{opacity:1}
 .appbar[data-back="off"] .appbar-back{visibility:hidden}
 .appbar[data-skip="off"] .appbar-skip{visibility:hidden}
 
@@ -462,7 +463,6 @@ img{display:block}
 .flowbar-next img{width:10px;height:10px;filter:brightness(0) invert(.46);transition:filter .3s var(--ease)}
 .flowbar-next.is-ready{color:var(--white)}
 .flowbar-next.is-ready img{filter:brightness(0) invert(1)}
-.flowbar-next:hover{transform:translateX(3px)}
 
 /* ── projection background picker ────────────────────────── */
 .picker{

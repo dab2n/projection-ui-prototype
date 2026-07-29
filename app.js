@@ -20,6 +20,7 @@ fit();
 
 /* ── navigation ─────────────────────────────────────────── */
 let at = 0;
+const onShow = [];      // fns notified with the screen name on every change
 
 function show(i) {
   at = Math.max(0, Math.min(screens.length - 1, i));
@@ -42,8 +43,10 @@ function show(i) {
       n === steps.length - 1 ? 'Done ' : 'Next ';
   }
 
+  cur.querySelector('.watch-scroll')?.scrollTo(0, 0);
   replay(cur);
   if (typeof refreshNext === 'function') refreshNext();
+  onShow.forEach(fn => fn(order[at]));
   location.hash = order[at];
 }
 
@@ -171,18 +174,66 @@ onSelect.push(syncMarkers);
   video.addEventListener('loadeddata', () => { video.play().catch(() => {}); key(); }, { once: true });
 }
 
-/* ── rounds stepper (drives the Total readout) ──────────── */
+/* ── Main workout ────────────────────────────────────────────────────────
+   Same principle as the Newton app's setup-main: the pack's stretch and learn
+   minutes are fixed, the third bar is whatever the user sets, and the three bar
+   widths stay proportional to each other. The run bar reads "You Can Choose"
+   until the stepper is actually touched. Entering the step, the bars collapse to
+   the number and grow back out while the total counts up. */
 const rounds   = document.getElementById('rounds');
 const totalMin = document.getElementById('totalMin');
-const BASE_MIN = 12;                      // 4m stretch + 8m learn, fixed by the design
-const PER_ROUND = 1;                      // 3m work + 1m rest ≈ 1 min of "You Can Choose" per step
+const STRETCH = 4, LEARN = 8;             // fixed pack minutes, from the design
+const PER_ROUND = 1;                      // one "You Can Choose" minute per round → 6 = 18 total
+const MIN_BAR = 56;
+/* The design's 8-minute LEARN bar is 210 of the 352px track, which fixes the scale at
+   26.25px per minute. Stretch and learn are drawn at that scale; the third bar stays a
+   full-width track until the stepper is touched, then takes its own minutes. */
+const PX_PER_MIN = k => k * (210 / 352) / LEARN;
+
+const bars = { stretch: STRETCH, learn: LEARN, run: +rounds.textContent * PER_ROUND };
+const barEl = k => document.querySelector(`.tbar--${k}`);
+const graphEl = document.querySelector('.total-bars');
+let runChosen = false;
+
+function layoutBars() {
+  const full = graphEl.clientWidth;
+  const px = m => Math.max(MIN_BAR, Math.min(full, Math.round(PX_PER_MIN(m) * full)));
+  barEl('stretch').style.width = px(STRETCH) + 'px';
+  barEl('learn').style.width = px(LEARN) + 'px';
+  barEl('run').style.width = (runChosen ? px(bars.run) : full) + 'px';
+  barEl('run').querySelector('span').textContent = runChosen ? `${bars.run}m` : 'You Can Choose';
+  totalMin.textContent = STRETCH + LEARN + bars.run;
+}
+
+function introBars() {
+  for (const k of ['stretch', 'learn', 'run']) {
+    const b = barEl(k);
+    b.style.transition = 'none';
+    b.style.width = MIN_BAR + 'px';
+  }
+  void graphEl.offsetWidth;                                   // commit the collapsed start
+  for (const k of ['stretch', 'learn', 'run']) barEl(k).style.transition = '';
+  layoutBars();
+  const t = STRETCH + LEARN + bars.run;
+  let start = null;                                           // …and count the total up to it
+  requestAnimationFrame(function step(ts) {
+    if (start === null) start = ts;
+    const p = Math.min((ts - start) / 700, 1);
+    totalMin.textContent = Math.round((1 - (1 - p) ** 2) * t);
+    if (p < 1) requestAnimationFrame(step);
+  });
+}
+onShow.push(name => { if (name === 'main') introBars(); });
 
 document.querySelectorAll('[data-step-delta]').forEach(btn => {
   btn.onclick = () => {
     const next = Math.max(1, Math.min(20, +rounds.textContent + +btn.dataset.stepDelta));
     if (next === +rounds.textContent) return;
     rounds.textContent = next;
-    totalMin.textContent = BASE_MIN + next * PER_ROUND;
+    runChosen = true;
+    document.querySelector('.tbar--run').classList.add('is-set');
+    bars.run = next * PER_ROUND;
+    layoutBars();
     [rounds, totalMin].forEach(n => {
       n.classList.remove('is-pop');
       void n.offsetWidth;
@@ -190,6 +241,18 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     });
   };
 });
+
+/* ── pack detail: still → clip cross-dissolve, then loop for good ───────── */
+{
+  const hero = document.querySelector('.hero');
+  const clip = hero.querySelector('.hero-clip');
+  let armed = false;
+  onShow.push(name => {
+    if (name !== 'watch' || armed) return;
+    armed = true;
+    setTimeout(() => { clip.play().catch(() => {}); hero.classList.add('is-playing'); }, 1000);
+  });
+}
 
 /* ── projection background picker ───────────────────────── */
 {
@@ -290,9 +353,15 @@ if (location.search.includes('selftest')) {
   ok('single-select is radio', seg[0].classList.contains('is-on') && !seg[1].classList.contains('is-on'));
   seg[0].click();
   ok('tapping the active one clears it', !seg[0].classList.contains('is-on'));
+  ok('cards default to unselected', !document.querySelector('.card.is-on'));
+
+  show(order.indexOf('level'));
   ok('Next dims while a group is empty', !btnNext.classList.contains('is-ready'));
   seg[1].click();
+  document.querySelector('.assist').click();
   ok('Next lights up once answered', btnNext.classList.contains('is-ready'));
+
+  show(order.indexOf('main'));
 
   const dec = document.querySelector('[data-step-delta="-1"]');
   rounds.textContent = 1;
@@ -301,6 +370,7 @@ if (location.search.includes('selftest')) {
   rounds.textContent = 6;
   document.querySelector('[data-step-delta="1"]').click();
   ok('total tracks rounds', rounds.textContent === '7' && totalMin.textContent === '19');
+  ok('run bar leaves its placeholder', document.querySelector('.tbar--run').classList.contains('is-set'));
 }
 
 /* ── dev-only live reload: poll Last-Modified, no deps ──── */
