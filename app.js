@@ -43,6 +43,7 @@ function show(i) {
   }
 
   replay(cur);
+  if (typeof refreshNext === 'function') refreshNext();
   location.hash = order[at];
 }
 
@@ -78,37 +79,49 @@ addEventListener('keydown', e => {
 /* ── selection groups ───────────────────────────────────── */
 const onSelect = [];
 
+/* Same toggle semantics as the Newton app: tap to select, tap again to clear — a
+   single-select group behaves like a radio but the active one can still be turned off. */
 document.querySelectorAll('[data-select]').forEach(group => {
   const multi = group.dataset.select === 'multi';
   group.querySelectorAll('.opt').forEach(opt => {
     opt.onclick = () => {
+      const on = !opt.classList.contains('is-on');
       if (multi) {
         // a [data-exclusive] option (e.g. "None") clears the rest, and vice versa
-        const on = !opt.classList.contains('is-on');
         if (opt.hasAttribute('data-exclusive') && on) {
           group.querySelectorAll('.opt').forEach(o => o.classList.remove('is-on'));
         } else if (on) {
           group.querySelectorAll('.opt[data-exclusive]').forEach(o => o.classList.remove('is-on'));
         }
-        opt.classList.toggle('is-on', on);
-      } else {
-        group.querySelectorAll('.opt').forEach(o => o.classList.toggle('is-on', o === opt));
+      } else if (on) {
+        group.querySelectorAll('.opt').forEach(o => o.classList.remove('is-on'));
       }
+      opt.classList.toggle('is-on', on);
       onSelect.forEach(fn => fn());
     };
   });
 });
 
+/* Next reads Neutral/500 until every group on the step has an answer, then goes white. */
+const btnNext = document.getElementById('btnNext');
+const refreshNext = () => {
+  const cur = screens[at];
+  const groups = cur.querySelectorAll('[data-select]');
+  btnNext.classList.toggle('is-ready', !groups.length || [...groups].every(g => g.querySelector('.is-on')));
+};
+onSelect.push(refreshNext);
+
 /* ── injury check: keyed silhouette + body-region hotspots ───────────────
-   Positions are normalised to the silhouette box — nudge them here if the clip
+   Normalised to the silhouette box. Taken from the Newton app's own body map for
+   this same clip (312×554 there), so the two stay in step — nudge here if the clip
    is re-shot; nothing else depends on the numbers. */
 const PARTS = [
-  { id: 'lower-back', x: 0.64, y: 0.52 },
-  { id: 'right-arm',  x: 0.62, y: 0.27 },
-  { id: 'left-arm',   x: 0.26, y: 0.28 },
-  { id: 'knee',       x: 0.60, y: 0.685 },
-  { id: 'calf',       x: 0.65, y: 0.755 },
-  { id: 'ankle',      x: 0.62, y: 0.845 },
+  { id: 'left-arm',   x:  85 / 312, y: 170 / 554 },
+  { id: 'right-arm',  x: 172 / 312, y: 135 / 554 },
+  { id: 'lower-back', x: 183 / 312, y: 233 / 554 },
+  { id: 'knee',       x: 155 / 312, y: 345 / 554 },
+  { id: 'calf',       x: 170 / 312, y: 415 / 554 },
+  { id: 'ankle',      x: 160 / 312, y: 465 / 554 },
 ];
 
 const hits = document.getElementById('figureHits');
@@ -271,6 +284,15 @@ if (location.search.includes('selftest')) {
   ok('hotspot selects its chip', chips[4].classList.contains('is-on') && on() === 1);
   chips[1].click();
   ok('a body part clears "None"', on() === 2);
+
+  const seg = document.querySelectorAll('.segrow .opt');
+  seg[0].click();
+  ok('single-select is radio', seg[0].classList.contains('is-on') && !seg[1].classList.contains('is-on'));
+  seg[0].click();
+  ok('tapping the active one clears it', !seg[0].classList.contains('is-on'));
+  ok('Next dims while a group is empty', !btnNext.classList.contains('is-ready'));
+  seg[1].click();
+  ok('Next lights up once answered', btnNext.classList.contains('is-ready'));
 
   const dec = document.querySelector('[data-step-delta="-1"]');
   rounds.textContent = 1;
