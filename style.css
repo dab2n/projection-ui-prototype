@@ -1,0 +1,401 @@
+/* ============================================================
+   Projection UI — tokens straight from Figma (2026 개인 / UI)
+   Frame: 1060 × 662.5
+   ============================================================ */
+:root{
+  --bg:#141414;
+  --white:#fff;
+  --black:#050a0a;
+  --n50:#fafafa;  --n100:#f2f2f2; --n400:#a3a3a3; --n500:#757575;
+  --n600:#525252; --n700:#3b3b3b;
+
+  /* 직사각형_Selected */
+  --sel:linear-gradient(180deg,#fa3030 53.869%,#fe6e3c 85.083%,#fec389 104.71%,#d1feff 104.72%);
+  --sel-shadow:0 15px 58.32px 10px rgba(0,0,0,.05);
+  --sel-inner:inset 0 0 16px 6px rgba(255,255,255,.6);
+
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:#0b0b0b; color:var(--white);
+  font-family:'Supreme',system-ui,-apple-system,sans-serif;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+img{display:block}
+
+/* OffBit Trial (Figma) is a licensed trial face — Pixelify Sans is the free stand-in.
+   ponytail: swap the @font-face here if you license OffBit. */
+.pixel{font-family:'Pixelify Sans',ui-monospace,monospace;font-weight:700}
+
+/* ── stage & fit ─────────────────────────────────────────── */
+.fit{display:grid;place-items:center;width:100%;flex:1;min-height:0}
+.stage{
+  position:relative; width:1060px; height:663px; overflow:hidden;
+  background:var(--bg); border-radius:6px;
+  transform:scale(var(--s,1)); transform-origin:center;
+  box-shadow:0 40px 120px rgba(0,0,0,.6);
+}
+.hint{margin:0 0 16px;font-size:13px;color:#5a5a5a;letter-spacing:-.3px}
+
+/* ambient projector light */
+.beam{
+  position:absolute; inset:0; pointer-events:none; z-index:6;
+  background:radial-gradient(120% 80% at 50% -10%,rgba(255,255,255,.045),transparent 60%);
+  animation:flicker 6s ease-in-out infinite;
+}
+@keyframes flicker{0%,100%{opacity:1}45%{opacity:.86}70%{opacity:.95}}
+
+/* ── screens ─────────────────────────────────────────────── */
+.screen{
+  position:absolute; inset:0; opacity:0; visibility:hidden;
+  transform:scale(1.015); transition:opacity .38s var(--ease),transform .5s var(--ease),visibility 0s .5s;
+}
+.screen.is-active{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+
+/* staggered entrance — replayed by JS on every screen change */
+.screen.is-active [data-anim]{animation:rise .55s var(--ease) both;animation-delay:calc(var(--i,0)*70ms + 60ms)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ── type ────────────────────────────────────────────────── */
+.d2{margin:0;font-weight:700;font-size:40px;line-height:1.2;letter-spacing:-1.5px;color:var(--white)}
+.sub{margin:0;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;color:var(--n100)}
+.t2{font-weight:700;font-size:20px;line-height:1.2;letter-spacing:-1px}
+.desc{font-weight:400;font-size:14px;line-height:1.4;letter-spacing:-.42px;color:var(--n600)}
+.label{margin:0 0 8px;padding:0 12px;font-size:16px;line-height:1.5;letter-spacing:-.5px;color:var(--white)}
+
+.titleblock{
+  position:absolute; left:50%; top:72px; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  padding:0 16px; text-align:center;
+}
+
+/* ── shared card ─────────────────────────────────────────── */
+.card{
+  position:relative; display:flex; flex-direction:column; justify-content:center; gap:4px;
+  width:100%; min-height:80px; padding:16px 20px; border-radius:20px;
+  background:var(--white); color:var(--black); overflow:hidden;
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease);
+}
+.card::before{                      /* the selected gradient, cross-faded */
+  content:''; position:absolute; inset:0; border-radius:inherit;
+  background:var(--sel); opacity:0; transition:opacity .3s var(--ease);
+}
+.card > *{position:relative;z-index:1}
+.card .t2,.card .desc{transition:color .3s var(--ease)}
+.card.is-on::before{opacity:1}
+.card.is-on{color:var(--white);box-shadow:var(--sel-shadow),var(--sel-inner);transform:scale(1.012)}
+.card.is-on .t2{color:var(--white)}
+.card.is-on .desc{color:var(--n100)}
+.card:not(.is-on):hover{transform:translateY(-2px)}
+.card:active{transform:scale(.985)}
+
+.card--icon{flex-direction:row;align-items:center;justify-content:flex-start;gap:12px}
+.card-ico{width:34px;height:34px;object-fit:contain;transition:filter .3s var(--ease)}
+.card.is-on .card-ico{filter:brightness(0) invert(1)}
+/* Indoor uses one exported foot placed twice, mirrored — same as the Figma layer */
+.feet{position:relative;flex:0 0 34px;width:34px;height:34px}
+.feet img{position:absolute;top:5.88%;height:87.15%;width:36.53%;transition:filter .3s var(--ease)}
+.feet img:first-child{left:8.82%}
+.feet img:last-child{left:55.88%;transform:scaleX(-1)}
+.card.is-on .feet img{filter:brightness(0) invert(1)}
+
+.list{display:flex;flex-direction:column;gap:4px}
+.col{position:absolute;top:240px;width:360px}
+.col--l{left:140px}
+.col--r{left:560px}
+
+/* ── 2. Location / Goal ──────────────────────────────────── */
+/* the exported ellipse bleeds past its Figma box (inset -24.38% -11.46%) — absolute
+   placement below already folds that bleed in, so no wrapper is needed */
+.floorglow{position:absolute;pointer-events:none;z-index:0;transform:rotate(180deg)}
+.floorglow--flow{left:200.6px;top:525.6px;width:658.88px;height:374.88px}
+
+/* ── 3. Condition ────────────────────────────────────────── */
+.grid2{
+  position:absolute; left:174px; top:272px; width:712px;
+  display:grid; grid-template-columns:352px 352px; gap:8px;
+}
+.card--wide{min-height:84px}
+.check{
+  width:28px;height:28px;border-radius:50%;background:var(--white);
+  position:absolute;right:20px;top:50%;margin-top:-14px;
+  opacity:0;transform:scale(.4);transition:opacity .25s var(--ease),transform .35s var(--ease);
+}
+.check::after{
+  content:'';position:absolute;left:9px;top:8px;width:8px;height:13px;
+  border:solid #fa3030;border-width:0 2.6px 2.6px 0;transform:rotate(45deg);
+}
+.is-on .check{opacity:1;transform:scale(1);transition-delay:.08s}
+
+/* ── 4. Injury check ─────────────────────────────────────── */
+/* Figma layer order: body → floor glow → axis → ring. The glow sits ON TOP of the
+   body, which is what dissolves the feet into the floor. */
+.figure{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+.figure-body{z-index:1}
+.figure-ring,.figure-axis{z-index:3}
+.floorglow--figure{z-index:2}
+.figure-body{
+  /* sized to the rendered figure in the Figma frame, not its (larger) layer box */
+  position:absolute;left:213px;top:222px;width:167px;height:296px;object-fit:contain;
+  animation:breathe 5s ease-in-out infinite;transform-origin:50% 100%;
+}
+.figure-ring{position:absolute;left:153.68px;top:474.03px;width:337.13px;height:45.84px;animation:ring 5s ease-in-out infinite}
+.figure-axis{position:absolute;left:310.08px;top:504.23px;width:24.09px;height:24.09px;animation:axis 3.2s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scaleY(1) translateY(0)}50%{transform:scaleY(1.012) translateY(-3px)}}
+@keyframes ring{0%,100%{opacity:.85;transform:scaleX(1)}50%{opacity:1;transform:scaleX(1.03)}}
+@keyframes axis{0%,100%{transform:translateX(-4px)}50%{transform:translateX(4px)}}
+.floorglow--figure{left:-13px;top:449.3px;width:677.94px;height:593.15px}
+
+.chips{position:absolute;left:560px;top:240px;width:360px;display:flex;flex-direction:column;gap:9px}
+.chiprow{display:flex;gap:8px}
+.chip{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  height:66px;padding:12px 20px;border-radius:20px;overflow:hidden;
+  background:var(--white);color:var(--black);
+  font-weight:700;font-size:20px;line-height:1.2;letter-spacing:-1px;white-space:nowrap;
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease),color .3s var(--ease);
+}
+.chip--fill{flex:1}
+.chip::before{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--sel);opacity:0;transition:opacity .3s var(--ease)}
+.chip > *{position:relative}
+.chip.is-on{color:var(--white);box-shadow:var(--sel-shadow),var(--sel-inner);transform:scale(1.02)}
+.chip.is-on::before{opacity:1}
+.chip:not(.is-on):hover{transform:translateY(-2px)}
+.chip:active{transform:scale(.97)}
+.chip--sq{flex:1;height:66px;padding:12px;border-radius:16px}
+
+/* ── 5. Level / Mode ─────────────────────────────────────── */
+.levelwrap{position:absolute;left:50%;top:206px;transform:translateX(-50%);width:780px;display:flex;flex-direction:column;gap:32px}
+.group{display:flex;flex-direction:column}
+.segrow{display:flex;gap:4px;width:336px}
+.assistrow{display:flex;gap:8px;width:100%}
+
+.assist{
+  position:relative;flex:1;min-width:0;height:189px;padding:16px;border-radius:20px;overflow:hidden;
+  display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-end;
+  background:var(--white);transition:transform .3s var(--ease),box-shadow .3s var(--ease);
+}
+.assist::before{content:'';position:absolute;inset:0;background:var(--sel);opacity:0;transition:opacity .3s var(--ease)}
+.assist > .badge,.assist > .assist-txt{position:relative;z-index:2}
+.assist.is-on{box-shadow:var(--sel-shadow),var(--sel-inner);transform:translateY(-3px)}
+.assist.is-on::before{opacity:1}
+.assist:not(.is-on):hover{transform:translateY(-3px)}
+
+/* The "Quiet On" photo blends straight onto the red card. The other three are dark
+   source photos tinted by a plus-lighter gradient laid over them — same as Figma. */
+.assist-img{position:absolute;z-index:1;pointer-events:none;mix-blend-mode:plus-lighter;object-fit:cover;transition:transform .5s var(--ease)}
+.assist-img--quiet{left:35px;top:-59px;width:116px;height:175px}
+.assist:hover .assist-img{transform:translateY(-4px) scale(1.03)}
+
+.assist-fig{position:absolute;z-index:1;pointer-events:none;transition:transform .5s var(--ease)}
+.assist-fig img{width:100%;height:100%;object-fit:cover;object-position:bottom}
+/* the tint is masked by the photo's own alpha, so it only lands on the subject */
+.assist-fig::after{
+  content:'';position:absolute;inset:0;mix-blend-mode:plus-lighter;
+  mask:var(--src) center/100% 100% no-repeat;-webkit-mask:var(--src) center/100% 100% no-repeat;
+}
+.assist-fig--pace {--src:url(assets/assist-pace.png); left:0;      top:-56.3px;width:204px;   height:177.73px;rotate:8.89deg}
+.assist-fig--load {--src:url(assets/assist-load.png); left:33px;   top:-56px;  width:155px;   height:176px;scale:-1 1}
+.assist-fig--boost{--src:url(assets/assist-boost.png);left:26.7px; top:-50.8px;width:147.07px;height:169.31px;rotate:-3.05deg}
+.assist-fig--pace::after {background:linear-gradient(#fa3030,#fe6e3c)}
+.assist-fig--load::after {background:linear-gradient(#fa3a3a,#fe6e3c)}
+.assist-fig--boost::after{background:linear-gradient(#fa3030,#feb179)}
+.assist:hover .assist-fig{transform:translateY(-4px)}
+
+.assist-txt{display:flex;flex-direction:column;gap:4px;width:100%}
+.assist-txt b{font-weight:700;font-size:20px;line-height:1.2;letter-spacing:-1px;color:var(--black);transition:color .3s var(--ease)}
+.assist-txt i{font-style:normal;font-size:13px;line-height:1.2;letter-spacing:-.5px;color:var(--n500);transition:color .3s var(--ease)}
+.assist.is-on .assist-txt b{color:var(--white)}
+.assist.is-on .assist-txt i{color:var(--n50)}
+
+.badge{
+  align-self:flex-end;background:rgba(255,255,255,.9);color:var(--n600);
+  padding:4px 8px;border-radius:80px;font-weight:500;font-size:12px;line-height:1.2;letter-spacing:-.5px;
+  margin-bottom:auto;opacity:0;transform:translateY(-4px);transition:opacity .3s var(--ease),transform .3s var(--ease);
+}
+.assist.is-on .badge{opacity:1;transform:none}
+
+/* ── 6. Main workout ─────────────────────────────────────── */
+.total{position:relative;width:360px;height:171px;padding:4px;border-radius:20px;background:var(--white);display:flex;justify-content:flex-end}
+.total-bars{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:1;border-radius:18px;overflow:hidden}
+.tbar{
+  flex:1;display:flex;align-items:center;justify-content:space-between;
+  padding:10px;border-radius:12px;color:var(--white);
+  animation:barIn .6s var(--ease) both;transform-origin:right center;
+}
+.tbar span{font-size:15px;line-height:1.4;letter-spacing:-.5px}
+.tbar b{font-weight:700;font-size:13px;line-height:1.2;letter-spacing:-.5px;opacity:.9}
+.tbar--stretch{width:105px;background:linear-gradient(-89.87deg,#d1feff 14.046%,#fec389 4.61%,#fe6e3c 10.42%,#fa3030 46.55%);animation-delay:.15s}
+.tbar--learn{width:210px;background:linear-gradient(90deg,#fa3030 63.04%,#fe6e3c 89.9%,#fec389 101.08%,#d1feff 108.1%);animation-delay:.25s}
+.tbar--run{position:relative;width:100%;background:var(--n100);color:var(--n400);animation-delay:.35s}
+.tbar--run em{
+  position:absolute;right:0;top:0;height:48px;display:flex;align-items:center;padding:10px;
+  border-radius:12px;font-style:normal;font-weight:700;font-size:13px;letter-spacing:-.5px;color:var(--white);
+  background:linear-gradient(90deg,#fa3030 8.37%,#fe6e3c 68.79%,#fec389 100.9%,#d1feff 121.05%);
+}
+@keyframes barIn{from{opacity:0;transform:scaleX(.2)}to{opacity:1;transform:none}}
+
+.total-num{position:absolute;left:0;top:0;width:100px;height:156px;padding:10px;color:var(--black)}
+.total-num b{display:block;font-size:60px;line-height:1}
+.total-num span{display:block;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;opacity:.6;text-align:center}
+
+.setup{display:flex;flex-direction:column;gap:4px;height:171px}
+.tabs{display:flex;gap:4px;padding:4px;border-radius:20px;background:var(--white)}
+.tab{
+  flex:1;display:flex;align-items:center;justify-content:center;padding:8px 16px;border-radius:16px;
+  font-weight:500;font-size:14px;line-height:1.4;letter-spacing:-.56px;color:var(--n700);
+  background:transparent;transition:background .25s var(--ease)
+}
+.tab.is-on{background:var(--n100)}
+
+.stepper{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 20px;border-radius:20px;background:var(--white)}
+.stepper-hint{display:flex;align-items:center;justify-content:center;gap:10px;width:296px;padding:8px 0}
+.stepper-hint > span:first-child{font-size:12px;line-height:1.2;letter-spacing:-.5px;color:var(--n500)}
+.pill{display:flex;gap:2px;padding:8px;border-radius:99px;background:var(--n100);font-weight:500;font-size:12px;line-height:1.2;letter-spacing:-.5px}
+.pill b{font-weight:500;color:var(--black)}
+.pill i{font-style:normal;color:var(--n600)}
+.stepper-ctl{display:flex;align-items:center;justify-content:center;gap:93px;width:100%}
+.step{width:28px;height:28px;border-radius:50%;transition:transform .2s var(--ease)}
+.step img{width:28px;height:28px}
+.step:hover{transform:scale(1.12)}
+.step:active{transform:scale(.9)}
+.stepper-val{font-weight:700;font-size:40px;line-height:1;letter-spacing:-1.6px;color:var(--black);font-family:inherit}
+.is-pop{animation:pop .3s var(--ease)}
+@keyframes pop{0%{transform:scale(.72);opacity:.5}60%{transform:scale(1.08)}100%{transform:none}}
+
+/* ── 0. Pack suggestion ──────────────────────────────────── */
+.deck{position:absolute;left:0;top:190px;width:100%;height:340px}
+.deck-ghost{position:absolute;width:auto;filter:blur(.2px)}
+.deck-ghost--l{left:96px;top:6px;height:330px;animation:driftL 7s ease-in-out infinite}
+.deck-ghost--r{left:562px;top:-2px;height:346px;animation:driftR 7s ease-in-out infinite}
+@keyframes driftL{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(-6px) rotate(-.4deg)}}
+@keyframes driftR{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(6px) rotate(.4deg)}}
+
+.packcard{
+  position:absolute;left:339px;top:21px;width:377px;
+  background:var(--white);border-radius:24px;padding:4.5px;color:var(--black);
+  box-shadow:0 30px 80px rgba(0,0,0,.45);
+  animation:float 6s ease-in-out infinite;
+}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.packcard-thumb{position:relative;height:189px;border-radius:20px;overflow:hidden}
+.packcard-thumb > img{width:100%;height:100%;object-fit:cover;object-position:50% 22%}
+.packcard-creator{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;font-weight:500;font-size:15px;color:var(--black)}
+.packcard-hot{
+  position:absolute;right:12px;top:12px;display:flex;align-items:center;gap:4px;
+  padding:5px 10px;border-radius:80px;background:rgba(20,20,20,.55);backdrop-filter:blur(6px);
+  color:var(--white);font-weight:700;font-size:13px;letter-spacing:-.4px;
+}
+.avatar{width:24px;height:24px;border-radius:50%;object-fit:cover}
+.packcard-info{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px}
+.packcard-text .t2{margin:0;max-width:183px;display:block}
+.meta{margin:4px 0 0;display:flex;align-items:center;gap:5px;font-size:13px;line-height:1.4;color:var(--n500)}
+.meta i{width:3px;height:3px;border-radius:50%;background:var(--n400)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border-radius:80px;font-weight:700;letter-spacing:-.5px;color:var(--white);
+  transition:transform .25s var(--ease),filter .25s var(--ease);
+}
+.btn img{width:14px;height:14px;filter:brightness(0) invert(1)}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+.btn:active{transform:scale(.97)}
+.btn--primary{height:40px;padding:0 18px;font-size:16px;background:#fa3030}
+.btn--start{position:absolute;left:576px;top:521px;width:328px;height:54px;font-size:20px;background:#fa3030;z-index:3}
+
+/* ── 1. Pack detail ──────────────────────────────────────── */
+.hero{position:absolute;left:140px;top:72px;width:360px;height:519px;margin:0;border-radius:24px;overflow:hidden;background:#e9e4de}
+.hero > img{width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.hero-foot{position:absolute;left:16px;bottom:24px;display:flex;align-items:center;gap:6px;font-size:15px;color:var(--black)}
+.stack{display:flex}
+.stack img{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.9);margin-left:-16px}
+.stack img:first-child{margin-left:0}
+.hero-flame{position:absolute;font-size:20px;animation:emberA 3s ease-in-out infinite}
+.hero-flame--a{left:39px;bottom:48px}
+.hero-flame--b{left:61px;bottom:80px;font-size:18px;animation-name:emberB;animation-duration:3.6s}
+@keyframes emberA{0%,100%{transform:translateY(0) scale(1);opacity:.95}50%{transform:translateY(-5px) scale(1.08);opacity:1}}
+@keyframes emberB{0%,100%{transform:translateY(0) scale(1);opacity:.8}50%{transform:translateY(-7px) scale(1.05);opacity:1}}
+
+.watch-info{position:absolute;left:576px;top:124px;width:202px}
+.watch-creator{display:flex;align-items:center;gap:8px;height:24px;font-size:15px;color:var(--white)}
+.watch-info .d2{margin-top:8px;font-size:32px;letter-spacing:-1.2px}   /* 202px column, 2 lines */
+.watch-desc{margin:12px 0 0;font-size:15px;line-height:1.35;letter-spacing:-.3px;color:var(--n400)}
+
+.watch-actions{position:absolute;left:856px;top:132px;display:flex;flex-direction:column;gap:11px}
+.iconbtn{
+  width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.1);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--white);
+  transition:background .25s var(--ease),transform .25s var(--ease);
+}
+.iconbtn:hover{background:rgba(255,255,255,.18);transform:translateY(-2px)}
+.iconbtn svg{width:17px;height:17px}
+.iconbtn span{font-size:11px;letter-spacing:-.3px;opacity:.9}
+
+.watch-stats{position:absolute;left:592px;top:324px;width:328px;margin:0;display:flex}
+.watch-stats > div{width:93px;padding-right:4px}
+.watch-stats > div + div{border-left:1px solid rgba(255,255,255,.14);padding-left:8px;margin-left:4px}
+.watch-stats dt{font-size:13px;letter-spacing:-.3px;color:var(--n400)}
+.watch-stats dd{margin:6px 0 0;font-weight:700;font-size:17px;letter-spacing:-.6px;color:var(--white)}
+
+.watch-process{position:absolute;left:576px;top:408px;width:328px}
+.watch-process .label{padding:0;font-weight:700;font-size:17px;margin-bottom:8px}
+.graph{position:relative;height:164px;padding:4px;border-radius:20px;background:var(--white);display:flex;justify-content:flex-end}
+.graph-bars{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:1;border-radius:16px;overflow:hidden}
+.bar{flex:1;display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:12px;color:var(--white);animation:barIn .6s var(--ease) both}
+.bar span{font-size:15px;letter-spacing:-.5px}
+.bar b{font-weight:700;font-size:13px;letter-spacing:-.5px;opacity:.9}
+.bar--stretch{width:170px;background:linear-gradient(-89.87deg,#d1feff 14.05%,#fec389 4.61%,#fe6e3c 10.42%,#fa3030 46.55%);animation-delay:.2s}
+.bar--learn{width:210px;background:linear-gradient(90deg,#fa3030 63.04%,#fe6e3c 89.9%,#fec389 101.08%,#d1feff 108.1%);animation-delay:.3s}
+.bar--run{width:100%;background:var(--n100);color:var(--n400);animation-delay:.4s}
+.bar--run b{color:var(--n400)}
+.graph-num{position:absolute;left:0;top:0;width:100px;padding:10px;color:var(--black)}
+.graph-num b{display:block;font-size:60px;line-height:1}
+.graph-num span{display:block;font-weight:700;font-size:18px;letter-spacing:-.54px;opacity:.6}
+.watch-glow{
+  position:absolute;left:959px;top:618px;width:462px;height:154px;pointer-events:none;
+  background:radial-gradient(50% 50% at 50% 50%,rgba(250,48,48,.55),transparent 70%);filter:blur(30px);
+}
+
+/* ── shared chrome ───────────────────────────────────────── */
+.appbar{
+  position:absolute;left:50%;top:72px;transform:translateX(-50%);
+  width:780px;height:40px;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;
+  z-index:5;opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility 0s .3s;
+}
+.appbar.is-on{opacity:1;visibility:visible;transition-delay:0s}
+.appbar[data-pos="right"]{left:560px;width:360px;transform:none}   /* pack detail keeps it over the info column */
+.appbar-back{width:24px;height:24px;transition:transform .2s var(--ease)}
+.appbar-back img{width:24px;height:24px;transform:rotate(180deg)}
+.appbar-back:hover{transform:translateX(-3px)}
+.appbar-skip{font-size:16px;line-height:1.5;letter-spacing:-.5px;color:var(--white);opacity:.9}
+.appbar-skip:hover{opacity:1}
+.appbar[data-back="off"] .appbar-back{visibility:hidden}
+.appbar[data-skip="off"] .appbar-skip{visibility:hidden}
+
+.flowbar{
+  position:absolute;left:50%;top:567px;transform:translateX(-50%);
+  width:780px;height:24px;display:flex;align-items:center;justify-content:space-between;
+  z-index:5;opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility 0s .3s;
+}
+.flowbar.is-on{opacity:1;visibility:visible;transition-delay:0s}
+.flowbar-steps{margin:0;padding:0;list-style:none;display:flex;align-items:center;gap:8.28px;width:416px}
+.flowbar-steps li{
+  font-size:15.732px;line-height:1.5;letter-spacing:-.207px;color:var(--n500);
+  transition:color .3s var(--ease),font-weight .3s var(--ease);white-space:nowrap;
+}
+.flowbar-steps li.is-done,
+.flowbar-steps li:last-child{color:var(--n400)}   /* Main Workout always reads brighter */
+.flowbar-steps li.is-now{color:var(--white);font-weight:700}
+.flowbar-next{display:flex;align-items:center;gap:2px;font-weight:700;font-size:15.732px;letter-spacing:-.414px;color:var(--white);transition:transform .2s var(--ease)}
+.flowbar-next img{width:10px;height:10px;filter:brightness(0) invert(1)}
+.flowbar-next:hover{transform:translateX(3px)}
+
+/* ── a11y ────────────────────────────────────────────────── */
+:focus-visible{outline:2px solid #fa3030;outline-offset:3px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}

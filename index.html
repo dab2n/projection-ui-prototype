@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projection UI — Prototype</title>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=supreme@400,500,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="fit">
+  <div class="stage" id="stage">
+
+    <!-- ambient projection light -->
+    <div class="beam"></div>
+
+    <!-- ─────────────── 0. 팩 제안 / Pack suggestion ─────────────── -->
+    <section class="screen" data-screen="pack">
+      <div class="titleblock" style="width:560px">
+        <h1 class="d2" data-anim style="--i:0">Need a Quick Reset?</h1>
+        <p class="sub" data-anim style="--i:1">A short movement break to refresh your body and focus.</p>
+      </div>
+
+      <div class="deck">
+        <img class="deck-ghost deck-ghost--l" src="assets/pack-ghost-left.png" alt="Quick Dance Steps pack" data-anim style="--i:2">
+        <img class="deck-ghost deck-ghost--r" src="assets/pack-ghost-right.png" alt="Boxing Basics pack" data-anim style="--i:2">
+
+        <article class="packcard" data-anim style="--i:3">
+          <div class="packcard-thumb">
+            <img src="assets/pack-thumb.png" alt="Creator throwing a jab">
+            <div class="packcard-creator">
+              <img class="avatar" src="assets/avatar-laan.png" alt="">
+              <span>Iaan</span>
+            </div>
+            <div class="packcard-hot">🔥<span>HOT</span></div>
+          </div>
+          <div class="packcard-info">
+            <div class="packcard-text">
+              <p class="t2">7m Indoor Boxing Basics</p>
+              <p class="meta"><span>Creator Pack</span><i></i><span>7m</span></p>
+            </div>
+            <button class="btn btn--primary" data-go="watch">View Pack <img src="assets/arrow-right.svg" alt=""></button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ─────────────── 1. 팩 시청 / Pack detail ─────────────── -->
+    <section class="screen" data-screen="watch" data-appbar="back">
+      <figure class="hero" data-anim style="--i:0">
+        <img src="assets/hero-boxing.png" alt="Creator in boxing stance">
+        <figcaption class="hero-foot">
+          <span class="stack">
+            <img src="assets/avatar-1.png" alt=""><img src="assets/avatar-2.png" alt=""><img src="assets/avatar-laan.png" alt="">
+          </span>
+          8602 joined this week
+        </figcaption>
+        <span class="hero-flame hero-flame--a">🔥</span>
+        <span class="hero-flame hero-flame--b">🔥</span>
+      </figure>
+
+      <div class="watch-info">
+        <div class="watch-creator" data-anim style="--i:1">
+          <img class="avatar" src="assets/avatar-laan.png" alt=""><span>Iaan</span>
+        </div>
+        <h1 class="d2" data-anim style="--i:2">7m Indoor<br>Boxing Steps</h1>
+        <p class="watch-desc" data-anim style="--i:3">Learn the basic boxing steps beginners can practice indoo…</p>
+      </div>
+
+      <div class="watch-actions" data-anim style="--i:2">
+        <button class="iconbtn" aria-label="Save pack">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <span>124</span>
+        </button>
+        <button class="iconbtn" aria-label="Share pack">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m8.4 10.7 7.2-4.2m0 11-7.2-4.2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+          <span>888+</span>
+        </button>
+      </div>
+
+      <dl class="watch-stats" data-anim style="--i:4">
+        <div><dt>Sport</dt><dd>Boxing</dd></div>
+        <div><dt>Joined</dt><dd>5602</dd></div>
+        <div><dt>Recommended</dt><dd>Quiet On</dd></div>
+      </dl>
+
+      <div class="watch-process" data-anim style="--i:5">
+        <p class="label">Process</p>
+        <div class="graph">
+          <div class="graph-num"><b class="pixel">12</b><span>min</span></div>
+          <div class="graph-bars">
+            <div class="bar bar--stretch"><span>5min</span><b>STRETCH</b></div>
+            <div class="bar bar--learn"><span>7min</span><b>LEARN</b></div>
+            <div class="bar bar--run"><span>You Can Choose</span><b>RUN!</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="watch-glow"></div>
+      <button class="btn btn--start" data-go="location" data-anim style="--i:6">Start <img src="assets/arrow-right.svg" alt=""></button>
+    </section>
+
+    <!-- ─────────────── 2. Location / Goal ─────────────── -->
+    <section class="screen" data-screen="location" data-step="0">
+      <div class="titleblock" style="width:546px">
+        <h1 class="d2" data-anim style="--i:0">Where are you<br>working out today?</h1>
+        <p class="sub" data-anim style="--i:1">We’ll reduce strain on those areas.</p>
+      </div>
+
+      <div class="col col--l" data-anim style="--i:2">
+        <p class="label">Location</p>
+        <div class="list" data-select="single">
+          <button class="card card--icon opt is-on">
+            <span class="feet">
+              <img src="assets/footprint-indoor.svg" alt=""><img src="assets/footprint-indoor.svg" alt="">
+            </span><span class="t2">Indoor</span>
+          </button>
+          <button class="card card--icon opt">
+            <img class="card-ico" src="assets/footprint-outdoor.svg" alt=""><span class="t2">Outdoor</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="col col--r" data-anim style="--i:3">
+        <p class="label">Today’s Goal</p>
+        <div class="list" data-select="single">
+          <button class="card opt is-on"><span class="t2">Beginner</span><span class="desc">Following along fot the first time</span></button>
+          <button class="card opt"><span class="t2">Standard</span><span class="desc">Getting used to the flow</span></button>
+          <button class="card opt"><span class="t2">Near-Original</span><span class="desc">Performing close to the real movement</span></button>
+        </div>
+      </div>
+
+      <img class="floorglow floorglow--flow" src="assets/glow-ellipse.svg" alt="">
+    </section>
+
+    <!-- ─────────────── 3. Condition ─────────────── -->
+    <section class="screen" data-screen="condition" data-step="1">
+      <div class="titleblock" style="width:392px">
+        <h1 class="d2" data-anim style="--i:0">How are you<br>feeling today?</h1>
+        <p class="sub" data-anim style="--i:1">We’ll reduce strain on those areas.</p>
+      </div>
+
+      <div class="grid2" data-select="single" data-anim style="--i:2">
+        <button class="card card--wide opt"><span class="t2">Feeling light</span><span class="desc">My body feels loose and ready</span></button>
+        <button class="card card--wide opt is-on"><span class="t2">About the Same as Usual</span><span class="desc">Neither great nor bad</span><i class="check"></i></button>
+        <button class="card card--wide opt"><span class="t2">Feeling Heavy</span><span class="desc">A little tired or stiff</span></button>
+        <button class="card card--wide opt"><span class="t2">Very Tired</span><span class="desc">I only want to move lightly</span></button>
+      </div>
+    </section>
+
+    <!-- ─────────────── 4. Injury check ─────────────── -->
+    <section class="screen" data-screen="injury" data-step="2" data-appbar="both">
+      <div class="titleblock" style="width:360px">
+        <h1 class="d2" data-anim style="--i:0">Any areas<br>bothering you?</h1>
+        <p class="sub" data-anim style="--i:1">We’ll reduce strain on those areas.</p>
+      </div>
+
+      <div class="figure" data-anim style="--i:2">
+        <img class="figure-body" src="assets/body-figure.png" alt="Standing figure">
+        <img class="figure-ring" src="assets/floor-ring.svg" alt="">
+        <img class="figure-axis" src="assets/icon-leftright.svg" alt="">
+      </div>
+      <img class="floorglow floorglow--figure" src="assets/floor-glow.svg" alt="">
+
+      <div class="chips" data-select="multi" data-anim style="--i:3">
+        <div class="chiprow"><button class="chip opt" data-exclusive><span>None</span></button><button class="chip opt"><span>Lower Back</span></button></div>
+        <div class="chiprow"><button class="chip opt"><span>Ankle · Sole</span></button><button class="chip opt chip--fill"><span>Knee</span></button><button class="chip opt chip--fill"><span>Calf</span></button></div>
+        <div class="chiprow"><button class="chip opt"><span>Left Arm</span></button><button class="chip opt"><span>Right Arm</span></button></div>
+      </div>
+    </section>
+
+    <!-- ─────────────── 5. Level / Mode ─────────────── -->
+    <section class="screen" data-screen="level" data-step="3" data-appbar="both">
+      <div class="titleblock" style="width:360px">
+        <h1 class="d2" data-anim style="--i:0">How do you<br>want to move?</h1>
+      </div>
+
+      <div class="levelwrap">
+        <div class="group" data-anim style="--i:1">
+          <p class="label" style="width:336px">Difficulty</p>
+          <div class="segrow" data-select="single">
+            <button class="chip chip--sq opt"><span>Guided</span></button>
+            <button class="chip chip--sq opt is-on"><span>Standard</span></button>
+            <button class="chip chip--sq opt"><span>Near-Pro</span></button>
+          </div>
+        </div>
+
+        <div class="group" data-anim style="--i:2">
+          <p class="label" style="width:336px">Assist Mode</p>
+          <div class="assistrow" data-select="single">
+            <button class="assist opt is-on">
+              <img class="assist-img assist-img--quiet" src="assets/assist-quiet.png" alt="">
+              <span class="badge">Recommended</span>
+              <span class="assist-txt"><b>Quiet On</b><i>Reduced landing impact ·minimal indoor noise</i></span>
+            </button>
+            <button class="assist opt">
+              <span class="assist-fig assist-fig--pace"><img src="assets/assist-pace.png" alt=""></span>
+              <span class="assist-txt"><b>Pace On</b><i>Auto-corrects<br>knee and ankle wobble</i></span>
+            </button>
+            <button class="assist opt">
+              <span class="assist-fig assist-fig--load"><img src="assets/assist-load.png" alt=""></span>
+              <span class="assist-txt"><b>Load On</b><i>Build strength<br>with added resistance</i></span>
+            </button>
+            <button class="assist opt">
+              <span class="assist-fig assist-fig--boost"><img src="assets/assist-boost.png" alt=""></span>
+              <span class="assist-txt"><b>Boost On</b><i>Automatic pace support<br>in the final stretch</i></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────── 6. Main workout ─────────────── -->
+    <section class="screen" data-screen="main" data-step="4" data-appbar="both">
+      <div class="titleblock" style="width:520px">
+        <h1 class="d2" data-anim style="--i:0">Set your<br>main workout</h1>
+        <p class="sub" data-anim style="--i:1">The 12m Pack (Stretching + Learning) stays as-is</p>
+      </div>
+
+      <div class="col col--l" data-anim style="--i:2">
+        <p class="label">Total</p>
+        <div class="total">
+          <div class="total-num"><b class="pixel" id="totalMin">18</b><span>min</span></div>
+          <div class="total-bars">
+            <div class="tbar tbar--stretch"><span>4m</span><b>STRETCH</b></div>
+            <div class="tbar tbar--learn"><span>8m</span><b>LEARN</b></div>
+            <div class="tbar tbar--run"><span>You Can Choose</span><em>Strike!</em></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col col--r" data-anim style="--i:3">
+        <p class="label">Set up</p>
+        <div class="setup">
+          <div class="tabs" data-select="single">
+            <button class="tab opt is-on">Rounds</button>
+            <button class="tab opt">Time</button>
+          </div>
+          <div class="stepper">
+            <div class="stepper-hint">
+              <span>5 rounds recommended</span>
+              <span class="pill"><b>3m Work</b><i>·1m Rest</i></span>
+            </div>
+            <div class="stepper-ctl">
+              <button class="step" data-step-delta="-1" aria-label="Decrease"><img src="assets/icon-minus.svg" alt=""></button>
+              <output class="stepper-val" id="rounds">6</output>
+              <button class="step" data-step-delta="1" aria-label="Increase"><img src="assets/icon-plus.svg" alt=""></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- shared chrome -->
+    <div class="appbar" id="appbar">
+      <button class="appbar-back" id="btnBack" aria-label="Back"><img src="assets/icon-back.svg" alt=""></button>
+      <button class="appbar-skip" id="btnSkip">Skip</button>
+    </div>
+
+    <nav class="flowbar" id="flowbar">
+      <ol class="flowbar-steps">
+        <li>Location</li><li>Condition</li><li>Injury check</li><li>Level/Mode</li><li>Main Workout</li>
+      </ol>
+      <button class="flowbar-next" id="btnNext">Next <img src="assets/arrow-right.svg" alt=""></button>
+    </nav>
+
+  </div>
+</div>
+
+<p class="hint">← → 방향키 · 클릭으로 이동 &nbsp;|&nbsp; 1060 × 663 projection frame</p>
+
+<script src="app.js"></script>
+</body>
+</html>
