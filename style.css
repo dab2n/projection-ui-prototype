@@ -95,8 +95,8 @@ img{display:block}
 }
 .card > *{position:relative;z-index:1}
 .card .t2,.card .desc{transition:color .3s var(--ease)}
-.card.is-on::before{opacity:1}
-.card.is-on{color:var(--white);box-shadow:var(--sel-shadow),var(--sel-inner);transform:scale(1.012)}
+.card.is-on::before{opacity:1;box-shadow:var(--sel-inner)}
+.card.is-on{color:var(--white);box-shadow:var(--sel-shadow);transform:scale(1.012)}
 .card.is-on .t2{color:var(--white)}
 .card.is-on .desc{color:var(--n100)}
 .card:active{transform:scale(.985)}
@@ -177,8 +177,8 @@ img{display:block}
 .chip--fill{flex:1}
 .chip::before{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--sel);opacity:0;transition:opacity .3s var(--ease)}
 .chip > *{position:relative}
-.chip.is-on{color:var(--white);box-shadow:var(--sel-shadow),var(--sel-inner);transform:scale(1.02)}
-.chip.is-on::before{opacity:1}
+.chip.is-on{color:var(--white);box-shadow:var(--sel-shadow);transform:scale(1.02)}
+.chip.is-on::before{opacity:1;box-shadow:var(--sel-inner)}
 .chip:active{transform:scale(.97)}
 .chip--sq{flex:1;height:66px;padding:12px;border-radius:16px}
 
@@ -195,7 +195,7 @@ img{display:block}
 }
 .assist > .badge,.assist > .assist-txt{position:relative;z-index:2}
 /* 직사각형_Selected: drop shadow + the white inner shadow, straight from the library */
-.assist.is-on{box-shadow:var(--sel-shadow),var(--sel-inner);transform:translateY(-3px)}
+.assist.is-on{box-shadow:var(--sel-shadow);transform:translateY(-3px)}
 /* the check takes the Recommended badge's place */
 .assist::after{
   content:'';position:absolute;top:4px;right:4px;z-index:3;width:52px;height:52px;
@@ -212,6 +212,8 @@ img{display:block}
    it up until that square is exactly the card. */
 .assist .fig-sel{position:absolute;left:-34.35%;top:-26.9%;width:169.2%;height:169.2%;z-index:1;
   background-size:100% 100%;background-repeat:no-repeat;display:none}
+/* the artwork is the top fill, so the inner glow rides on it (as in the Figma layer) */
+.assist.is-on::before{content:'';position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;box-shadow:var(--sel-inner)}
 .assist.is-on .fig{display:none}
 .assist.is-on .fig-sel{display:block}
 
@@ -238,18 +240,23 @@ img{display:block}
 }
 .tbar span{font-size:15px;line-height:1.4;letter-spacing:-.5px}
 .tbar b{font-weight:700;font-size:13px;line-height:1.2;letter-spacing:-.5px;opacity:.9}
+/* widths are set by JS: fixed at the design values until Set up is touched, then
+   proportional to the minutes so the top bars shrink as Strike grows */
+.tbar--stretch,.tbar--learn,.tbar--run{transition:width .5s var(--ease)}
 .tbar--stretch{width:105px;background:linear-gradient(-90deg,#d1feff 0%,#fec389 6.49%,#fe6e3c 16.831%,#fa3030 41.678%)}
 .tbar--learn{width:210px;background:linear-gradient(90deg,#fa3030 63.043%,#fe6e3c 89.902%,#fec389 101.08%,#d1feff 108.1%)}
 .tbar--run{position:relative;width:100%;background:var(--n100);color:var(--n400)}
-/* the Strike chip is the run row's fill: it grows leftward as rounds are added */
+/* a narrow bar drops its STRETCH/LEARN label and keeps just the minutes */
+.tbar.is-tight b{display:none}
+/* the Strike chip is the run row's fill — it carries its own minutes and grows leftward */
 .strike{
-  position:absolute;right:0;top:0;height:48px;min-width:74px;
-  display:flex;align-items:center;justify-content:flex-end;padding:10px;border-radius:12px;
-  background:linear-gradient(90deg,#fa3030 8.368%,#fe6e3c 68.788%,#fec389 100.9%,#d1feff 121.05%);
-  transition:width .55s var(--ease);
+  position:absolute;right:0;top:0;height:100%;min-width:74px;font-style:normal;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:12px;
+  background:linear-gradient(90deg,#fa3030 63.043%,#fe6e3c 89.902%,#fec389 101.08%,#d1feff 108.1%);
+  transition:width .5s var(--ease);
 }
-.strike b{font-style:normal;font-weight:700;font-size:13px;line-height:1.2;letter-spacing:-.5px;color:var(--white);opacity:1}
-.tbar--run.is-set span{color:var(--black)}
+.strike span{font-size:15px;line-height:1.4;letter-spacing:-.5px;color:var(--white)}
+.strike b{font-weight:700;font-size:13px;line-height:1.2;letter-spacing:-.5px;color:var(--white)}
 
 .total-num{position:absolute;left:4px;top:4px;width:100px;height:156px;padding:10px;color:var(--black)}
 .total-num b{display:block;font-size:60px;line-height:1}
@@ -376,7 +383,8 @@ img{display:block}
 /* the scrolling frame */
 .watch-scroll{
   position:absolute;left:560px;top:316px;width:360px;height:221px;
-  overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;
+  overflow-y:auto;overflow-x:hidden;   /* the carousels are clipped, not scrolled sideways */
+  overscroll-behavior:contain;scrollbar-width:none;
 }
 .watch-scroll::-webkit-scrollbar{display:none}
 .watch-stats{margin:0;padding:8px 40px 0;display:flex;align-items:center;justify-content:center;gap:4px}
@@ -392,7 +400,9 @@ img{display:block}
 .blocktitle--row img{width:26px;height:26px}
 
 /* Process graph — 759:8520 geometry, run row is Neutral/400 here */
-.graph{position:relative;padding:4px;border-radius:20px;background:var(--white);overflow:hidden;box-shadow:0 0 64px 18px rgba(255,255,255,.10)}
+/* no glow here — the scroll frame clips it into a hard rectangle. The halo lives on
+   .watch-glow, outside the frame. */
+.graph{position:relative;padding:4px;border-radius:20px;background:var(--white);overflow:hidden}
 .graph-bars{display:flex;flex-direction:column;align-items:flex-end;gap:2px;height:156px;border-radius:18px;overflow:hidden}
 .bar{
   flex:1;display:flex;align-items:center;justify-content:space-between;
@@ -431,6 +441,12 @@ img{display:block}
 .rel em,.more em{width:3px;height:3px;border-radius:50%;background:currentColor}
 
 /* glow behind the Start button, then the button itself */
+.scroll-fade{
+  position:absolute;left:560px;top:470px;width:360px;height:67px;z-index:3;pointer-events:none;
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  background:linear-gradient(rgba(20,20,20,0),rgba(20,20,20,.55));
+  mask:linear-gradient(transparent,#000 45%);-webkit-mask:linear-gradient(transparent,#000 45%);
+}
 .watch-glow{position:absolute;left:435.5px;top:402.5px;width:585px;height:277px;transform:rotate(180deg);pointer-events:none;z-index:3}
 .btn--start{
   position:absolute;left:576px;top:521px;width:328px;

@@ -183,27 +183,35 @@ onSelect.push(syncMarkers);
 const rounds   = document.getElementById('rounds');
 const totalMin = document.getElementById('totalMin');
 const STRETCH = 5, LEARN = 7;             // the pack's fixed minutes (node 143:7373)
-const WORK = 3, REST = 1;                 // "3m Work · 1m Rest" — one round is 4 minutes
+const WORK = 3, REST = 1;                 // "3m Work · 1m Rest" — rests sit between rounds
 const MAX_ROUNDS = 20;
+const TIGHT = 96;                         // below this a bar can't hold its label
 
 const runRow = document.querySelector('.tbar--run');
 const runLabel = document.getElementById('runLabel');
 const strike = document.getElementById('strike');
+const graphEl = document.querySelector('.total-bars');
 let strikeMin = 0;                        // 0 until Set up is touched
 
-const strikeFor = r => r * (WORK + REST);
+const strikeFor = r => r * WORK + (r - 1) * REST;   // 6 rounds → 6×3 + 5×1 = 23m
 const total = () => STRETCH + LEARN + strikeMin;
 
-/* The Strike chip is the run row's fill — it grows leftward with the chosen minutes,
-   from its label width at 1 round to the whole row at the maximum. */
-function layoutStrike() {
-  const full = runRow.clientWidth;
-  const min = 74;
-  strike.style.width = strikeMin
-    ? `${Math.round(min + (strikeMin / strikeFor(MAX_ROUNDS)) * (full - min))}px`
-    : `${min}px`;
-  runLabel.textContent = strikeMin ? `${strikeMin}m` : 'You Can Choose';
-  runRow.classList.toggle('is-set', strikeMin > 0);
+/* Until Set up is touched the graph keeps the design's 105 / 210 / full rows. Once a
+   Strike time exists all three go proportional to their minutes, so the top two shrink
+   as the Strike chip grows (node 205:10083). */
+function layoutBars() {
+  const full = graphEl.clientWidth;
+  const set = strikeMin > 0;
+  const px = m => Math.round(m / total() * full);
+  const widths = set ? [px(STRETCH), px(LEARN), px(strikeMin)] : [105, 210, 74];
+
+  [['.tbar--stretch', 0], ['.tbar--learn', 1]].forEach(([sel, i]) => {
+    const el = document.querySelector(sel);
+    el.style.width = widths[i] + 'px';
+    el.classList.toggle('is-tight', widths[i] < TIGHT);
+  });
+  strike.style.width = Math.max(74, widths[2]) + 'px';
+  runLabel.textContent = set ? `${strikeMin}m` : '';
 }
 
 /* Entering the step, the total counts up to its current value. */
@@ -217,7 +225,7 @@ function countTotal() {
     if (p < 1) requestAnimationFrame(step);
   });
 }
-onShow.push(name => { if (name === 'main') { layoutStrike(); countTotal(); } });
+onShow.push(name => { if (name === 'main') { layoutBars(); countTotal(); } });
 
 document.querySelectorAll('[data-step-delta]').forEach(btn => {
   btn.onclick = () => {
@@ -225,7 +233,7 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     if (next === +rounds.textContent && strikeMin) return;
     rounds.textContent = next;
     strikeMin = strikeFor(next);
-    layoutStrike();
+    layoutBars();
     totalMin.textContent = total();
     [rounds, totalMin].forEach(n => {
       n.classList.remove('is-pop');
@@ -366,14 +374,18 @@ if (location.search.includes('selftest')) {
   ok('graph bars are 105 / 210', is('.tbar--stretch', 105) && is('.tbar--learn', 210));
 
   ok('Total starts at the pack minutes', totalMin.textContent === String(STRETCH + LEARN));
-  ok('run row starts as a placeholder', runLabel.textContent === 'You Can Choose');
+  ok('run row starts as a placeholder', runLabel.textContent === '');
   rounds.textContent = 1;
   document.querySelector('[data-step-delta="-1"]').click();
   ok('stepper floors at 1', rounds.textContent === '1');
   rounds.textContent = 5;
   document.querySelector('[data-step-delta="1"]').click();
-  ok('Set up drives Total', rounds.textContent === '6' && totalMin.textContent === '36');
-  ok('Strike shows its minutes', runLabel.textContent === '24m' && parseFloat(strike.style.width) > 74);
+  ok('Set up drives Total', rounds.textContent === '6' && totalMin.textContent === '35');
+  ok('Strike carries its own minutes', runLabel.textContent === '23m');
+  // read the target width, not the mid-transition one
+  ok('top bars shrink to stay proportional',
+     parseFloat(document.querySelector('.tbar--stretch').style.width) < 105 &&
+     parseFloat(document.querySelector('.tbar--learn').style.width) < 210);
 }
 
 /* ── dev-only live reload: poll Last-Modified, no deps ──── */

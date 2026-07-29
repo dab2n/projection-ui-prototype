@@ -68,10 +68,14 @@ Start 버튼 328폭 @(576,521).
 
 **Total은 조작란이 아니라 표시용**이다. 오른쪽 Set up의 Rounds / Time이 Strike 시간을 정한다.
 
-- 팩의 STRETCH 5분 · LEARN 7분은 고정 (바 폭도 105 / 210으로 고정)
-- 한 라운드 = 3m Work + 1m Rest = 4분. `−` `+`로 라운드를 바꾸면 Strike 시간이 바뀌고
-  Total이 자동으로 다시 계산된다
-- Strike! 칩이 run 행의 채움 역할을 해서, 라운드가 늘어나면 왼쪽으로 자란다 (0.55s)
+- 팩의 STRETCH 5분 · LEARN 7분은 고정
+- 휴식은 라운드 **사이**에만 들어간다: Strike = 라운드×3m + (라운드−1)×1m.
+  6라운드 → 23m, Total 35m (`205:10083`과 일치)
+- Set up을 건드리기 전까지 그래프는 디자인의 105 / 210 / full 폭을 유지하고,
+  Strike 시간이 정해지는 순간 **세 바가 모두 분에 비례하는 폭으로 실시간 재배치**된다.
+  위 두 바가 줄어들고 Strike가 자란다 (0.5s)
+- 분 숫자는 빨간 바 **안에** 들어간다. 바가 96px보다 좁아지면 STRETCH/LEARN 라벨을 떨어뜨리고
+  분만 남긴다 (`205:10083`의 처리와 동일)
 - 스텝 진입 시 Total이 700ms 동안 카운트업한다
 
 ## 실루엣
@@ -89,7 +93,9 @@ Injury check의 인물은 `assets/injury-silhouette.mp4`. 원본이 **흰 매트
 `transform: scale()`로만 축소하므로 모든 좌표·타이포가 디자인 값 그대로다.
 
 디자인 토큰(색, 그라디언트, 그림자, 타이포)은 `style.css` 상단 `:root`에 Figma 값 그대로 들어있다.
-선택 상태 그라디언트 `--sel`, 그림자 `--sel-shadow` / `--sel-inner`가 Figma의 `직사각형_Selected` 스타일.
+Figma에 등록된 `selected` 이펙트 = drop shadow `0 15px 58.32px 10px #0000000D` +
+inner shadow `0 0 16px 6px #FFFFFF99`. **inner shadow는 채움 레이어 위에 얹어야** 보인다 —
+그라디언트나 선택 아트가 위를 덮으면 사라지므로, 카드·칩·Assist 카드 모두 최상단 레이어에 걸었다.
 
 ## 모션
 

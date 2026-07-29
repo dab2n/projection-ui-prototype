@@ -139,6 +139,8 @@
         </div>
       </div>
 
+      <!-- content blurs out under the button — the cue that the frame keeps scrolling -->
+      <div class="scroll-fade"></div>
       <img class="watch-glow" src="assets/watch-glow.svg" alt="">
       <button class="btn btn--start" data-go="location">Start <img src="assets/arrow-sm-right.svg" alt=""></button>
     </section>
@@ -276,8 +278,8 @@
             <div class="tbar tbar--stretch"><span>5m</span><b>STRETCH</b></div>
             <div class="tbar tbar--learn"><span>7m</span><b>LEARN</b></div>
             <div class="tbar tbar--run">
-              <span id="runLabel">You Can Choose</span>
-              <em class="strike" id="strike"><b>Strike!</b></em>
+              <span>You Can Choose</span>
+              <em class="strike" id="strike"><span id="runLabel"></span><b>Strike!</b></em>
             </div>
           </div>
           <div class="total-num"><b class="pixel" id="totalMin">12</b><span>min</span></div>
