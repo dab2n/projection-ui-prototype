@@ -395,13 +395,14 @@
       </div>
       <label>환경광 <input type="range" id="ambient" min="0" max="60" value="18"><b id="ambientOut">18%</b></label>
       <label>프로젝터 <input type="range" id="gain" min="60" max="170" value="100"><b id="gainOut">100%</b></label>
-      <label class="picker-check picker-check--sub">
+      <p class="picker-cap">뷰 — 검정은 어느 쪽이든 투명하다</p>
+      <label class="picker-check picker-check--sub" title="환경광을 빼고 책상을 자기 색 그대로 깐다. 검정 영역으로 책상색이 그대로 비친다.">
         <input type="checkbox" id="realOn">
-        <span>리얼 프로젝션뷰 <i>(검정 = 책상 그대로)</i></span>
+        <span>리얼 프로젝션뷰</span>
       </label>
-      <label class="picker-check picker-check--sub">
+      <label class="picker-check picker-check--sub" title="빛이 나가는 픽셀만 남기고 나머지는 체커보드로 비운다.">
         <input type="checkbox" id="unlitOn">
-        <span>발광 영역만 보기 <i>(검정 = 광량 0)</i></span>
+        <span>발광 영역만 보기</span>
       </label>
       <!-- reads the projected result, so it answers "will this text survive" with a number -->
       <dl class="picker-contrast" id="contrast"></dl>
