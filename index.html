@@ -150,6 +150,9 @@
 
       <!-- content blurs out under the button — the cue that the frame keeps scrolling -->
       <div class="scroll-fade"></div>
+      <!-- blur.svg's two halves: the ellipse-clipped background blur, then the radial fill.
+           An <img> can't apply the SVG's own backdrop-filter, so it lives here in CSS. -->
+      <div class="watch-haze"></div>
       <img class="watch-glow" src="assets/blur-glow.svg" alt="">
       <button class="btn btn--start" data-go="location">Start <img src="assets/arrow-sm-right.svg" alt=""></button>
     </section>

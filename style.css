@@ -306,8 +306,8 @@ img{display:block}
    seam across the side cards, so the same ellipse is a soft-edged mask instead */
 .deck-haze{
   backdrop-filter:blur(2.4px);-webkit-backdrop-filter:blur(2.4px);
-  mask:radial-gradient(ellipse closest-side at 50% 50%,#000 42%,#0000 100%);
-  -webkit-mask:radial-gradient(ellipse closest-side at 50% 50%,#000 42%,#0000 100%);
+  mask:radial-gradient(ellipse 324px 155px at 50% 50%,#000 55%,#0000 100%);
+  -webkit-mask:radial-gradient(ellipse 324px 155px at 50% 50%,#000 55%,#0000 100%);
 }
 .slot{
   position:absolute;left:50%;top:21px;width:377px;margin-left:-188.5px;
@@ -528,7 +528,20 @@ img{display:block}
 }
 /* node 705:7786 — the ellipse is 462×154 centred (728,541), 180° rotated, and blur.svg's
    585×277 is that box grown by the 30.72 layer blur (61.5 a side). Hence 435.5 / 402.5.
+   The fill is a radial #F2F2F2 14%→0% at 20% layer opacity, already baked into the asset
+   (fill-opacity .2), so nothing here should scale it further.
    It breathes slowly: the light behind the button is the one live thing in this frame. */
+.watch-haze{
+  position:absolute;left:435.5px;top:402.5px;width:585px;height:277px;
+  z-index:3;pointer-events:none;
+  backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);
+  /* the asset clips its background blur to the 462×154 ellipse — NOT to the 585×277 box, which
+     is just that ellipse plus its layer-blur bleed. Radii spelled out so the blur stays in the
+     button band and leaves the minute figure at the top of the card sharp. A soft edge instead
+     of the asset's hard clip, or the boundary draws a line across the card. */
+  mask:radial-gradient(ellipse 231px 77px at 50% 50%,#000 58%,#0000 100%);
+  -webkit-mask:radial-gradient(ellipse 231px 77px at 50% 50%,#000 58%,#0000 100%);
+}
 .watch-glow{
   position:absolute;left:435.5px;top:402.5px;width:585px;height:277px;
   /* same z as the scrim but later in the DOM, so it lights the scrim and still sits
