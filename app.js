@@ -462,6 +462,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const hex = document.getElementById('deskHex');
   const chip = document.getElementById('deskChip');
   const ambient = document.getElementById('ambient');
+  const real = document.getElementById('realOn');
   const gain = document.getElementById('gain');
 
   /* No palette remap. The rule is: keep the designed colour and lower its opacity — hue and
@@ -471,7 +472,9 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const apply = () => {
     const m = /^#?([\da-f]{6})$/i.exec(hex.value.trim());
     const n = m ? parseInt(m[1], 16) : 0xf2efea;
-    const a = +ambient.value / 100;
+    // real projection view: the desk sits at its own colour, so every black area of the frame
+    // simply shows the desk. Ambient stops applying — that is the point of the view.
+    const a = real.checked ? 1 : +ambient.value / 100;
     const rgb = [0, 1, 2].map(i => Math.round(((n >> (16 - i * 8)) & 255) * a));
     body.style.setProperty('--floor', `rgb(${rgb.join(' ')})`);
     body.style.setProperty('--gain', +gain.value / 100);
@@ -564,6 +567,11 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const box = document.getElementById('pickerHex');
     box.value = want;
     box.dispatchEvent(new Event('input'));
+  };
+
+  real.onchange = () => {
+    if (real.checked && !on.checked) { on.checked = true; on.dispatchEvent(new Event('change')); }
+    else apply();
   };
 
   const unlit = document.getElementById('unlitOn');
@@ -688,6 +696,15 @@ if (location.search.includes('selftest')) {
     // inline props are what the preview writes; the computed value would inherit from :root
     ok('and the token is released when preview is off',
        document.body.style.getPropertyValue('--brand') === '');
+
+    // real projection view: the floor IS the desk, so every black area shows the desk colour
+    const realBox = document.getElementById('realOn');
+    realBox.checked = true; realBox.dispatchEvent(new Event('change'));
+    ok('real view puts the desk colour behind the black',
+       getComputedStyle(document.body).getPropertyValue('--floor').trim() === 'rgb(242 239 234)');
+    realBox.checked = false; realBox.dispatchEvent(new Event('change'));
+    document.getElementById('previewOn').checked = false;
+    document.getElementById('previewOn').dispatchEvent(new Event('change'));
   }
 
   const cards = [...document.querySelectorAll('.deck .slot')];

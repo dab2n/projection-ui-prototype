@@ -116,19 +116,16 @@ body.is-preview .stage{
 .cursor{
   position:absolute;left:0;top:0;width:36px;height:36px;margin:-18px 0 0 -18px;
   border-radius:50%;pointer-events:none;z-index:40;opacity:0;
-  /* The blur carries most of it, but a backdrop blur is invisible over flat areas — a white
-     card blurred is still that white. So the hairline is doubled, light over dark content and
-     a barely-there dark line over light content, and the fill is bright enough to read. */
-  background:rgba(255,255,255,.22);
+  /* solid white at the top falling away to nothing at the bottom */
+  background:linear-gradient(180deg,#ffffff 0%,rgba(255,255,255,.42) 45%,rgba(255,255,255,0) 100%);
   box-shadow:0 0 0 1px rgba(255,255,255,.3), 0 0 0 1.8px rgba(0,0,0,.13);
-  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
   transition:opacity .25s var(--ease),width .18s var(--ease),height .18s var(--ease),
-             margin .18s var(--ease),background .18s var(--ease);
+             margin .18s var(--ease);
 }
 .cursor.is-in{opacity:1}
 .cursor.is-down{
   width:28px;height:28px;margin:-14px 0 0 -14px;
-  background:rgba(255,255,255,.36);
+  background:linear-gradient(180deg,#ffffff 0%,rgba(255,255,255,.58) 45%,rgba(255,255,255,.08) 100%);
 }
 
 .taps{position:absolute;inset:0;pointer-events:none;z-index:39;overflow:hidden}
