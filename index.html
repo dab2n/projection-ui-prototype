@@ -23,27 +23,29 @@
         <p class="sub" data-anim style="--i:1">A short movement break to refresh your body and focus.</p>
       </div>
 
-      <div class="deck">
-        <img class="deck-ghost deck-ghost--l" src="assets/pack-ghost-left.png" alt="Quick Dance Steps pack" data-anim style="--i:2">
-        <img class="deck-ghost deck-ghost--r" src="assets/pack-ghost-right.png" alt="Boxing Basics pack" data-anim style="--i:2">
-
-        <article class="packcard" data-anim style="--i:3">
-          <div class="packcard-thumb">
-            <img src="assets/pack-thumb.png" alt="Creator throwing a jab">
-            <div class="packcard-creator">
-              <img class="avatar" src="assets/avatar-laan.png" alt="">
-              <span>Iaan</span>
-            </div>
-            <div class="packcard-hot">🔥<span>HOT</span></div>
+      <!-- every card in the carousel is this one component, filled from PACKS in app.js -->
+      <div class="deck" id="deck" data-anim style="--i:2">
+        <template id="packTpl">
+          <div class="slot">
+            <article class="packcard">
+              <div class="packcard-thumb">
+                <img alt="">
+                <div class="packcard-creator">
+                  <img class="avatar" src="assets/avatar-laan.png" alt="">
+                  <span>Iaan</span>
+                </div>
+                <div class="packcard-hot">🔥<span>HOT</span></div>
+              </div>
+              <div class="packcard-info">
+                <div class="packcard-text">
+                  <p class="t2"></p>
+                  <p class="meta"><span></span><i></i><span></span></p>
+                </div>
+                <button class="btn btn--primary">View Pack <img src="assets/arrow-right.svg" alt=""></button>
+              </div>
+            </article>
           </div>
-          <div class="packcard-info">
-            <div class="packcard-text">
-              <p class="t2">7m Indoor Boxing Basics</p>
-              <p class="meta"><span>Creator Pack</span><i></i><span>7m</span></p>
-            </div>
-            <button class="btn btn--primary" data-go="watch">View Pack <img src="assets/arrow-right.svg" alt=""></button>
-          </div>
-        </article>
+        </template>
       </div>
     </section>
 

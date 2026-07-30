@@ -275,6 +275,97 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   };
 });
 
+/* ── pack suggestion carousel ────────────────────────────────────────────
+   All five cards are clones of the one #packTpl component, so they can't drift apart.
+   Swipe (drag or a trackpad's horizontal wheel) or tap a side card to bring it to the
+   middle. Images are placeholders already in the repo; `pos` is the crop each one needs
+   so the wide thumb box never cuts a head off. */
+{
+  const PACKS = [
+    { img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%' },
+    { img: 'more-footwork.png', title: 'Footwork for Small Spaces',    kind: 'Creator Pack', len: '15m', pos: '50% 25%' },
+    { img: 'pack-thumb.png',    title: '7m Indoor Boxing Basics',      kind: 'Creator Pack', len: '7m',  pos: '50% 10%', hot: true, go: 'watch' },
+    { img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 20%' },
+    { img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 45%' },
+  ];
+  const CENTRE = 2;
+
+  const deck = document.getElementById('deck');
+  const tpl  = document.getElementById('packTpl');
+  const slots = PACKS.map((p, i) => {
+    const slot = tpl.content.firstElementChild.cloneNode(true);
+    const img = slot.querySelector('.packcard-thumb > img');
+    img.src = `assets/${p.img}`;
+    img.alt = p.title;
+    img.style.setProperty('--pos', p.pos);
+    slot.querySelector('.t2').textContent = p.title;
+    const [kind, len] = slot.querySelectorAll('.meta span');
+    kind.textContent = p.kind;
+    len.textContent = p.len;
+    if (!p.hot) slot.querySelector('.packcard-hot').remove();
+    slot.querySelector('.btn').onclick = e => {
+      // a side card's button only pulls it in; only the middle one opens its detail screen
+      if (i !== at2) { e.stopPropagation(); centre(i); }
+      else if (p.go) show(order.indexOf(p.go));
+    };
+    slot.onclick = () => { if (i !== at2) centre(i); };
+    deck.append(slot);
+    return slot;
+  });
+
+  let at2 = CENTRE;
+
+  /* depth per step away from the middle — translateZ does the shrinking, so the sizes stay
+     consistent with the perspective instead of being scaled by hand */
+  const STEP = [
+    { x:   0, z:    0, ry:  0, o: 1,  b: 0   },
+    { x: 272, z: -170, ry: 13, o: .9, b: .6  },
+    { x: 430, z: -380, ry: 20, o: 0,  b: 1.4 },
+  ];
+
+  function place() {
+    slots.forEach((slot, i) => {
+      const d = i - at2;
+      const s = STEP[Math.min(Math.abs(d), 2)];
+      const sign = Math.sign(d);
+      slot.style.transform =
+        `translateX(${sign * s.x}px) translateZ(${s.z}px) rotateY(${-sign * s.ry}deg)`;
+      slot.style.opacity = s.o;
+      slot.style.filter = s.b ? `blur(${s.b}px)` : '';
+      slot.style.zIndex = 5 - Math.min(Math.abs(d), 2);
+      slot.dataset.d = d;
+      if (Math.abs(d) >= 2) slot.dataset.far = ''; else delete slot.dataset.far;
+    });
+  }
+  const centre = i => { at2 = Math.max(0, Math.min(PACKS.length - 1, i)); place(); };
+  place();
+
+  /* swipe: one step as soon as the drag passes 44px — committing mid-gesture is the right
+     feel for a touch surface, and it doesn't depend on a pointerup ever arriving */
+  let x0 = null, dx = 0;
+  deck.addEventListener('pointerdown', e => { x0 = e.clientX; dx = 0; });
+  deck.addEventListener('pointermove', e => {
+    if (x0 === null) return;
+    dx = e.clientX - x0;
+    if (Math.abs(dx) > 44) { centre(at2 + (dx < 0 ? 1 : -1)); x0 = null; }
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t =>
+    deck.addEventListener(t, () => { x0 = null; }));
+  // a drag that ended on a card must not also read as a tap on it
+  deck.addEventListener('click', e => { if (Math.abs(dx) > 6) e.stopPropagation(); }, true);
+
+  let wheelLock = 0;
+  deck.addEventListener('wheel', e => {
+    if (Math.abs(e.deltaX) < Math.abs(e.deltaY) || Math.abs(e.deltaX) < 8) return;
+    e.preventDefault();
+    if (e.timeStamp - wheelLock < 400) return;
+    wheelLock = e.timeStamp;
+    centre(at2 + Math.sign(e.deltaX));
+  }, { passive: false });
+
+  onShow.push(name => { if (name === 'pack') centre(CENTRE); });
+}
+
 /* ── pack detail: still → clip cross-dissolve, then loop for good ───────── */
 {
   const hero = document.querySelector('.hero');
@@ -401,6 +492,13 @@ if (location.search.includes('selftest')) {
   seg[0].click();
   ok('tapping the active one clears it', !seg[0].classList.contains('is-on'));
   ok('cards default to unselected', !document.querySelector('.card.is-on'));
+
+  const cards = [...document.querySelectorAll('.deck .slot')];
+  ok('carousel is copies of one card component',
+     cards.length === 5 && cards.every(c => c.querySelector('.packcard-thumb > img') && c.querySelector('.btn')));
+  ok('the boxing pack starts centred', cards[2].dataset.d === '0');
+  cards[3].click();
+  ok('tapping a side card centres it', cards[3].dataset.d === '0' && cards[2].dataset.d === '-1');
 
   show(order.indexOf('level'));
   ok('Next dims while a group is empty', !btnNext.classList.contains('is-ready'));

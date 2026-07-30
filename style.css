@@ -288,23 +288,30 @@ img{display:block}
 .is-pop{animation:pop .3s var(--ease)}
 @keyframes pop{0%{transform:scale(.72);opacity:.5}60%{transform:scale(1.08)}100%{transform:none}}
 
-/* ── 0. Pack suggestion ──────────────────────────────────── */
-.deck{position:absolute;left:0;top:190px;width:100%;height:340px}
-.deck-ghost{position:absolute;width:auto;filter:blur(.2px)}
-.deck-ghost--l{left:96px;top:6px;height:330px;animation:driftL 7s ease-in-out infinite}
-.deck-ghost--r{left:562px;top:-2px;height:346px;animation:driftR 7s ease-in-out infinite}
-@keyframes driftL{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(-6px) rotate(-.4deg)}}
-@keyframes driftR{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(6px) rotate(.4deg)}}
+/* ── 0. Pack suggestion ──────────────────────────────────────
+   A carousel of identical pack cards, symmetric around the centre one, with just enough
+   perspective to read as depth. The slot carries the 3D placement so the centre card can
+   keep its own float animation on the card itself — one element can't hold two transforms. */
+.deck{position:absolute;left:0;top:190px;width:100%;height:340px;perspective:1400px;touch-action:pan-y}
+.slot{
+  position:absolute;left:50%;top:21px;width:377px;margin-left:-188.5px;
+  transform-style:preserve-3d;cursor:pointer;
+  transition:transform .55s var(--ease),opacity .55s var(--ease),filter .55s var(--ease);
+}
+.slot[data-d="0"]{cursor:default}
+.slot[data-far]{opacity:0;pointer-events:none}
 
 .packcard{
-  position:absolute;left:339px;top:21px;width:377px;
+  width:100%;
   background:var(--white);border-radius:24px;padding:4.5px;color:var(--black);
   box-shadow:0 30px 80px rgba(0,0,0,.45);
-  animation:float 6s ease-in-out infinite;
 }
+/* only the card in the middle floats */
+.slot[data-d="0"] .packcard{animation:float 6s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .packcard-thumb{position:relative;height:189px;border-radius:20px;overflow:hidden}
-.packcard-thumb > img{width:100%;height:100%;object-fit:cover;object-position:50% 22%}
+/* per-pack crop: PACKS sets --pos so a face is never cut off by the wide thumb box */
+.packcard-thumb > img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 22%)}
 .packcard-creator{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;font-weight:500;font-size:15px;color:var(--black)}
 .packcard-hot{
   position:absolute;right:12px;top:12px;display:flex;align-items:center;gap:4px;
