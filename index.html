@@ -357,9 +357,9 @@
       <button data-c="#141414" title="Design default"></button>
       <button data-c="#050A0A" title="Neutral/Black"></button>
       <button data-c="#222A2A" title="Neutral/800"></button>
-      <button data-c="#FFFFFF" title="White desk"></button>
-      <button data-c="#EFE9E1" title="Warm desk"></button>
-      <button data-c="#C7B49A" title="Wood desk"></button>
+      <button data-c="#0E1C24" title="Deep teal (검정 대체)"></button>
+      <button data-c="#E5E6E6" title="Light field"></button>
+      <button data-c="#FFFFFF" title="White"></button>
     </div>
 
     <!-- additive-light preview: what the projector actually puts on the desk -->
@@ -382,10 +382,16 @@
       </div>
       <label>환경광 <input type="range" id="ambient" min="0" max="60" value="18"><b id="ambientOut">18%</b></label>
       <label>프로젝터 <input type="range" id="gain" min="60" max="170" value="100"><b id="gainOut">100%</b></label>
-      <p class="picker-note">밝은 프로젝터는 책상을 압도하므로 책상은 상한이 아니라 <b>하한</b>이다.
-        검정은 광량 0이니 <b>책상 × 환경광</b>보다 어두워질 수 없다 — 그게 블랙 플로어다.
-        그보다 어두운 값은 만들 수 없으니, 위 색상 피커에서 배경을 명도 낮은 <b>유채색</b>으로 잡고
-        나머지를 그보다 밝게 쌓는 것이 유일한 방법이다.</p>
+      <label class="picker-check picker-check--sub">
+        <input type="checkbox" id="unlitOn">
+        <span>발광 영역만 보기 <i>(검정 = 광량 0)</i></span>
+      </label>
+      <!-- reads the projected result, so it answers "will this text survive" with a number -->
+      <dl class="picker-contrast" id="contrast"></dl>
+      <p class="picker-note">투사되면 검정은 <b>광량 0</b> = 맨 책상이다. 그래서 가산 합성에서
+        검정은 곧 투명이고, 위 체크박스로 실제로 빛이 나가는 영역만 볼 수 있다.
+        흰 책상에서는 <b>맨 책상이 가장 어두운 값</b>이므로, 밝은 배경을 쓰면 글자는 반대로
+        어두워야 읽힌다.</p>
     </div>
   </div>
 </aside>

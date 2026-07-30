@@ -374,6 +374,8 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   });
 }
 
+const onBgChange = [];   // the preview meter listens; the picker fires it on every repaint
+
 /* ── projection background picker ───────────────────────── */
 {
   const sv = document.getElementById('sv'), hue = document.getElementById('hue');
@@ -409,6 +411,7 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     svDot.style.top = `${100 - v}%`;
     hueDot.style.left = `${(h / 360) * 100}%`;
     if (!typing) hex.value = c;
+    onBgChange.forEach(fn => fn());
   };
 
   // pointer drag on either strip; ratio() clamps so dragging outside still tracks
@@ -434,6 +437,9 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     b.style.setProperty('--c', b.dataset.c);
     b.onclick = () => { ({ h, s, v } = hex2hsv(b.dataset.c)); paint(); };
   });
+
+  // the meter reads --bg, so repainting the background has to refresh it
+  onBgChange.forEach(fn => fn());
 
   const panel = document.getElementById('picker');
   document.getElementById('pickerFold').onclick = function () {
@@ -475,9 +481,45 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     // a drop shadow is light being removed, and a projector cannot do that
     if (body.classList.contains('is-preview')) body.style.setProperty('--sel-shadow', '0 0 0 rgba(0,0,0,0)');
     else body.style.removeProperty('--sel-shadow');
+    meter(rgb.map(v => v / 255));
   };
 
+  /* Legibility readout. A pair that fails on the monitor fails on the desk too, and the
+     projected values are the design screened over the floor — so the numbers say outright
+     whether white type survives the background that is currently picked. */
+  const out = document.getElementById('contrast');
+  const rd = k => {
+    const v = getComputedStyle(stage).getPropertyValue(k).trim();
+    const n = parseInt(/([\da-f]{6})/i.exec(v)[1], 16);
+    return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+  };
+  const relLum = c => {
+    const f = u => u <= 0.03928 ? u / 12.92 : ((u + 0.055) / 1.055) ** 2.4;
+    return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+  };
+  const ratio = (a, b) => {
+    const [x, y] = [relLum(a), relLum(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+  const screenOver = (c, floor) => c.map((v, i) => 1 - (1 - v) * (1 - floor[i]));
+
+  function meter(floor) {
+    const on = body.classList.contains('is-preview');
+    const pairs = [
+      ['흰 텍스트 / 배경', rd('--white'), rd('--bg')],
+      ['검정 텍스트 / 카드', rd('--black'), rd('--white')],
+      ['브랜드 / 배경', rd('--brand'), rd('--bg')],
+    ];
+    out.innerHTML = pairs.map(([name, fg, bg]) => {
+      const r = on ? ratio(screenOver(fg, floor), screenOver(bg, floor)) : ratio(fg, bg);
+      return `<dt>${name}</dt><dd class="${r < 4.5 ? 'is-bad' : ''}">${r.toFixed(1)}:1</dd>`;
+    }).join('');
+  }
+
   on.onchange = () => { body.classList.toggle('is-preview', on.checked); apply(); };
+  onBgChange.push(apply);
+  const unlit = document.getElementById('unlitOn');
+  unlit.onchange = () => body.classList.toggle('is-unlit', unlit.checked && on.checked);
   [hex, ambient, gain].forEach(el => el.oninput = apply);
   document.querySelectorAll('#deskPresets button').forEach(b => {
     b.style.setProperty('--c', b.dataset.c);
@@ -564,6 +606,16 @@ if (location.search.includes('selftest')) {
     // inline props are what the preview would have written; tokens must stay on :root untouched
     ok('preview leaves the colour tokens alone', document.body.style.getPropertyValue('--white') === '');
     ok('and the steps still match each other', flat(inactive()));
+
+    // the legibility meter is the thing that answers "will white type survive this background"
+    const read = () => [...document.querySelectorAll('#contrast dd')].map(d => parseFloat(d.textContent));
+    const hexIn = document.getElementById('pickerHex');
+    const setBg = v => { hexIn.value = v; hexIn.dispatchEvent(new Event('input')); };
+    setBg('#141414');
+    ok('white type passes on the dark background', read()[0] >= 4.5);
+    setBg('#E5E6E6');
+    ok('white type fails on a light background', read()[0] < 2);
+    setBg('#141414');
     box.checked = false; box.dispatchEvent(new Event('change'));
   }
 

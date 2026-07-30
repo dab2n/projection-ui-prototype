@@ -60,6 +60,13 @@ img{display:block}
    like, and nothing in the UI can come out darker than it. Screen over that floor is the sum;
    the projector's own output is scaled by brightness() for its gain. */
 body.is-preview .fit{background:var(--floor,#2b2a28);isolation:isolate}
+/* "Show only what emits light". Because screen-blending makes black the identity, every unlit
+   pixel is literally transparent — over a checker it reads as a hole, which is what the
+   projector puts on the desk: nothing. */
+body.is-unlit .fit{
+  background:
+    repeating-conic-gradient(#5a5a5a 0 25%,#8e8e8e 0 50%) 0 0/18px 18px;
+}
 body.is-preview .stage{
   mix-blend-mode:screen;
   filter:brightness(var(--gain,1));   /* projector gain only — no colour filtering */
@@ -662,6 +669,11 @@ body.is-preview .picker-sliders{display:flex}
 .picker-sliders input[type=range]{width:100%;height:13px;accent-color:#fa3030}
 .picker-sliders b{font-family:ui-monospace,monospace;color:#e6e6e6;text-align:right}
 .picker-note{margin:2px 0 0;color:#6f6f6f;line-height:1.45}
+.picker-check--sub{color:#9a9a9a}
+.picker-contrast{margin:2px 0 0;display:grid;grid-template-columns:1fr auto;gap:2px 8px;color:#9a9a9a}
+.picker-contrast dt{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.picker-contrast dd{margin:0;font-family:ui-monospace,monospace;text-align:right;color:#e6e6e6}
+.picker-contrast dd.is-bad{color:#fa3030}
 
 /* ── a11y ────────────────────────────────────────────────── */
 :focus-visible{outline:2px solid #fa3030;outline-offset:3px;border-radius:6px}
