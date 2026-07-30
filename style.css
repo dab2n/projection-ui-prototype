@@ -605,6 +605,19 @@ body.is-preview .stage{
 .flowbar-next.is-ready{color:var(--white)}
 .flowbar-next.is-ready img{filter:brightness(0) invert(1)}
 
+/* Projected, the flow needs three levels, not two: the step you are on has to be the brightest
+   thing, the steps still ahead sit a notch under it, and the ones already done drop further
+   again. Figma only specifies two, so this only applies in the preview. */
+body.is-preview .flowbar-steps li{color:var(--n400)}
+body.is-preview .flowbar-steps li.is-done{color:var(--n600)}
+body.is-preview .flowbar-steps li.is-now{color:var(--white)}
+/* Next going live reads as light being added, which is the one thing a projector does well */
+body.is-preview .flowbar-next{color:var(--n600)}
+body.is-preview .flowbar-next.is-ready{
+  color:var(--white);
+  text-shadow:0 0 14px color-mix(in srgb,var(--brand) 55%,transparent);
+}
+
 /* ── projection background picker ────────────────────────── */
 .picker{
   position:fixed;right:20px;bottom:20px;width:212px;z-index:50;
