@@ -1,14 +1,9 @@
-<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="27.6667" height="30.1131" viewBox="0 0 27.6667 30.1131" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="solar:fire-bold-duotone" filter="url(#filter0_f_0_34)">
+<svg overflow="visible" style="display: block;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="solar:fire-bold-duotone">
 <path id="Vector" d="M15.1653 24.5808C18.2913 23.9548 22.3333 21.7058 22.3333 15.8908C22.3333 10.5998 18.4603 7.0758 15.6753 5.4568C15.0563 5.0968 14.3333 5.5698 14.3333 6.2848V8.1128C14.3333 9.5548 13.7273 12.1868 12.0433 13.2818C11.1833 13.8408 10.2533 13.0038 10.1493 11.9838L10.0633 11.1458C9.96333 10.1718 8.97133 9.5808 8.19333 10.1748C6.79433 11.2398 5.33333 13.1098 5.33333 15.8898C5.33333 23.0008 10.6223 24.7798 13.2663 24.7798C13.421 24.7798 13.5823 24.7748 13.7503 24.7648C14.1963 24.7088 13.7503 24.8638 15.1653 24.5798" fill="url(#paint0_linear_0_34)"/>
 <path id="Vector_2" d="M10.3333 21.224C10.3333 23.844 12.4443 24.654 13.7503 24.766C14.1963 24.71 13.7503 24.865 15.1653 24.581C16.2043 24.214 17.3333 23.272 17.3333 21.224C17.3333 19.927 16.5143 19.126 15.8733 18.751C15.6773 18.636 15.4493 18.781 15.4323 19.007C15.3763 19.725 14.6863 20.297 14.2173 19.751C13.8023 19.269 13.6273 18.564 13.6273 18.113V17.523C13.6273 17.169 13.2703 16.933 12.9643 17.115C11.8283 17.788 10.3333 19.174 10.3333 21.224Z" fill="url(#paint1_radial_0_34)"/>
 </g>
 <defs>
-<filter id="filter0_f_0_34" x="-3" y="-2.55469" width="34.6667" height="34.6667" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-<feGaussianBlur stdDeviation="2.66667" result="effect1_foregroundBlur_0_34"/>
-</filter>
 <linearGradient id="paint0_linear_0_34" x1="21.501" y1="5.33333" x2="21.501" y2="25.0859" gradientUnits="userSpaceOnUse">
 <stop offset="0.583222" stop-color="#FA3030"/>
 <stop offset="0.83169" stop-color="#FE6E3C"/>

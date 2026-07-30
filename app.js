@@ -332,7 +332,11 @@ show(Math.max(0, order.indexOf(location.hash.slice(1))));
    Covers the two bits with real branching — exclusive multi-select and the
    stepper clamp. Everything else is markup. */
 if (location.search.includes('selftest')) {
-  const ok = (name, cond) => console[cond ? 'log' : 'error'](`${cond ? 'PASS' : 'FAIL'} — ${name}`);
+  const results = window.__selftest = [];   // also readable from devtools / automation
+  const ok = (name, cond) => {
+    results.push(`${cond ? 'PASS' : 'FAIL'} — ${name}`);
+    console[cond ? 'log' : 'error'](results.at(-1));
+  };
   const chips = [...document.querySelectorAll('.chips .opt')];
   const on = () => chips.filter(c => c.classList.contains('is-on')).length;
   const marker = id => document.querySelector(`.hit[data-part="${id}"]`).classList.contains('is-on');
