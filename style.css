@@ -64,6 +64,9 @@ img{display:block}
 /* ── screens ─────────────────────────────────────────────── */
 .screen{
   position:absolute; inset:0; opacity:0; visibility:hidden;
+  /* nothing is projected outside the 1060×663 frame, so the frame clips. It also lets the
+     scrims overhang the bottom edge instead of leaving a rounding-width sliver uncovered. */
+  overflow:hidden;
   transform:scale(1.015); transition:opacity .38s var(--ease),transform .5s var(--ease),visibility 0s .5s;
 }
 .screen.is-active{opacity:1;visibility:visible;transform:none;transition-delay:0s}
@@ -389,15 +392,16 @@ img{display:block}
   mask:linear-gradient(#000 0%,#000 14%,#0000 40%);
   -webkit-mask:linear-gradient(#000 0%,#000 14%,#0000 40%);
 }
-/* the embers drift away from the profile row and fade, one after the other */
-.hero-fire--a{left:39px;top:446.63px;width:24px;height:24px;animation:ember 3.4s ease-out infinite}
+/* The embers lift away from the profile row and are gone by the time they are a little way
+   off. Short travel and linear timing: the long eased drift read as a jump then a crawl. */
+.hero-fire--a{left:39px;top:446.63px;width:24px;height:24px;animation:ember 3.2s linear infinite;will-change:transform,opacity}
 /* node 705:7806 reports a 22.556 bbox: an 18.667 square rotated 13.68°, centred (72.06,428.28) */
-.hero-fire--b{left:62.72px;top:418.95px;width:18.67px;height:18.67px;rotate:13.68deg;animation:ember 3.4s ease-out infinite 1.5s}
+.hero-fire--b{left:62.72px;top:418.95px;width:18.67px;height:18.67px;rotate:13.68deg;animation:ember 3.2s linear infinite 1.6s;will-change:transform,opacity}
 @keyframes ember{
-  0%   {transform:translate(0,6px) scale(.72);opacity:0}
-  18%  {transform:translate(2px,0) scale(1);opacity:1}
-  70%  {transform:translate(9px,-38px) scale(.92);opacity:.55}
-  100% {transform:translate(15px,-64px) scale(.7);opacity:0}
+  0%   {transform:translate(0,1px);opacity:0}
+  20%  {transform:translate(1px,-2px);opacity:.9}
+  55%  {transform:translate(2px,-8px);opacity:.55}
+  100% {transform:translate(4px,-17px);opacity:0}
 }
 
 .hero-foot{
@@ -500,7 +504,7 @@ img{display:block}
    blur on the scrim itself — that soft edge is what makes it melt into the frame instead
    of ending on a line. overflow:hidden keeps the 62px bleed inside the frame. */
 .scroll-fade{
-  position:absolute;left:560px;top:440px;width:360px;height:223px;z-index:3;pointer-events:none;
+  position:absolute;left:560px;top:440px;width:360px;height:229px;z-index:3;pointer-events:none;
   overflow:hidden;
   backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
   mask:linear-gradient(transparent,#000 40%);-webkit-mask:linear-gradient(transparent,#000 40%);
@@ -509,20 +513,33 @@ img{display:block}
    reads on a white desk — hardcoding #141414 would leave a grey band there */
 .scroll-fade::before{
   content:'';position:absolute;left:-90px;right:-90px;bottom:-90px;height:280px;
-  /* the 90px overhang keeps the 62px blur from sampling past the edge and lightening it */
-  background:linear-gradient(transparent,var(--bg) 52%);
+  /* the 90px overhang keeps the 62px blur from sampling past the edge and lightening it.
+     Kept light on purpose: in the node the graph card stays a pale blurred grey under the
+     button, it does not go dark. The dark only takes over past the card's bottom edge. */
+  background:linear-gradient(transparent,var(--bg) 78%);
   filter:blur(62px);
 }
-/* the 62px blur alone can only get so opaque, and content kept showing through below the
-   Start button. This lays solid --bg over everything from the button down, faded in at the
-   top so the two blurs still carry the transition. */
+/* the graph card ends at y=602, the fact cards start at 650 — only their top edge reaches
+   into the frame, and that is the bit that was showing. Solid --bg over just that band. */
 .scroll-fade::after{
-  content:'';position:absolute;left:0;right:0;bottom:0;height:130px;
+  content:'';position:absolute;left:0;right:0;bottom:0;height:100px;
   background:var(--bg);
-  mask:linear-gradient(transparent,#000 42%);-webkit-mask:linear-gradient(transparent,#000 42%);
+  mask:linear-gradient(transparent,#000 40%);-webkit-mask:linear-gradient(transparent,#000 40%);
 }
-/* the glow Figma puts behind the button — blur.svg, layer blur baked in */
-.watch-glow{position:absolute;left:435.5px;top:402.5px;width:585px;height:277px;transform:rotate(180deg);pointer-events:none;z-index:3}
+/* node 705:7786 — the ellipse is 462×154 centred (728,541), 180° rotated, and blur.svg's
+   585×277 is that box grown by the 30.72 layer blur (61.5 a side). Hence 435.5 / 402.5.
+   It breathes slowly: the light behind the button is the one live thing in this frame. */
+.watch-glow{
+  position:absolute;left:435.5px;top:402.5px;width:585px;height:277px;
+  /* same z as the scrim but later in the DOM, so it lights the scrim and still sits
+     under the button (z 4) rather than washing over it */
+  transform:rotate(180deg);pointer-events:none;z-index:3;
+  animation:startglow 5.5s ease-in-out infinite;
+}
+@keyframes startglow{
+  0%,100%{opacity:.75;transform:rotate(180deg) scale(1)}
+  50%    {opacity:1;transform:rotate(180deg) scale(1.045)}
+}
 .btn--start{
   position:absolute;left:576px;top:521px;width:328px;
   padding:16px 20px;border-radius:999px;background:var(--brand);font-size:18px;letter-spacing:-.54px;z-index:4;
