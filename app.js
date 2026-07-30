@@ -475,8 +475,6 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
 {
   const body = document.body;
   const on = document.getElementById('previewOn');
-  const hex = document.getElementById('deskHex');
-  const chip = document.getElementById('deskChip');
   const ambient = document.getElementById('ambient');
   const real = document.getElementById('realOn');
   const gain = document.getElementById('gain');
@@ -486,8 +484,8 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
      the floor on its own. Recomputing colours per token is what made every inactive tab a
      different hue. The only knobs left are physical: the desk, the room, the projector. */
   const apply = () => {
-    const m = /^#?([\da-f]{6})$/i.exec(hex.value.trim());
-    const n = m ? parseInt(m[1], 16) : 0xf2efea;
+    // the desk is whatever the panel's picker is set to — there is only one colour here
+    const n = parseInt(/([\da-f]{6})/i.exec(getComputedStyle(stage).getPropertyValue('--bg'))[1], 16);
     // real projection view: the desk sits at its own colour, so every black area of the frame
     // simply shows the desk. Ambient stops applying — that is the point of the view.
     // real view: the desk sits at its own colour and the frame projects nothing on the
@@ -496,7 +494,6 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const rgb = [0, 1, 2].map(i => Math.round(((n >> (16 - i * 8)) & 255) * a));
     body.style.setProperty('--floor', `rgb(${rgb.join(' ')})`);
     body.style.setProperty('--gain', +gain.value / 100);
-    chip.style.background = m ? hex.value : '#f2efea';
     ambientOut.textContent = ambient.value + '%';
     gainOut.textContent = gain.value + '%';
     const on = body.classList.contains('is-preview');
@@ -588,22 +585,13 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   };
 
   real.onchange = () => {
-    body.classList.toggle('is-real', real.checked);
-    // the desk becomes the projection background that was picked, so the holes match it exactly
-    if (real.checked) {
-      hex.value = getComputedStyle(stage).getPropertyValue('--bg').trim().toUpperCase();
-      if (!on.checked) { on.checked = true; on.dispatchEvent(new Event('change')); return; }
-    }
-    apply();
+    if (real.checked && !on.checked) { on.checked = true; on.dispatchEvent(new Event('change')); }
+    else apply();
   };
 
   const unlit = document.getElementById('unlitOn');
   unlit.onchange = () => body.classList.toggle('is-unlit', unlit.checked && on.checked);
-  [hex, ambient, gain].forEach(el => el.oninput = apply);
-  document.querySelectorAll('#deskPresets button').forEach(b => {
-    b.style.setProperty('--c', b.dataset.c);
-    b.onclick = () => { hex.value = b.dataset.c; apply(); };
-  });
+  [ambient, gain].forEach(el => el.oninput = apply);
   apply();
 }
 
@@ -729,8 +717,8 @@ if (location.search.includes('selftest')) {
     ok('real view lays the picked background down as the desk',
        getComputedStyle(document.body).getPropertyValue('--floor').trim() ===
        hexToRgb(getComputedStyle(stage).getPropertyValue('--bg')));
-    ok('and the frame projects nothing where its background is',
-       getComputedStyle(stage).backgroundColor === 'rgb(0, 0, 0)');
+    ok('and the frame paints no background of its own',
+       getComputedStyle(stage).backgroundColor === 'rgba(0, 0, 0, 0)');
     realBox.checked = false; realBox.dispatchEvent(new Event('change'));
     document.getElementById('previewOn').checked = false;
     document.getElementById('previewOn').dispatchEvent(new Event('change'));

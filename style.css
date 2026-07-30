@@ -98,11 +98,11 @@ body.is-unlit .fit{
   background:
     repeating-conic-gradient(#5a5a5a 0 25%,#8e8e8e 0 50%) 0 0/18px 18px;
 }
-/* Real projection view. The background token IS the desk, so the frame projects nothing there:
-   its own background drops to zero output and the desk shows straight through — as it does
-   through every other black area, including type knocked out of a white card. */
-body.is-real .stage{background:#000}
+/* The UI paints no background of its own. Under the preview the frame is transparent, so the
+   desk plate shows through untouched wherever nothing is projected — the frame's background,
+   and equally the type knocked out of a white card. */
 body.is-preview .stage{
+  background:transparent;
   mix-blend-mode:screen;
   filter:brightness(var(--gain,1));   /* projector gain only — no colour filtering */
   box-shadow:none;
@@ -764,6 +764,7 @@ body.is-preview .picker-sliders{display:flex}
 /* the two view switches were disappearing into the slider stack — a caption and a rule above
    them, and short labels that fit on one line, is the difference between seen and not seen */
 .picker-check--sub{color:#cfcfcf;white-space:nowrap}
+.picker-cap--top{margin:0 0 -2px;padding-top:0;border-top:0}
 .picker-cap{
   margin:4px 0 -2px;padding-top:8px;border-top:1px solid #2e2e2e;
   color:#7c7c7c;font-size:11px;

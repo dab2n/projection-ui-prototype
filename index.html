@@ -356,6 +356,7 @@
     <button class="picker-fold" id="pickerFold" aria-label="Fold panel">–</button>
   </header>
   <div class="picker-body">
+    <p class="picker-cap picker-cap--top">이 색은 <b>책상</b>이다. UI가 칠하는 배경은 없다</p>
     <div class="sv" id="sv"><i class="dot" id="svDot"></i></div>
     <div class="hue" id="hue"><i class="dot" id="hueDot"></i></div>
     <div class="picker-row">
@@ -382,17 +383,6 @@
       <span>프로젝션 프리뷰 <i>(가산 합성)</i></span>
     </label>
     <div class="picker-sliders" id="previewOpts">
-      <div class="picker-row">
-        <span class="picker-chip" id="deskChip"></span>
-        <input class="picker-hex" id="deskHex" value="#F2EFEA" spellcheck="false" aria-label="Desk hex">
-      </div>
-      <div class="picker-presets" id="deskPresets">
-        <button data-c="#FFFFFF" title="White desk"></button>
-        <button data-c="#F2EFEA" title="Off-white desk"></button>
-        <button data-c="#EFE9E1" title="Warm desk"></button>
-        <button data-c="#C7B49A" title="Wood desk"></button>
-        <button data-c="#9AA0A6" title="Grey desk"></button>
-      </div>
       <label>환경광 <input type="range" id="ambient" min="0" max="60" value="18"><b id="ambientOut">18%</b></label>
       <label>프로젝터 <input type="range" id="gain" min="60" max="170" value="100"><b id="gainOut">100%</b></label>
       <p class="picker-cap">뷰 — 검정은 어느 쪽이든 투명하다</p>
