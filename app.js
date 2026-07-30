@@ -445,31 +445,40 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
 }
 
 /* ── projection preview: additive light on a desk ─────────────
-   Screen-blends the frame over a desk-coloured plate, which is what a projector physically
-   does — black adds nothing, so it reads as bare desk. Three knobs, because none of them is
-   knowable from a screenshot: how bright the desk reads to the camera, how much saturation a
-   diffuse white surface eats, and the projector's black-level spill. */
+   The projector adds light, so the frame screen-blends over the desk. The projector is assumed
+   bright enough to dominate, which means the desk is the FLOOR, not a ceiling: desk × ambient
+   is what "black" looks like, and nothing can come out darker than that. Three knobs, none of
+   them knowable from a screenshot — the desk's own colour, how lit the room is, and how much
+   the projector puts out. */
 {
   const body = document.body;
   const on = document.getElementById('previewOn');
-  const val = document.getElementById('deskVal');
+  const hex = document.getElementById('deskHex');
+  const chip = document.getElementById('deskChip');
+  const ambient = document.getElementById('ambient');
+  const gain = document.getElementById('gain');
   const sat = document.getElementById('deskSat');
-  const leak = document.getElementById('deskLeak');
-  const outs = { deskVal: 'deskValOut', deskSat: 'deskSatOut', deskLeak: 'deskLeakOut' };
 
   const apply = () => {
-    const v = +val.value;
-    // the desk keeps the picked background's hue, just at the value the camera would see
-    body.style.setProperty('--desk', `rgb(${v} ${Math.round(v * .985)} ${Math.round(v * .96)})`);
+    const m = /^#?([\da-f]{6})$/i.exec(hex.value.trim());
+    const n = m ? parseInt(m[1], 16) : 0xf2efea;
+    const a = +ambient.value / 100;
+    const ch = i => Math.round(((n >> (16 - i * 8)) & 255) * a);
+    body.style.setProperty('--floor', `rgb(${ch(0)} ${ch(1)} ${ch(2)})`);
+    body.style.setProperty('--gain', +gain.value / 100);
     body.style.setProperty('--sat', +sat.value / 100);
-    body.style.setProperty('--leak', leak.value);
-    document.getElementById(outs.deskVal).textContent = v;
-    document.getElementById(outs.deskSat).textContent = sat.value + '%';
-    document.getElementById(outs.deskLeak).textContent = leak.value;
+    chip.style.background = m ? hex.value : '#f2efea';
+    ambientOut.textContent = ambient.value + '%';
+    gainOut.textContent = gain.value + '%';
+    deskSatOut.textContent = sat.value + '%';
   };
 
   on.onchange = () => { body.classList.toggle('is-preview', on.checked); apply(); };
-  [val, sat, leak].forEach(el => el.oninput = apply);
+  [hex, ambient, gain, sat].forEach(el => el.oninput = apply);
+  document.querySelectorAll('#deskPresets button').forEach(b => {
+    b.style.setProperty('--c', b.dataset.c);
+    b.onclick = () => { hex.value = b.dataset.c; apply(); };
+  });
   apply();
 }
 

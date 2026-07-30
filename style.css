@@ -54,16 +54,15 @@ img{display:block}
 .hint{margin:0 0 16px;font-size:13px;color:#5a5a5a;letter-spacing:-.3px}
 
 /* ── projection preview ──────────────────────────────────────
-   A projector adds light, it can't subtract it: what you see is desk + projected light, and
-   black means "no light", i.e. the bare desk. Screen-blending the frame over a desk-coloured
-   plate is that sum. The desk is set to how a camera reads it (~216, not 255) because the
-   headroom above it is all the contrast a projection has to work with. --leak is the
-   projector's black-level spill, which never reaches zero on real hardware. */
-body.is-preview .fit{background:var(--desk,#d8d4ce);isolation:isolate}
+   A projector adds light and can't subtract it: what lands on the desk is desk + projection.
+   With a bright projector the projection dominates, so the desk is not a ceiling — it is the
+   floor. --floor is the desk reflecting ambient light, which is exactly what "black" looks
+   like, and nothing in the UI can come out darker than it. Screen over that floor is the sum;
+   the projector's own output is scaled by brightness() for its gain. */
+body.is-preview .fit{background:var(--floor,#2b2a28);isolation:isolate}
 body.is-preview .stage{
-  background:rgb(var(--leak,10) var(--leak,10) var(--leak,10));
   mix-blend-mode:screen;
-  filter:saturate(var(--sat,.65));
+  filter:brightness(var(--gain,1)) saturate(var(--sat,.88));
   box-shadow:none;
 }
 

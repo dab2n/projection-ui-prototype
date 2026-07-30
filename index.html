@@ -369,11 +369,24 @@
       <span>프로젝션 프리뷰 <i>(가산 합성)</i></span>
     </label>
     <div class="picker-sliders" id="previewOpts">
-      <label>책상 밝기 <input type="range" id="deskVal" min="120" max="255" value="216"><b id="deskValOut">216</b></label>
-      <label>채도 <input type="range" id="deskSat" min="20" max="100" value="65"><b id="deskSatOut">65%</b></label>
-      <label>블랙 누광 <input type="range" id="deskLeak" min="0" max="40" value="10"><b id="deskLeakOut">10</b></label>
-      <p class="picker-note">검정은 광량 0이라 책상색이 그대로 보인다. 흰 텍스트는 흰 책상에서
-        사라지므로, 대비는 명도가 아니라 색상·채도로 만들어야 한다.</p>
+      <div class="picker-row">
+        <span class="picker-chip" id="deskChip"></span>
+        <input class="picker-hex" id="deskHex" value="#F2EFEA" spellcheck="false" aria-label="Desk hex">
+      </div>
+      <div class="picker-presets" id="deskPresets">
+        <button data-c="#FFFFFF" title="White desk"></button>
+        <button data-c="#F2EFEA" title="Off-white desk"></button>
+        <button data-c="#EFE9E1" title="Warm desk"></button>
+        <button data-c="#C7B49A" title="Wood desk"></button>
+        <button data-c="#9AA0A6" title="Grey desk"></button>
+      </div>
+      <label>환경광 <input type="range" id="ambient" min="0" max="60" value="18"><b id="ambientOut">18%</b></label>
+      <label>프로젝터 <input type="range" id="gain" min="60" max="170" value="100"><b id="gainOut">100%</b></label>
+      <label>채도 <input type="range" id="deskSat" min="30" max="100" value="88"><b id="deskSatOut">88%</b></label>
+      <p class="picker-note">밝은 프로젝터는 책상을 압도하므로 책상은 상한이 아니라 <b>하한</b>이다.
+        검정은 광량 0이니 <b>책상 × 환경광</b>보다 어두워질 수 없다 — 그게 블랙 플로어다.
+        그보다 어두운 값은 만들 수 없으니, 위 색상 피커에서 배경을 명도 낮은 <b>유채색</b>으로 잡고
+        나머지를 그보다 밝게 쌓는 것이 유일한 방법이다.</p>
     </div>
   </div>
 </aside>
