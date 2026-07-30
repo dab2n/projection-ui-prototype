@@ -40,10 +40,7 @@ function show(i) {
   flowbar.classList.toggle('is-on', step !== undefined);
   if (step !== undefined) {
     const n = +step;
-    steps.forEach((li, k) => {
-      li.classList.toggle('is-now', k === n);
-      li.classList.toggle('is-done', k < n);   // three levels once the palette is projected
-    });
+    steps.forEach((li, k) => li.classList.toggle('is-now', k === n));
     flowbar.querySelector('#btnNext').firstChild.nodeValue =
       n === steps.length - 1 ? 'Done ' : 'Next ';
   }
@@ -460,75 +457,11 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   const chip = document.getElementById('deskChip');
   const ambient = document.getElementById('ambient');
   const gain = document.getElementById('gain');
-  const sat = document.getElementById('deskSat');
 
-  /* ── automatic palette correction ─────────────────────────
-     The composite squeezes the whole design into [floor, 1], so the dark end loses its
-     separation and every neutral drifts toward the desk's bare white. Rather than hand-pick a
-     second palette, the tokens are re-derived from the floor.
-
-     Neutrals carry the value structure and most of them sit below the floor, so they get
-     remapped — piecewise, into a narrow band just above it, which keeps their order. A flat
-     clamp would collapse black/900/800 onto one value.
-
-     Chromatic colours are already well above the floor, so their lightness is left ALONE and
-     only their saturation is pre-paid. Lifting those too is what turned the selected card's red
-     into pink: the composite lifts everything a second time, so pre-lifting double-counts.
-
-     Neutrals also pick up a tint — teal in the shadows, warm at the top — so there is no raw
-     grey, no raw white, and the desk never reads as bare paper. Move the ambient slider and the
-     whole palette re-derives, because the floor moved. */
-  const BASE = {
-    '--white': '#ffffff', '--n50': '#fafafa', '--n100': '#f2f2f2', '--n400': '#a3a3a3',
-    '--n500': '#757575', '--n600': '#525252', '--n700': '#3b3b3b', '--n800': '#222a2a',
-    '--n900': '#141a1a', '--black': '#050a0a', '--brand': '#fa3030',
-  };
-  const RAMP = ['#fa3030', '#fe6e3c', '#fec389', '#d1feff'];
-  const MARGIN = 0.05;
-
-  const toHsl = str => {
-    const n = parseInt(/([\da-f]{6})/i.exec(str)[1], 16);
-    const r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
-    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, l = (mx + mn) / 2;
-    let h = 0;
-    if (d) h = mx === r ? 60 * (((g - b) / d) % 6) : mx === g ? 60 * ((b - r) / d + 2) : 60 * ((r - g) / d + 4);
-    // d is the raw chroma. HSL's s is useless as a neutrality test at the ends of the scale —
-    // #050a0a reads as s=0.33 — so the caller decides on d instead.
-    return { h: (h + 360) % 360, s: d ? d / (1 - Math.abs(2 * l - 1)) : 0, l, d };
-  };
-  const toHex = (h, s, l) => {
-    const f = n => {
-      const k = (n + h / 30) % 12;
-      const v = l - s * Math.min(l, 1 - l) * Math.max(-1, Math.min(k - 3, 9 - k, 1));
-      return Math.round(255 * Math.min(1, Math.max(0, v))).toString(16).padStart(2, '0');
-    };
-    return '#' + f(0) + f(8) + f(4);
-  };
-  const BAND = 0.1;                         // where the sub-floor neutrals get to live
-  const TOP = 0.94;                         // neutrals stop short of 1 so they can hold a tint
-  const project = (src, floorL, satLoss) => {
-    let { h, s, l, d } = toHsl(src);
-    const lift = floorL + MARGIN;           // the lowest value the projector can produce
-    let L;
-    if (d < 0.06) {
-      // neutral: monotonic remap so the order of black → 900 → 800 → … survives the lift
-      L = l < lift
-        ? lift + (l / lift) * BAND
-        : lift + BAND + (l - lift) / (1 - lift) * (TOP - lift - BAND);
-      // No raw grey and no raw white: teal in the shadows, warm at the top. The target is a
-      // chroma, not an HSL saturation — near L=1 the reachable chroma is only min(L,1−L), so
-      // asking for a saturation gives a tint that quietly vanishes at the light end.
-      const dT = 0.05 + 0.06 * (1 - L);
-      s = Math.min(1, dT / Math.max(0.001, 1 - Math.abs(2 * L - 1)));
-      h = 200 - 168 * L;
-    } else {
-      // chromatic: keep the designed lightness, only pre-pay the saturation the surface eats
-      L = Math.max(l, lift);
-      s = Math.min(1, s * (1 + floorL) / satLoss);
-    }
-    return toHex(h, s, L);
-  };
-
+  /* No palette remap. The rule is: keep the designed colour and lower its opacity — hue and
+     value stay exactly as drawn, and after the additive composite a lowered alpha lands nearer
+     the floor on its own. Recomputing colours per token is what made every inactive tab a
+     different hue. The only knobs left are physical: the desk, the room, the projector. */
   const apply = () => {
     const m = /^#?([\da-f]{6})$/i.exec(hex.value.trim());
     const n = m ? parseInt(m[1], 16) : 0xf2efea;
@@ -536,35 +469,16 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     const rgb = [0, 1, 2].map(i => Math.round(((n >> (16 - i * 8)) & 255) * a));
     body.style.setProperty('--floor', `rgb(${rgb.join(' ')})`);
     body.style.setProperty('--gain', +gain.value / 100);
-    body.style.setProperty('--sat', +sat.value / 100);
     chip.style.background = m ? hex.value : '#f2efea';
     ambientOut.textContent = ambient.value + '%';
     gainOut.textContent = gain.value + '%';
-    deskSatOut.textContent = sat.value + '%';
-
-    if (!body.classList.contains('is-preview')) {
-      [...Object.keys(BASE), '--bg', '--sel', '--bar-ramp', '--sel-shadow']
-        .forEach(k => body.style.removeProperty(k));
-      return;
-    }
-    const floorL = (Math.max(...rgb) + Math.min(...rgb)) / 510;
-    const satLoss = +sat.value / 100;
-    const p = src => project(src, floorL, satLoss);
-
-    Object.entries(BASE).forEach(([k, v]) => body.style.setProperty(k, p(v)));
-    // the picked projection background is a token like any other — remap it, don't replace it
-    body.style.setProperty('--bg', p(getComputedStyle(stage).getPropertyValue('--bg') || '#141414'));
-    const r = RAMP.map(p);
-    body.style.setProperty('--sel',
-      `linear-gradient(180deg,${r[0]} 53.869%,${r[1]} 85.083%,${r[2]} 104.71%,${r[3]} 104.72%)`);
-    body.style.setProperty('--bar-ramp',
-      `linear-gradient(90deg,${r[0]} 63.043%,${r[1]} 89.902%,${r[2]} 101.08%,${r[3]} 108.1%)`);
-    // a drop shadow is light being removed, which a projector cannot do
-    body.style.setProperty('--sel-shadow', '0 0 0 rgba(0,0,0,0)');
+    // a drop shadow is light being removed, and a projector cannot do that
+    if (body.classList.contains('is-preview')) body.style.setProperty('--sel-shadow', '0 0 0 rgba(0,0,0,0)');
+    else body.style.removeProperty('--sel-shadow');
   };
 
   on.onchange = () => { body.classList.toggle('is-preview', on.checked); apply(); };
-  [hex, ambient, gain, sat].forEach(el => el.oninput = apply);
+  [hex, ambient, gain].forEach(el => el.oninput = apply);
   document.querySelectorAll('#deskPresets button').forEach(b => {
     b.style.setProperty('--c', b.dataset.c);
     b.onclick = () => { hex.value = b.dataset.c; apply(); };
@@ -622,29 +536,6 @@ if (location.search.includes('selftest')) {
      cards.length === 5 && cards.every(c => c.querySelector('.packcard-thumb > img') && c.querySelector('.btn')));
   ok('the boxing pack starts centred', cards[2].dataset.d === '0');
   // the blur has to land between the side cards and the middle one, or it has nothing to blur
-  /* the projection palette: the whole point is that it lifts what can't be produced without
-     reordering anything, and leaves the chromatic colours where the design put them */
-  {
-    const lum = k => {
-      const m = /#([\da-f]{6})/i.exec(getComputedStyle(document.body).getPropertyValue(k)) ||
-                /rgb\((\d+),?\s*(\d+),?\s*(\d+)/.exec(getComputedStyle(document.body).getPropertyValue(k));
-      const n = m[1].length === 6 ? parseInt(m[1], 16) : ((+m[1] << 16) | (+m[2] << 8) | +m[3]);
-      const c = [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
-      return (Math.max(...c) + Math.min(...c)) / 2;
-    };
-    const box = document.getElementById('previewOn');
-    box.checked = true; box.dispatchEvent(new Event('change'));
-
-    ok('preview lifts the background above the floor', lum('--bg') > 0.078 + 0.05);
-    const order = ['--black', '--n900', '--n800', '--n700', '--n500', '--n100', '--white'].map(lum);
-    ok('the neutral ramp keeps its order through the lift',
-       order.every((v, i) => i === 0 || v > order[i - 1]));
-    ok('the brand red keeps its designed lightness', Math.abs(lum('--brand') - 0.588) < 0.02);
-
-    box.checked = false; box.dispatchEvent(new Event('change'));
-    ok('turning preview off restores the tokens', lum('--white') === 1);
-  }
-
   ok('the deck blur sits under the middle card and over the rest',
      getComputedStyle(document.querySelector('.deck-haze')).zIndex === '7' &&
      cards[2].style.zIndex === '9' && cards[1].style.zIndex === '6');
@@ -657,6 +548,26 @@ if (location.search.includes('selftest')) {
   document.querySelector('.assist').click();
   ok('Next lights up once answered', btnNext.classList.contains('is-ready'));
 
+  /* the inactive steps are the complaint that started this: they must all be identical, and
+     they must stay identical with the preview on — no per-token colour recomputation */
+  {
+    const box = document.getElementById('previewOn');
+    const inactive = () => steps.filter(li => !li.classList.contains('is-now'))
+      .map(li => getComputedStyle(li).color + ' @' + getComputedStyle(li).opacity);
+    const flat = a => a.every(v => v === a[0]);
+    ok('every inactive step looks the same', flat(inactive()));
+    ok('every step is the same colour, current or not',
+       flat(steps.map(li => getComputedStyle(li).color)));
+    ok('only the current step is bold',
+       steps.filter(li => getComputedStyle(li).fontWeight === '700').length === 1);
+    box.checked = true; box.dispatchEvent(new Event('change'));
+    // inline props are what the preview would have written; tokens must stay on :root untouched
+    ok('preview leaves the colour tokens alone', document.body.style.getPropertyValue('--white') === '');
+    ok('and the steps still match each other', flat(inactive()));
+    box.checked = false; box.dispatchEvent(new Event('change'));
+  }
+
+
   show(order.indexOf('main'));
 
   // geometry that kept drifting away from the Figma nodes — offsetWidth ignores the
@@ -664,7 +575,7 @@ if (location.search.includes('selftest')) {
   const box = s => { const e = document.querySelector(s); return [e.offsetWidth, e.offsetHeight]; };
   const is = (s, w, h) => { const [a, b] = box(s); return a === w && (h === undefined || b === h); };
   // the scroll frame starts under the back tab (y=124) and runs to the frame bottom
-  ok('pack detail scrolls from below the back tab', is('.watch-scroll', 360, 539));
+  ok('pack detail scrolls from below the back tab to the node\'s clip line', is('.watch-scroll', 360, 413));
   ok('the info block scrolls with it', !!document.querySelector('.watch-scroll .watch-info'));
   ok('Main workout has no Skip', appbar.dataset.skip === 'off');
   ok('hero is 360×519 r40', is('.hero', 360, 519));

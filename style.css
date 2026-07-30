@@ -62,7 +62,7 @@ img{display:block}
 body.is-preview .fit{background:var(--floor,#2b2a28);isolation:isolate}
 body.is-preview .stage{
   mix-blend-mode:screen;
-  filter:brightness(var(--gain,1)) saturate(var(--sat,.88));
+  filter:brightness(var(--gain,1));   /* projector gain only — no colour filtering */
   box-shadow:none;
 }
 
@@ -347,6 +347,8 @@ body.is-preview .stage{
   padding:5px 10px;border-radius:80px;background:rgba(20,20,20,.55);backdrop-filter:blur(6px);
   color:var(--white);font-weight:700;font-size:13px;letter-spacing:-.4px;
 }
+/* the project's own fire icon, not the 🔥 emoji it used to render */
+.packcard-hot img{width:15px;height:15px}
 .avatar{width:24px;height:24px;border-radius:50%;object-fit:cover}
 .packcard-info{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px}
 .packcard-text .t2{margin:0;max-width:183px;display:block}
@@ -449,13 +451,15 @@ body.is-preview .stage{
 .iconbtn--mid img{width:18px;height:18px}
 .iconbtn span{font-size:11px;line-height:1.2;color:var(--white)}
 
-/* the scrolling frame: everything from the frame below the back tab (y=124) down to the
-   bottom of the projection frame. Only the back tab, the hero and the Start button stay put. */
+/* The scrolling frame starts at the frame below the back tab (y=124) and ends where Figma clips
+   it, y=537 — just under the Start button. Extending it to the bottom of the projection frame
+   meant content sat below the button and had to be covered with a grey slab, which is what read
+   as "something showing through". Below 537 there is only background, the glow and the button. */
 .watch-scroll{
-  position:absolute;left:560px;top:124px;width:360px;height:539px;
+  position:absolute;left:560px;top:124px;width:360px;height:413px;
   overflow-y:auto;overflow-x:hidden;   /* the carousels are clipped, not scrolled sideways */
   overscroll-behavior:contain;scrollbar-width:none;
-  padding-bottom:160px;                /* the last row has to clear the pinned Start button */
+  padding-bottom:96px;                 /* the last row has to clear the pinned Start button */
 }
 .watch-scroll::-webkit-scrollbar{display:none}
 /* 40px below the info block: the stats frame sits at y=324 in the design */
@@ -516,28 +520,21 @@ body.is-preview .stage{
 /* Figma: layer blur 62 over background blur 2. The 2px is the backdrop, the 62px is a
    blur on the scrim itself — that soft edge is what makes it melt into the frame instead
    of ending on a line. overflow:hidden keeps the 62px bleed inside the frame. */
+/* Sits over the bottom of the scroll frame only, and stops where that frame stops. Nothing
+   needs covering below it any more — the content simply ends there, as in the node. */
 .scroll-fade{
-  position:absolute;left:560px;top:440px;width:360px;height:229px;z-index:3;pointer-events:none;
+  position:absolute;left:560px;top:430px;width:360px;height:107px;z-index:3;pointer-events:none;
   overflow:hidden;
   backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
-  mask:linear-gradient(transparent,#000 40%);-webkit-mask:linear-gradient(transparent,#000 40%);
+  mask:linear-gradient(transparent,#000 55%);-webkit-mask:linear-gradient(transparent,#000 55%);
 }
 /* the scrim dissolves into whatever the projection background is set to, so it still
    reads on a white desk — hardcoding #141414 would leave a grey band there */
 .scroll-fade::before{
-  content:'';position:absolute;left:-90px;right:-90px;bottom:-90px;height:280px;
-  /* the 90px overhang keeps the 62px blur from sampling past the edge and lightening it.
-     Kept light on purpose: in the node the graph card stays a pale blurred grey under the
-     button, it does not go dark. The dark only takes over past the card's bottom edge. */
-  background:linear-gradient(transparent,var(--bg) 78%);
+  content:'';position:absolute;left:-90px;right:-90px;bottom:-90px;height:230px;
+  /* the 90px overhang keeps the 62px blur from sampling past the edge and lightening it */
+  background:linear-gradient(transparent,var(--bg) 74%);
   filter:blur(62px);
-}
-/* the graph card ends at y=602, the fact cards start at 650 — only their top edge reaches
-   into the frame, and that is the bit that was showing. Solid --bg over just that band. */
-.scroll-fade::after{
-  content:'';position:absolute;left:0;right:0;bottom:0;height:100px;
-  background:var(--bg);
-  mask:linear-gradient(transparent,#000 40%);-webkit-mask:linear-gradient(transparent,#000 40%);
 }
 /* node 705:7786 — the ellipse is 462×154 centred (728,541), 180° rotated, and blur.svg's
    585×277 is that box grown by the 30.72 layer blur (61.5 a side). Hence 435.5 / 402.5.
@@ -592,31 +589,23 @@ body.is-preview .stage{
   z-index:5;opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility 0s .3s;
 }
 .flowbar.is-on{opacity:1;visibility:visible;transition-delay:0s}
-/* even gaps, a touch wider than the Figma layer; current step white, the rest Neutral/500 */
+/* Even gaps, a touch wider than the Figma layer. Inactive is the SAME white at 40% opacity, not
+   a second colour: over the design background that lands on Neutral/500 as Figma specifies, and
+   under projection it lands correctly against whatever the floor is — no hue shifts, one rule,
+   and every inactive step is identical to every other. */
 .flowbar-steps{margin:0;padding:0;list-style:none;display:flex;align-items:center;gap:20px}
 .flowbar-steps li{
-  font-size:15.732px;line-height:1.5;letter-spacing:-.207px;color:var(--n500);
-  transition:color .3s var(--ease);white-space:nowrap;
+  font-size:15.732px;line-height:1.5;letter-spacing:-.207px;color:var(--white);opacity:.4;
+  transition:opacity .3s var(--ease);white-space:nowrap;
 }
-.flowbar-steps li.is-now{color:var(--white);font-weight:700}
-/* Next: Neutral/500 until the step is answered, then white (Newton app behaviour) */
-.flowbar-next{display:flex;align-items:center;gap:2px;font-weight:700;font-size:15.732px;letter-spacing:-.414px;color:var(--n500);transition:transform .2s var(--ease),color .3s var(--ease)}
-.flowbar-next img{width:10px;height:10px;filter:brightness(0) invert(.46);transition:filter .3s var(--ease)}
-.flowbar-next.is-ready{color:var(--white)}
-.flowbar-next.is-ready img{filter:brightness(0) invert(1)}
-
-/* Projected, the flow needs three levels, not two: the step you are on has to be the brightest
-   thing, the steps still ahead sit a notch under it, and the ones already done drop further
-   again. Figma only specifies two, so this only applies in the preview. */
-body.is-preview .flowbar-steps li{color:var(--n400)}
-body.is-preview .flowbar-steps li.is-done{color:var(--n600)}
-body.is-preview .flowbar-steps li.is-now{color:var(--white)}
-/* Next going live reads as light being added, which is the one thing a projector does well */
-body.is-preview .flowbar-next{color:var(--n600)}
-body.is-preview .flowbar-next.is-ready{
-  color:var(--white);
-  text-shadow:0 0 14px color-mix(in srgb,var(--brand) 55%,transparent);
+.flowbar-steps li.is-now{opacity:1;font-weight:700}
+/* Next: same rule — 40% until the step is answered, then full (Newton app behaviour) */
+.flowbar-next{
+  display:flex;align-items:center;gap:2px;font-weight:700;font-size:15.732px;letter-spacing:-.414px;
+  color:var(--white);opacity:.4;transition:transform .2s var(--ease),opacity .3s var(--ease);
 }
+.flowbar-next img{width:10px;height:10px;filter:brightness(0) invert(1)}
+.flowbar-next.is-ready{opacity:1}
 
 /* ── projection background picker ────────────────────────── */
 .picker{
