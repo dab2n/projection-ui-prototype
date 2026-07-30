@@ -114,24 +114,26 @@ body.is-preview .stage{
 .stage{user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 .stage ::selection{background:transparent}
 .cursor{
-  position:absolute;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;
+  position:absolute;left:0;top:0;width:36px;height:36px;margin:-18px 0 0 -18px;
   border-radius:50%;pointer-events:none;z-index:40;opacity:0;
-  /* the blur is what makes it readable over anything, so the fill and ring can stay faint */
-  background:rgba(255,255,255,.12);
-  box-shadow:0 0 0 1px rgba(255,255,255,.2);
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  /* The blur carries most of it, but a backdrop blur is invisible over flat areas — a white
+     card blurred is still that white. So the hairline is doubled, light over dark content and
+     a barely-there dark line over light content, and the fill is bright enough to read. */
+  background:rgba(255,255,255,.22);
+  box-shadow:0 0 0 1px rgba(255,255,255,.3), 0 0 0 1.8px rgba(0,0,0,.13);
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
   transition:opacity .25s var(--ease),width .18s var(--ease),height .18s var(--ease),
              margin .18s var(--ease),background .18s var(--ease);
 }
 .cursor.is-in{opacity:1}
 .cursor.is-down{
-  width:23px;height:23px;margin:-11.5px 0 0 -11.5px;
-  background:rgba(255,255,255,.22);
+  width:28px;height:28px;margin:-14px 0 0 -14px;
+  background:rgba(255,255,255,.36);
 }
 
 .taps{position:absolute;inset:0;pointer-events:none;z-index:39;overflow:hidden}
 .tap{
-  position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;
+  position:absolute;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;
   box-shadow:0 0 0 1px rgba(255,255,255,.32);
   animation:tap .42s var(--ease) forwards;
 }
@@ -450,13 +452,30 @@ body.is-preview .stage{
 
 /* the warm blurred wash Figma stacks at the foot of the frame — a 32px background blur
    under a low-opacity brown gradient, faded in from above so it has no edge */
-.hero-haze{
-  position:absolute;left:0;right:0;bottom:0;pointer-events:none;
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  mask:linear-gradient(transparent,#000 55%);-webkit-mask:linear-gradient(transparent,#000 55%);
+.hero-haze{position:absolute;left:0;right:0;bottom:0;pointer-events:none}
+/* Progressive blur, four steps. A single masked backdrop-filter always draws a seam at its own
+   top edge: the mask fades the layer out, but the blur is still clipped to the element, so the
+   pixels either side of that line are filtered differently. Stacking layers whose blur AND mask
+   both ramp means no one edge carries a visible change. */
+.hero-haze--a{
+  height:250px;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+  mask:linear-gradient(transparent,#000 94%);-webkit-mask:linear-gradient(transparent,#000 94%);
 }
-.hero-haze--a{height:180px;background:linear-gradient(rgba(108,94,67,.22),rgba(210,183,130,.28))}
-.hero-haze--b{height:124px;background:linear-gradient(rgba(163,124,89,.18),rgba(120,86,56,.34))}
+.hero-haze--b{
+  height:205px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  background:linear-gradient(rgba(108,94,67,0),rgba(108,94,67,.16));
+  mask:linear-gradient(transparent,#000 90%);-webkit-mask:linear-gradient(transparent,#000 90%);
+}
+.hero-haze--c{
+  height:158px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  background:linear-gradient(rgba(190,165,120,0),rgba(210,183,130,.2));
+  mask:linear-gradient(transparent,#000 84%);-webkit-mask:linear-gradient(transparent,#000 84%);
+}
+.hero-haze--d{
+  height:108px;backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);
+  background:linear-gradient(rgba(163,124,89,0),rgba(120,86,56,.3));
+  mask:linear-gradient(transparent,#000 76%);-webkit-mask:linear-gradient(transparent,#000 76%);
+}
 
 /* Figma stacks the embers after 하단바, so they sit over the profile row — z-index 2.
    Each ember is three stacked copies of the same art: the element itself sharp at the base,
