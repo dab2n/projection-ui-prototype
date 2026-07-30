@@ -333,17 +333,7 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
       if (Math.abs(d) >= 2) slot.dataset.far = ''; else delete slot.dataset.far;
     });
   }
-  let settle;
-  const centre = i => {
-    const was = at2;
-    at2 = Math.max(0, Math.min(PACKS.length - 1, i));
-    place();
-    if (at2 === was) return;
-    // the trail lives exactly as long as the slot transition does
-    deck.classList.add('is-moving');
-    clearTimeout(settle);
-    settle = setTimeout(() => deck.classList.remove('is-moving'), 560);
-  };
+  const centre = i => { at2 = Math.max(0, Math.min(PACKS.length - 1, i)); place(); };
   place();
 
   /* swipe: one step as soon as the drag passes 44px — committing mid-gesture is the right
@@ -653,8 +643,8 @@ if (location.search.includes('selftest')) {
   ok('the frame hides the system cursor', getComputedStyle(stage).cursor === 'none');
   stage.dispatchEvent(new PointerEvent('pointerdown', { clientX: 400, clientY: 300, bubbles: true }));
   ok('a tap spawns a ripple', document.querySelectorAll('.taps .tap').length === 1);
-  ok('the swipe leaves a trail while the cards travel',
-     document.getElementById('deck').classList.contains('is-moving'));
+  ok('no selectable control shows a system cursor',
+     [...document.querySelectorAll('.card,.chip,.slot,.btn')].every(e => getComputedStyle(e).cursor === 'none'));
 
   show(order.indexOf('level'));
   ok('Next dims while a group is empty', !btnNext.classList.contains('is-ready'));

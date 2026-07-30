@@ -108,33 +108,36 @@ body.is-preview .stage{
    For screen recordings: the system pointer is hidden inside the frame and replaced with the
    translucent disc UI prototypes use. It follows on its own rAF loop with heavy smoothing, so
    the recording never shows the hard 1:1 jitter of a real mouse. */
-.stage{cursor:none}
+/* nothing inside the frame shows a system cursor — button{cursor:pointer} would otherwise win
+   on every selectable card — and dragging must not paint a text selection over the UI */
+.stage,.stage *{cursor:none}
+.stage{user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.stage ::selection{background:transparent}
 .cursor{
   position:absolute;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;
   border-radius:50%;pointer-events:none;z-index:40;opacity:0;
-  /* two-tone on purpose: the dark fill reads over the white cards, the light ring reads over
-     the dark field, so the cursor never disappears into whatever is under it */
-  background:rgba(10,14,16,.24);
-  box-shadow:0 0 0 1.5px rgba(255,255,255,.8), 0 0 0 2.5px rgba(10,14,16,.28);
+  /* the blur is what makes it readable over anything, so the fill and ring can stay faint */
+  background:rgba(255,255,255,.12);
+  box-shadow:0 0 0 1px rgba(255,255,255,.2);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   transition:opacity .25s var(--ease),width .18s var(--ease),height .18s var(--ease),
              margin .18s var(--ease),background .18s var(--ease);
 }
 .cursor.is-in{opacity:1}
 .cursor.is-down{
-  width:22px;height:22px;margin:-11px 0 0 -11px;
-  background:rgba(10,14,16,.4);
+  width:23px;height:23px;margin:-11.5px 0 0 -11.5px;
+  background:rgba(255,255,255,.22);
 }
 
 .taps{position:absolute;inset:0;pointer-events:none;z-index:39;overflow:hidden}
 .tap{
-  position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;
-  background:rgba(10,14,16,.1);
-  box-shadow:0 0 0 2px rgba(255,255,255,.85), 0 0 0 3px rgba(10,14,16,.3);
-  animation:tap .62s var(--ease) forwards;
+  position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;
+  box-shadow:0 0 0 1px rgba(255,255,255,.32);
+  animation:tap .42s var(--ease) forwards;
 }
 @keyframes tap{
-  from{transform:scale(.35);opacity:.95}
-  to{transform:scale(4.4);opacity:0}
+  from{transform:scale(.6);opacity:.8}
+  to{transform:scale(1.7);opacity:0}
 }
 
 /* ambient projector light */
@@ -239,7 +242,7 @@ body.is-preview .stage{
 .figure-hits{position:absolute;left:201px;top:200px;width:202px;height:358px;z-index:4;pointer-events:none}
 .hit{
   position:absolute;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;
-  pointer-events:auto;cursor:pointer;background:none;
+  pointer-events:auto;background:none;
 }
 /* nothing is drawn until a region is picked — the tap targets stay invisible */
 .hit-marker{
@@ -395,13 +398,9 @@ body.is-preview .stage{
 }
 .slot{
   position:absolute;left:50%;top:21px;width:377px;margin-left:-188.5px;
-  transform-style:preserve-3d;cursor:pointer;
+  transform-style:preserve-3d;
   transition:transform .55s var(--ease),opacity .55s var(--ease),filter .55s var(--ease);
 }
-.slot[data-d="0"]{cursor:none}
-/* the swipe leaves a trail: a horizontal-only blur while the cards travel, cleared the moment
-   the transition ends so nothing is blurred at rest */
-.deck.is-moving .slot{filter:url(#smear)}
 .slot[data-far]{opacity:0;pointer-events:none}
 
 .packcard{
