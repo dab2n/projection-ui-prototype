@@ -30,9 +30,11 @@ function show(i) {
   const step = cur.dataset.step;          // undefined on pack / watch
   const bar  = cur.dataset.appbar;        // 'back' | 'both' | undefined
 
+  // Main workout is the last step, so there is nothing to skip to
+  const last = step !== undefined && +step === steps.length - 1;
   appbar.classList.toggle('is-on', !!bar);
   appbar.dataset.back = bar ? 'on' : 'off';
-  appbar.dataset.skip = bar === 'both' ? 'on' : 'off';
+  appbar.dataset.skip = bar === 'both' && !last ? 'on' : 'off';
   appbar.dataset.pos  = bar === 'back' ? 'right' : 'wide';
 
   flowbar.classList.toggle('is-on', step !== undefined);
@@ -211,30 +213,60 @@ function layoutBars() {
     el.classList.toggle('is-tight', widths[i] < TIGHT);
   });
   strike.style.width = Math.max(74, widths[2]) + 'px';
-  runLabel.textContent = set ? `${strikeMin}m` : '';
+  if (set) countTo(runLabel, strikeMin, v => `${v}m`);
+  else runLabel.textContent = '';
 }
 
-/* Entering the step, the total counts up to its current value. */
-function countTotal() {
-  const t = total();
+/* Numbers roll to their new value instead of snapping — the total jumps 4 minutes per
+   round, so the tween is what makes the change readable. */
+const tweens = new WeakMap();
+let SNAP = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function countTo(el, to, fmt = String, ms = 450) {
+  const from = parseFloat(el.textContent) || 0;
+  cancelAnimationFrame(tweens.get(el));
+  // no rAF while the tab is hidden, so there is nothing to animate — jump to the value
+  if (from === to || SNAP || document.hidden) { el.textContent = fmt(to); return; }
+  el.dataset.tweenTo = fmt(to);
   let start = null;
-  requestAnimationFrame(function step(ts) {
+  const step = ts => {
     if (start === null) start = ts;
-    const p = Math.min((ts - start) / 700, 1);
-    totalMin.textContent = Math.round((1 - (1 - p) ** 2) * t);
-    if (p < 1) requestAnimationFrame(step);
+    const p = Math.min((ts - start) / ms, 1);
+    el.textContent = fmt(Math.round(from + (to - from) * (1 - (1 - p) ** 3)));
+    if (p < 1) tweens.set(el, requestAnimationFrame(step));
+    else delete el.dataset.tweenTo;
+  };
+  tweens.set(el, requestAnimationFrame(step));
+}
+
+/* a hidden tab (or a blanked projector) stops rAF, which would strand a half-counted
+   number on screen — land any pending tween on its target instead */
+addEventListener('visibilitychange', () => {
+  if (!document.hidden) return;
+  document.querySelectorAll('[data-tween-to]').forEach(el => {
+    el.textContent = el.dataset.tweenTo;
+    delete el.dataset.tweenTo;
   });
+});
+
+/* Entering the step, the total counts up from zero to its current value. */
+function countTotal() {
+  totalMin.textContent = '0';
+  countTo(totalMin, total(), String, 700);
 }
 onShow.push(name => { if (name === 'main') { layoutBars(); countTotal(); } });
 
+/* the round count lives here, not in the DOM — mid-tween textContent is an in-between
+   number and reading it back would drop clicks */
+let roundCount = +rounds.textContent;
 document.querySelectorAll('[data-step-delta]').forEach(btn => {
   btn.onclick = () => {
-    const next = Math.max(1, Math.min(MAX_ROUNDS, +rounds.textContent + +btn.dataset.stepDelta));
-    if (next === +rounds.textContent && strikeMin) return;
-    rounds.textContent = next;
+    const next = Math.max(1, Math.min(MAX_ROUNDS, roundCount + +btn.dataset.stepDelta));
+    if (next === roundCount && strikeMin) return;
+    roundCount = next;
+    countTo(rounds, next, String, 260);
     strikeMin = strikeFor(next);
     layoutBars();
-    totalMin.textContent = total();
+    countTo(totalMin, total());
     [rounds, totalMin].forEach(n => {
       n.classList.remove('is-pop');
       void n.offsetWidth;
@@ -332,6 +364,7 @@ show(Math.max(0, order.indexOf(location.hash.slice(1))));
    Covers the two bits with real branching — exclusive multi-select and the
    stepper clamp. Everything else is markup. */
 if (location.search.includes('selftest')) {
+  SNAP = true;                              // assert the numbers, not their tween
   const results = window.__selftest = [];   // also readable from devtools / automation
   const ok = (name, cond) => {
     results.push(`${cond ? 'PASS' : 'FAIL'} — ${name}`);
@@ -372,18 +405,20 @@ if (location.search.includes('selftest')) {
   // scale transform the inactive screens carry, so it reads the design units directly
   const box = s => { const e = document.querySelector(s); return [e.offsetWidth, e.offsetHeight]; };
   const is = (s, w, h) => { const [a, b] = box(s); return a === w && (h === undefined || b === h); };
-  ok('pack detail scrolls in its 360×221 frame', is('.watch-scroll', 360, 221));
+  // the scroll frame starts under the back tab (y=124) and runs to the frame bottom
+  ok('pack detail scrolls from below the back tab', is('.watch-scroll', 360, 539));
+  ok('the info block scrolls with it', !!document.querySelector('.watch-scroll .watch-info'));
+  ok('Main workout has no Skip', appbar.dataset.skip === 'off');
   ok('hero is 360×519 r40', is('.hero', 360, 519));
   ok('Total card is 360×171', is('.total', 360, 171));
   ok('graph bars are 105 / 210', is('.tbar--stretch', 105) && is('.tbar--learn', 210));
 
   ok('Total starts at the pack minutes', totalMin.textContent === String(STRETCH + LEARN));
   ok('run row starts as a placeholder', runLabel.textContent === '');
-  rounds.textContent = 1;
-  document.querySelector('[data-step-delta="-1"]').click();
+  const step = d => document.querySelector(`[data-step-delta="${d}"]`).click();
+  for (let i = 0; i < MAX_ROUNDS + 3; i++) step(-1);
   ok('stepper floors at 1', rounds.textContent === '1');
-  rounds.textContent = 5;
-  document.querySelector('[data-step-delta="1"]').click();
+  for (let i = 0; i < 5; i++) step(1);
   ok('Set up drives Total', rounds.textContent === '6' && totalMin.textContent === '35');
   ok('Strike carries its own minutes', runLabel.textContent === '23m');
   // read the target width, not the mid-transition one

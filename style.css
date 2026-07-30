@@ -17,6 +17,9 @@
   --sel-inner:inset 0 0 16px 6px rgba(255,255,255,.6);
   /* 컬러 그라디언트 — the graph ramp, red → orange → peach → pale cyan */
   --ramp:#fa3030,#fe6e3c,#fec389,#d1feff;
+  /* every graph bar runs the same ramp across its own width, so all three rows end on
+     the same colour — the stretch row used to be mirrored and showed a cyan tail */
+  --bar-ramp:linear-gradient(90deg,#fa3030 63.043%,#fe6e3c 89.902%,#fec389 101.08%,#d1feff 108.1%);
 
   --ease:cubic-bezier(.2,.7,.2,1);
 }
@@ -243,8 +246,8 @@ img{display:block}
 /* widths are set by JS: fixed at the design values until Set up is touched, then
    proportional to the minutes so the top bars shrink as Strike grows */
 .tbar--stretch,.tbar--learn,.tbar--run{transition:width .5s var(--ease)}
-.tbar--stretch{width:105px;background:linear-gradient(-90deg,#d1feff 0%,#fec389 6.49%,#fe6e3c 16.831%,#fa3030 41.678%)}
-.tbar--learn{width:210px;background:linear-gradient(90deg,#fa3030 63.043%,#fe6e3c 89.902%,#fec389 101.08%,#d1feff 108.1%)}
+.tbar--stretch{width:105px;background:var(--bar-ramp)}
+.tbar--learn{width:210px;background:var(--bar-ramp)}
 .tbar--run{position:relative;width:100%;background:var(--n100);color:var(--n400)}
 /* a narrow bar drops its STRETCH/LEARN label and keeps just the minutes */
 .tbar.is-tight b{display:none}
@@ -252,7 +255,7 @@ img{display:block}
 .strike{
   position:absolute;right:0;top:0;height:100%;min-width:74px;font-style:normal;
   display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:12px;
-  background:linear-gradient(90deg,#fa3030 63.043%,#fe6e3c 89.902%,#fec389 101.08%,#d1feff 108.1%);
+  background:var(--bar-ramp);
   transition:width .5s var(--ease);
 }
 .strike span{font-size:15px;line-height:1.4;letter-spacing:-.5px;color:var(--white)}
@@ -260,7 +263,7 @@ img{display:block}
 
 .total-num{position:absolute;left:4px;top:4px;width:100px;height:156px;padding:10px;color:var(--black)}
 .total-num b{display:block;font-size:60px;line-height:1}
-.total-num span{display:block;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;opacity:.6;text-align:center}
+.total-num span{display:block;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;opacity:.6}
 
 .setup{display:flex;flex-direction:column;gap:4px;height:171px}
 .tabs{display:flex;gap:4px;padding:4px;border-radius:20px;background:var(--white)}
@@ -344,13 +347,15 @@ img{display:block}
 .hero-haze--a{height:180px;background:linear-gradient(rgba(108,94,67,.22),rgba(210,183,130,.28))}
 .hero-haze--b{height:124px;background:linear-gradient(rgba(163,124,89,.18),rgba(120,86,56,.34))}
 
-.hero-fire{position:absolute;pointer-events:none}
+/* Figma stacks the embers after 하단바, so they sit over the profile row — z-index 2 */
+.hero-fire{position:absolute;z-index:2;pointer-events:none}
 .hero-fire--a{left:39px;top:446.63px;width:24px;height:24px;animation:ember 3s ease-in-out infinite}
-.hero-fire--b{left:56.37px;top:417px;width:18.67px;height:18.67px;rotate:13.68deg;animation:ember 3.6s ease-in-out infinite .4s}
+/* node 705:7806 reports a 22.556 bbox: an 18.667 square rotated 13.68°, centred (72.06,428.28) */
+.hero-fire--b{left:62.72px;top:418.95px;width:18.67px;height:18.67px;rotate:13.68deg;animation:ember 3.6s ease-in-out infinite .4s}
 @keyframes ember{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.06)}}
 
 .hero-foot{
-  position:absolute;left:0;bottom:0;width:360px;height:80px;padding:8px 16px;
+  position:absolute;z-index:1;left:0;bottom:0;width:360px;height:80px;padding:8px 16px;
   display:flex;align-items:center;gap:6px;
   font-size:15px;line-height:1.4;letter-spacing:-.5px;color:var(--white);
 }
@@ -358,8 +363,9 @@ img{display:block}
 .stack img{width:32px;height:32px;border-radius:999px;object-fit:cover;border:1px solid var(--white);margin-right:-16px}
 .stack img:last-child{margin-right:0}
 
-/* info block: 202px text column + a 48px action column, 576–904 at y=124 */
-.watch-info{position:absolute;left:576px;top:124px;width:328px;height:160px;display:flex;align-items:flex-start;justify-content:space-between}
+/* info block: 202px text column + a 48px action column, 328 wide inset 16 in the
+   scroll frame (node 705:7654 sits at x=560 with a 16px inner offset) */
+.watch-info{margin:0 16px;width:328px;height:160px;display:flex;align-items:flex-start;justify-content:space-between;flex:none}
 .watch-text{display:flex;flex-direction:column;gap:12px;width:202px;height:100%}
 .watch-creator{display:flex;align-items:center;gap:4px;margin-bottom:-4px}
 .watch-creator img{width:24px;height:24px;border-radius:999px;object-fit:cover}
@@ -380,14 +386,17 @@ img{display:block}
 .iconbtn--mid img{width:18px;height:18px}
 .iconbtn span{font-size:11px;line-height:1.2;color:var(--white)}
 
-/* the scrolling frame */
+/* the scrolling frame: everything from the frame below the back tab (y=124) down to the
+   bottom of the projection frame. Only the back tab, the hero and the Start button stay put. */
 .watch-scroll{
-  position:absolute;left:560px;top:316px;width:360px;height:221px;
+  position:absolute;left:560px;top:124px;width:360px;height:539px;
   overflow-y:auto;overflow-x:hidden;   /* the carousels are clipped, not scrolled sideways */
   overscroll-behavior:contain;scrollbar-width:none;
+  padding-bottom:160px;                /* the last row has to clear the pinned Start button */
 }
 .watch-scroll::-webkit-scrollbar{display:none}
-.watch-stats{margin:0;padding:8px 40px 0;display:flex;align-items:center;justify-content:center;gap:4px}
+/* 40px below the info block: the stats frame sits at y=324 in the design */
+.watch-stats{margin:32px 0 0;padding:8px 40px 0;display:flex;align-items:center;justify-content:center;gap:4px}
 .watch-stats > div{display:flex;flex-direction:column;gap:6px;width:93px;text-align:center}
 .watch-stats dt{margin:0;font-size:13px;line-height:1.2;letter-spacing:-.5px;color:var(--white);opacity:.7}
 .watch-stats dd{margin:0;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;color:var(--white)}
@@ -410,12 +419,12 @@ img{display:block}
 }
 .bar span{font-size:15px;line-height:1.4;letter-spacing:-.5px}
 .bar b{font-weight:700;font-size:13px;line-height:1.2;letter-spacing:-.5px;opacity:.7}
-.bar--stretch{width:170px;background:linear-gradient(-90deg,#d1feff 0%,#fec389 6.49%,#fe6e3c 16.831%,#fa3030 41.678%)}
-.bar--learn{width:210px;background:linear-gradient(90deg,#fa3030 58.322%,#fe6e3c 83.169%,#fec389 93.51%,#d1feff 100%)}
+.bar--stretch{width:170px;background:var(--bar-ramp)}
+.bar--learn{width:210px;background:var(--bar-ramp)}
 .bar--run{width:100%;background:var(--n400)}
 .graph-num{position:absolute;left:4px;top:4px;width:100px;height:156px;padding:10px;color:var(--black)}
 .graph-num b{display:block;font-size:60px;line-height:1}
-.graph-num span{display:block;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;opacity:.6;text-align:center}
+.graph-num span{display:block;font-weight:700;font-size:18px;line-height:1.2;letter-spacing:-.54px;opacity:.6}
 
 /* 2×2 fact cards */
 .factgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%}
@@ -441,11 +450,23 @@ img{display:block}
 .rel em,.more em{width:3px;height:3px;border-radius:50%;background:currentColor}
 
 /* glow behind the Start button, then the button itself */
+/* Figma: layer blur 62 over background blur 2. The 2px is the backdrop, the 62px is a
+   blur on the scrim itself — that soft edge is what makes it melt into the frame instead
+   of ending on a line. overflow:hidden keeps the 62px bleed inside the frame. */
 .scroll-fade{
-  position:absolute;left:560px;top:470px;width:360px;height:67px;z-index:3;pointer-events:none;
-  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
-  background:linear-gradient(rgba(20,20,20,0),rgba(20,20,20,.55));
+  position:absolute;left:560px;top:452px;width:360px;height:211px;z-index:3;pointer-events:none;
+  overflow:hidden;
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
   mask:linear-gradient(transparent,#000 45%);-webkit-mask:linear-gradient(transparent,#000 45%);
+}
+/* the scrim dissolves into whatever the projection background is set to, so it still
+   reads on a white desk — hardcoding #141414 would leave a grey band there */
+.scroll-fade::before{
+  content:'';position:absolute;left:-90px;right:-90px;bottom:-90px;height:280px;
+  /* opaque by the frame's bottom line; the 90px overhang keeps the 62px blur from
+     sampling past the edge and lightening it again */
+  background:linear-gradient(transparent,var(--bg) 68%);
+  filter:blur(62px);
 }
 .watch-glow{position:absolute;left:435.5px;top:402.5px;width:585px;height:277px;transform:rotate(180deg);pointer-events:none;z-index:3}
 .btn--start{
