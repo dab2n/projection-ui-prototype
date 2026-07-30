@@ -506,8 +506,8 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   function meter(floor) {
     const on = body.classList.contains('is-preview');
     const pairs = [
-      ['흰 텍스트 / 배경', rd('--white'), rd('--bg')],
-      ['검정 텍스트 / 카드', rd('--black'), rd('--white')],
+      ['배경 위 텍스트', rd('--ink'), rd('--bg')],
+      ['카드 위 텍스트', rd('--ink-2'), rd('--surface')],
       ['브랜드 / 배경', rd('--brand'), rd('--bg')],
     ];
     out.innerHTML = pairs.map(([name, fg, bg]) => {
@@ -518,6 +518,18 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
 
   on.onchange = () => { body.classList.toggle('is-preview', on.checked); apply(); };
   onBgChange.push(apply);
+
+  /* Light field: the whole polarity flips for a white desk — lit field, unlit type, dark cards.
+     It is a token swap, so it also moves --bg; the picker follows it rather than fighting it. */
+  const light = document.getElementById('lightOn');
+  light.onchange = () => {
+    body.classList.toggle('is-light', light.checked);
+    const want = light.checked ? '#E5E6E6' : '#141414';
+    const box = document.getElementById('pickerHex');
+    box.value = want;
+    box.dispatchEvent(new Event('input'));
+  };
+
   const unlit = document.getElementById('unlitOn');
   unlit.onchange = () => body.classList.toggle('is-unlit', unlit.checked && on.checked);
   [hex, ambient, gain].forEach(el => el.oninput = apply);
@@ -612,9 +624,15 @@ if (location.search.includes('selftest')) {
     const hexIn = document.getElementById('pickerHex');
     const setBg = v => { hexIn.value = v; hexIn.dispatchEvent(new Event('input')); };
     setBg('#141414');
-    ok('white type passes on the dark background', read()[0] >= 4.5);
+    ok('type on the field passes on the dark background', read()[0] >= 4.5);
     setBg('#E5E6E6');
-    ok('white type fails on a light background', read()[0] < 2);
+    ok('the same white type fails on a light background', read()[0] < 2);
+    document.getElementById('lightOn').checked = true;
+    document.getElementById('lightOn').dispatchEvent(new Event('change'));
+    ok('the light field fixes it by flipping the type', read()[0] >= 4.5);
+    ok('and its cards stay legible', read()[1] >= 4.5);
+    document.getElementById('lightOn').checked = false;
+    document.getElementById('lightOn').dispatchEvent(new Event('change'));
     setBg('#141414');
     box.checked = false; box.dispatchEvent(new Event('change'));
   }
