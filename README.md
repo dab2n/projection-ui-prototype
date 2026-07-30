@@ -9,12 +9,20 @@ Level/Mode `205:10018`, Main workout `143:7373`, Total 컨테이너 `759:8520`.
 ## 실행
 
 ```bash
-python3 -m http.server 5555
+python3 serve.py        # 5555번, 다른 포트는 python3 serve.py 8080
 # http://localhost:5555
 ```
 
+`python3 -m http.server`를 쓰면 크롬이 `app.js` / `style.css`를 캐시해서 새로고침해도
+옛 코드를 보고 있을 수 있다. `serve.py`는 같은 서버에 `Cache-Control: no-store`만 붙인 것.
+
 localhost에서 열면 `index.html` / `style.css` / `app.js`의 `Last-Modified`를 1초마다 폴링해
-자동 새로고침한다. 파일 저장하면 브라우저에 바로 반영됨.
+자동 새로고침한다. 파일 저장하면 브라우저에 바로 반영됨 — 이때는 **보고 있던 화면에 그대로**
+머문다.
+
+**새로고침(⌘R)하면 항상 첫 화면부터 다시 시작한다.** 선택했던 카드도 전부 초기화되고
+히어로 영상도 처음부터 재생된다. 특정 화면만 바로 열려면 `?at=level`처럼 붙인다
+(`pack` `watch` `location` `condition` `injury` `level` `main`).
 
 자체 점검: `http://localhost:5555/index.html?selftest` → 콘솔에 PASS/FAIL.
 결과는 `window.__selftest` 배열에도 들어간다.
@@ -44,7 +52,8 @@ localhost에서 열면 `index.html` / `style.css` / `app.js`의 `Last-Modified`�
   `신체 영역` 마커가 올라간다
 - **팩 시청**: 상단 뒤로가기 바를 뺀 아래 영역 전체가 스크롤된다
 - Main workout의 `−` `+` → 라운드 수와 Total 분이 함께 변함
-- URL 해시로 특정 화면 직접 열기 (`#level` 등)
+- `?at=level`로 특정 화면 직접 열기. 해시(`#level`)는 현재 위치 표시용이고 부팅 때는 읽지 않는다
+  — 새로고침이 언제나 처음으로 돌아가야 하므로
 
 ## 프로젝션 배경색 테스트
 

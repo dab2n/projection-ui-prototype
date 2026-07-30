@@ -357,8 +357,17 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   paint();
 }
 
-/* ── boot ───────────────────────────────────────────────── */
-show(Math.max(0, order.indexOf(location.hash.slice(1))));
+/* ── boot ───────────────────────────────────────────────────
+   Refresh always restarts the flow from the first screen, so the whole thing can be walked
+   through from the top again. The hash still tracks where you are, but it is not what boot
+   reads — navigation-timing's reload/navigate distinction turned out not to be dependable.
+   To open one screen directly, use ?at=level. The dev live reload keeps its own screen. */
+{
+  const kept = sessionStorage.getItem('keep-screen');
+  sessionStorage.removeItem('keep-screen');
+  const want = kept || new URLSearchParams(location.search).get('at');
+  show(Math.max(0, order.indexOf(want)));
+}
 
 /* ── self-check: open index.html?selftest and watch the console ──────────
    Covers the two bits with real branching — exclusive multi-select and the
@@ -436,7 +445,11 @@ if (['localhost', '127.0.0.1'].includes(location.hostname)) {
       const r = await fetch(f, { method: 'HEAD', cache: 'no-store' }).catch(() => null);
       const t = r && r.headers.get('last-modified');
       if (!t) continue;
-      if (seen[f] && seen[f] !== t) return location.reload();
+      // stay on the screen being worked on — only a manual refresh restarts the flow
+      if (seen[f] && seen[f] !== t) {
+        sessionStorage.setItem('keep-screen', order[at]);
+        return location.reload();
+      }
       seen[f] = t;
     }
   }, 1000);
