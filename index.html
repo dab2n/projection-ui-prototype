@@ -361,6 +361,20 @@
       <button data-c="#EFE9E1" title="Warm desk"></button>
       <button data-c="#C7B49A" title="Wood desk"></button>
     </div>
+
+    <!-- additive-light preview: what the projector actually puts on the desk -->
+    <hr class="picker-rule">
+    <label class="picker-check">
+      <input type="checkbox" id="previewOn">
+      <span>프로젝션 프리뷰 <i>(가산 합성)</i></span>
+    </label>
+    <div class="picker-sliders" id="previewOpts">
+      <label>책상 밝기 <input type="range" id="deskVal" min="120" max="255" value="216"><b id="deskValOut">216</b></label>
+      <label>채도 <input type="range" id="deskSat" min="20" max="100" value="65"><b id="deskSatOut">65%</b></label>
+      <label>블랙 누광 <input type="range" id="deskLeak" min="0" max="40" value="10"><b id="deskLeakOut">10</b></label>
+      <p class="picker-note">검정은 광량 0이라 책상색이 그대로 보인다. 흰 텍스트는 흰 책상에서
+        사라지므로, 대비는 명도가 아니라 색상·채도로 만들어야 한다.</p>
+    </div>
   </div>
 </aside>
 

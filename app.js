@@ -444,6 +444,35 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   paint();
 }
 
+/* ── projection preview: additive light on a desk ─────────────
+   Screen-blends the frame over a desk-coloured plate, which is what a projector physically
+   does — black adds nothing, so it reads as bare desk. Three knobs, because none of them is
+   knowable from a screenshot: how bright the desk reads to the camera, how much saturation a
+   diffuse white surface eats, and the projector's black-level spill. */
+{
+  const body = document.body;
+  const on = document.getElementById('previewOn');
+  const val = document.getElementById('deskVal');
+  const sat = document.getElementById('deskSat');
+  const leak = document.getElementById('deskLeak');
+  const outs = { deskVal: 'deskValOut', deskSat: 'deskSatOut', deskLeak: 'deskLeakOut' };
+
+  const apply = () => {
+    const v = +val.value;
+    // the desk keeps the picked background's hue, just at the value the camera would see
+    body.style.setProperty('--desk', `rgb(${v} ${Math.round(v * .985)} ${Math.round(v * .96)})`);
+    body.style.setProperty('--sat', +sat.value / 100);
+    body.style.setProperty('--leak', leak.value);
+    document.getElementById(outs.deskVal).textContent = v;
+    document.getElementById(outs.deskSat).textContent = sat.value + '%';
+    document.getElementById(outs.deskLeak).textContent = leak.value;
+  };
+
+  on.onchange = () => { body.classList.toggle('is-preview', on.checked); apply(); };
+  [val, sat, leak].forEach(el => el.oninput = apply);
+  apply();
+}
+
 /* ── boot ───────────────────────────────────────────────────
    Refresh always restarts the flow from the first screen, so the whole thing can be walked
    through from the top again. The hash still tracks where you are, but it is not what boot
