@@ -25,6 +25,11 @@
 
       <!-- every card in the carousel is this one component, filled from PACKS in app.js -->
       <div class="deck" id="deck" data-anim style="--i:2">
+        <!-- light pool behind the middle card. It stays put while cards travel through it,
+             so it never rides along with a swipe. blur.svg carries the layer blur; the
+             backdrop blur next to it is the part an <img> can't do. -->
+        <div class="deck-haze"></div>
+        <img class="deck-glow" src="assets/blur-glow.svg" alt="">
         <template id="packTpl">
           <div class="slot">
             <article class="packcard">
@@ -58,8 +63,9 @@
         <!-- the two blurred warm gradients Figma stacks at the foot of the frame -->
         <div class="hero-haze hero-haze--a"></div>
         <div class="hero-haze hero-haze--b"></div>
-        <img class="hero-fire hero-fire--a" src="assets/icon-fire.svg" alt="">
-        <img class="hero-fire hero-fire--b" src="assets/icon-fire-sm.svg" alt="">
+        <!-- spans, not imgs: the progressive blur needs the element plus its two pseudos -->
+        <span class="hero-fire hero-fire--a" style="--fire:url(assets/icon-fire.svg)"></span>
+        <span class="hero-fire hero-fire--b" style="--fire:url(assets/icon-fire-sm.svg)"></span>
         <figcaption class="hero-foot">
           <span class="stack">
             <img src="assets/joined-1.png" alt=""><img src="assets/joined-2.png" alt=""><img src="assets/joined-3.png" alt="">
@@ -144,7 +150,7 @@
 
       <!-- content blurs out under the button — the cue that the frame keeps scrolling -->
       <div class="scroll-fade"></div>
-      <img class="watch-glow" src="assets/watch-glow.svg" alt="">
+      <img class="watch-glow" src="assets/blur-glow.svg" alt="">
       <button class="btn btn--start" data-go="location">Start <img src="assets/arrow-sm-right.svg" alt=""></button>
     </section>
 
@@ -155,24 +161,25 @@
         <p class="sub" data-anim style="--i:1">We’ll reduce strain on those areas.</p>
       </div>
 
-      <div class="col col--l" data-anim style="--i:2">
-        <p class="label">Location</p>
+      <!-- every card carries its own --i so they come up one after another, not as two blocks -->
+      <div class="col col--l">
+        <p class="label" data-anim style="--i:2">Location</p>
         <div class="list" data-select="single">
-          <button class="card card--icon opt">
+          <button class="card card--icon opt" data-anim style="--i:3">
             <img class="card-ico" src="assets/icon-barefoot.png" alt=""><span class="t2">Indoor</span>
           </button>
-          <button class="card card--icon opt">
+          <button class="card card--icon opt" data-anim style="--i:4">
             <img class="card-ico" src="assets/icon-shoe.png" alt=""><span class="t2">Outdoor</span>
           </button>
         </div>
       </div>
 
-      <div class="col col--r" data-anim style="--i:3">
-        <p class="label">Today’s Goal</p>
+      <div class="col col--r">
+        <p class="label" data-anim style="--i:3">Today’s Goal</p>
         <div class="list" data-select="single">
-          <button class="card opt"><span class="t2">Beginner</span><span class="desc">Following along fot the first time</span></button>
-          <button class="card opt"><span class="t2">Standard</span><span class="desc">Getting used to the flow</span></button>
-          <button class="card opt"><span class="t2">Near-Original</span><span class="desc">Performing close to the real movement</span></button>
+          <button class="card opt" data-anim style="--i:4"><span class="t2">Beginner</span><span class="desc">Following along fot the first time</span></button>
+          <button class="card opt" data-anim style="--i:5"><span class="t2">Standard</span><span class="desc">Getting used to the flow</span></button>
+          <button class="card opt" data-anim style="--i:6"><span class="t2">Near-Original</span><span class="desc">Performing close to the real movement</span></button>
         </div>
       </div>
 

@@ -266,12 +266,7 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     countTo(rounds, next, String, 260);
     strikeMin = strikeFor(next);
     layoutBars();
-    countTo(totalMin, total());
-    [rounds, totalMin].forEach(n => {
-      n.classList.remove('is-pop');
-      void n.offsetWidth;
-      n.classList.add('is-pop');
-    });
+    countTo(totalMin, total());   // the count is the whole animation — no scale pop
   };
 });
 
@@ -318,9 +313,9 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   /* depth per step away from the middle — translateZ does the shrinking, so the sizes stay
      consistent with the perspective instead of being scaled by hand */
   const STEP = [
-    { x:   0, z:    0, ry:  0, o: 1,  b: 0   },
-    { x: 272, z: -170, ry: 13, o: .9, b: .6  },
-    { x: 430, z: -380, ry: 20, o: 0,  b: 1.4 },
+    { x:   0, z:    0, ry:  0, o: 1,   b: 0   },
+    { x: 300, z: -230, ry: 28, o: .92, b: .8  },
+    { x: 470, z: -470, ry: 34, o: 0,   b: 1.6 },
   ];
 
   function place() {
@@ -332,7 +327,8 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
         `translateX(${sign * s.x}px) translateZ(${s.z}px) rotateY(${-sign * s.ry}deg)`;
       slot.style.opacity = s.o;
       slot.style.filter = s.b ? `blur(${s.b}px)` : '';
-      slot.style.zIndex = 5 - Math.min(Math.abs(d), 2);
+      // 9 / 6 / 3 leaves room for the haze layer to sit at 7, between the middle card and the rest
+      slot.style.zIndex = [9, 6, 3][Math.min(Math.abs(d), 2)];
       slot.dataset.d = d;
       if (Math.abs(d) >= 2) slot.dataset.far = ''; else delete slot.dataset.far;
     });
@@ -497,6 +493,10 @@ if (location.search.includes('selftest')) {
   ok('carousel is copies of one card component',
      cards.length === 5 && cards.every(c => c.querySelector('.packcard-thumb > img') && c.querySelector('.btn')));
   ok('the boxing pack starts centred', cards[2].dataset.d === '0');
+  // the blur has to land between the side cards and the middle one, or it has nothing to blur
+  ok('the deck blur sits under the middle card and over the rest',
+     getComputedStyle(document.querySelector('.deck-haze')).zIndex === '7' &&
+     cards[2].style.zIndex === '9' && cards[1].style.zIndex === '6');
   cards[3].click();
   ok('tapping a side card centres it', cards[3].dataset.d === '0' && cards[2].dataset.d === '-1');
 

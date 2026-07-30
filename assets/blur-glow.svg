@@ -1,0 +1,17 @@
+<svg width="585" height="277" viewBox="0 0 585 277" fill="none" xmlns="http://www.w3.org/2000/svg">
+<foreignObject x="3.05176e-05" y="-0.000457764" width="584.88" height="276.88"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(0.96px);clip-path:url(#bgblur_0_2312_1913_clip_path);height:100%;width:100%"></div></foreignObject><g filter="url(#filter0_f_2312_1913)" data-figma-bg-blur-radius="1.91048">
+<ellipse cx="292.44" cy="138.439" rx="231" ry="77" transform="rotate(-180 292.44 138.439)" fill="url(#paint0_radial_2312_1913)" fill-opacity="0.2"/>
+</g>
+<defs>
+<filter id="filter0_f_2312_1913" x="3.05176e-05" y="-0.000457764" width="584.88" height="276.88" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="30.72" result="effect1_foregroundBlur_2312_1913"/>
+</filter>
+<clipPath id="bgblur_0_2312_1913_clip_path" transform="translate(-3.05176e-05 0.000457764)"><ellipse cx="292.44" cy="138.439" rx="231" ry="77" transform="rotate(-180 292.44 138.439)"/>
+</clipPath><radialGradient id="paint0_radial_2312_1913" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(292.869 144.687) rotate(90) scale(89.3267 267.98)">
+<stop offset="0.150649" stop-color="#F2F2F2" stop-opacity="0.14"/>
+<stop offset="0.99566" stop-color="#F2F2F2" stop-opacity="0"/>
+</radialGradient>
+</defs>
+</svg>

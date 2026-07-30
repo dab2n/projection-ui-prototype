@@ -285,14 +285,27 @@ img{display:block}
 .step img{width:28px;height:28px}
 .step:active{transform:scale(.9)}
 .stepper-val{font-weight:700;font-size:40px;line-height:1;letter-spacing:-1.6px;color:var(--black);font-family:inherit}
-.is-pop{animation:pop .3s var(--ease)}
-@keyframes pop{0%{transform:scale(.72);opacity:.5}60%{transform:scale(1.08)}100%{transform:none}}
 
 /* ── 0. Pack suggestion ──────────────────────────────────────
    A carousel of identical pack cards, symmetric around the centre one, with just enough
    perspective to read as depth. The slot carries the 3D placement so the centre card can
    keep its own float animation on the card itself — one element can't hold two transforms. */
 .deck{position:absolute;left:0;top:190px;width:100%;height:340px;perspective:1400px;touch-action:pan-y}
+/* Both layers are pinned to the middle slot and never move, so a swipe animates the cards
+   through them — no transform on the blur means nothing re-composites it mid-transition.
+   They sit above the side cards (z 6) and below the middle one (z 9), which is what makes the
+   backdrop blur have something to blur: the cards behind the one you're looking at. */
+.deck-glow,.deck-haze{
+  position:absolute;left:50%;top:-115px;width:820px;height:560px;margin-left:-410px;
+  z-index:7;pointer-events:none;
+}
+/* blur.svg clips its backdrop blur to a hard ellipse; at this size that edge drew a visible
+   seam across the side cards, so the same ellipse is a soft-edged mask instead */
+.deck-haze{
+  backdrop-filter:blur(2.4px);-webkit-backdrop-filter:blur(2.4px);
+  mask:radial-gradient(ellipse closest-side at 50% 50%,#000 42%,#0000 100%);
+  -webkit-mask:radial-gradient(ellipse closest-side at 50% 50%,#000 42%,#0000 100%);
+}
 .slot{
   position:absolute;left:50%;top:21px;width:377px;margin-left:-188.5px;
   transform-style:preserve-3d;cursor:pointer;
@@ -354,12 +367,38 @@ img{display:block}
 .hero-haze--a{height:180px;background:linear-gradient(rgba(108,94,67,.22),rgba(210,183,130,.28))}
 .hero-haze--b{height:124px;background:linear-gradient(rgba(163,124,89,.18),rgba(120,86,56,.34))}
 
-/* Figma stacks the embers after 하단바, so they sit over the profile row — z-index 2 */
-.hero-fire{position:absolute;z-index:2;pointer-events:none}
-.hero-fire--a{left:39px;top:446.63px;width:24px;height:24px;animation:ember 3s ease-in-out infinite}
+/* Figma stacks the embers after 하단바, so they sit over the profile row — z-index 2.
+   Each ember is three stacked copies of the same art: the element itself sharp at the base,
+   ::before softly blurred across the middle, ::after heavily blurred at the flame tip. The
+   masks overlap, so the blur reads as a ramp rather than three bands.
+   ponytail: three fixed steps, not a true gradient blur — enough at 24px, and a real
+   progressive blur would need a canvas or an SVG filter chain per frame. */
+.hero-fire{
+  position:absolute;z-index:2;pointer-events:none;
+  background:var(--fire) center/contain no-repeat;
+  mask:linear-gradient(#0000 20%,#000 46%);-webkit-mask:linear-gradient(#0000 20%,#000 46%);
+}
+.hero-fire::before,.hero-fire::after{content:'';position:absolute;inset:0;background:inherit}
+.hero-fire::before{
+  filter:blur(.9px);
+  mask:linear-gradient(#0000 4%,#000 24%,#000 44%,#0000 64%);
+  -webkit-mask:linear-gradient(#0000 4%,#000 24%,#000 44%,#0000 64%);
+}
+.hero-fire::after{
+  filter:blur(2px);
+  mask:linear-gradient(#000 0%,#000 14%,#0000 40%);
+  -webkit-mask:linear-gradient(#000 0%,#000 14%,#0000 40%);
+}
+/* the embers drift away from the profile row and fade, one after the other */
+.hero-fire--a{left:39px;top:446.63px;width:24px;height:24px;animation:ember 3.4s ease-out infinite}
 /* node 705:7806 reports a 22.556 bbox: an 18.667 square rotated 13.68°, centred (72.06,428.28) */
-.hero-fire--b{left:62.72px;top:418.95px;width:18.67px;height:18.67px;rotate:13.68deg;animation:ember 3.6s ease-in-out infinite .4s}
-@keyframes ember{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.06)}}
+.hero-fire--b{left:62.72px;top:418.95px;width:18.67px;height:18.67px;rotate:13.68deg;animation:ember 3.4s ease-out infinite 1.5s}
+@keyframes ember{
+  0%   {transform:translate(0,6px) scale(.72);opacity:0}
+  18%  {transform:translate(2px,0) scale(1);opacity:1}
+  70%  {transform:translate(9px,-38px) scale(.92);opacity:.55}
+  100% {transform:translate(15px,-64px) scale(.7);opacity:0}
+}
 
 .hero-foot{
   position:absolute;z-index:1;left:0;bottom:0;width:360px;height:80px;padding:8px 16px;
@@ -461,20 +500,28 @@ img{display:block}
    blur on the scrim itself — that soft edge is what makes it melt into the frame instead
    of ending on a line. overflow:hidden keeps the 62px bleed inside the frame. */
 .scroll-fade{
-  position:absolute;left:560px;top:452px;width:360px;height:211px;z-index:3;pointer-events:none;
+  position:absolute;left:560px;top:440px;width:360px;height:223px;z-index:3;pointer-events:none;
   overflow:hidden;
   backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
-  mask:linear-gradient(transparent,#000 45%);-webkit-mask:linear-gradient(transparent,#000 45%);
+  mask:linear-gradient(transparent,#000 40%);-webkit-mask:linear-gradient(transparent,#000 40%);
 }
 /* the scrim dissolves into whatever the projection background is set to, so it still
    reads on a white desk — hardcoding #141414 would leave a grey band there */
 .scroll-fade::before{
   content:'';position:absolute;left:-90px;right:-90px;bottom:-90px;height:280px;
-  /* opaque by the frame's bottom line; the 90px overhang keeps the 62px blur from
-     sampling past the edge and lightening it again */
-  background:linear-gradient(transparent,var(--bg) 68%);
+  /* the 90px overhang keeps the 62px blur from sampling past the edge and lightening it */
+  background:linear-gradient(transparent,var(--bg) 52%);
   filter:blur(62px);
 }
+/* the 62px blur alone can only get so opaque, and content kept showing through below the
+   Start button. This lays solid --bg over everything from the button down, faded in at the
+   top so the two blurs still carry the transition. */
+.scroll-fade::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:130px;
+  background:var(--bg);
+  mask:linear-gradient(transparent,#000 42%);-webkit-mask:linear-gradient(transparent,#000 42%);
+}
+/* the glow Figma puts behind the button — blur.svg, layer blur baked in */
 .watch-glow{position:absolute;left:435.5px;top:402.5px;width:585px;height:277px;transform:rotate(180deg);pointer-events:none;z-index:3}
 .btn--start{
   position:absolute;left:576px;top:521px;width:328px;
