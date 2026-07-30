@@ -478,11 +478,46 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     chip.style.background = m ? hex.value : '#f2efea';
     ambientOut.textContent = ambient.value + '%';
     gainOut.textContent = gain.value + '%';
+    const on = body.classList.contains('is-preview');
     // a drop shadow is light being removed, and a projector cannot do that
-    if (body.classList.contains('is-preview')) body.style.setProperty('--sel-shadow', '0 0 0 rgba(0,0,0,0)');
+    if (on) body.style.setProperty('--sel-shadow', '0 0 0 rgba(0,0,0,0)');
     else body.style.removeProperty('--sel-shadow');
+    brand(rgb.map(v => v / 255), on);
     meter(rgb.map(v => v / 255));
   };
+
+  /* Keeping the red red.
+     The floor adds its own light to every channel, so a colour composited over it comes out
+     with its dark channels lifted — #FA3030 lands around #FA5353 and the red goes chalky. The
+     projector can pull those channels down, though, so solve the composite backwards: emit
+     P = 1 - (1-T)/(1-floor) and the desk shows T, the colour as drawn. Below the floor it
+     clamps to zero, which is simply as saturated as the surface allows.
+
+     Only the brand and the ramp get this. Neutrals are left alone on purpose — pre-compensating
+     those is what previously pulled every token off in its own direction. */
+  const RAMP = ['#fa3030', '#fe6e3c', '#fec389', '#d1feff'];
+  const precomp = (hex, floor) => {
+    const n = parseInt(/([\da-f]{6})/i.exec(hex)[1], 16);
+    const ch = i => {
+      const t = ((n >> (16 - i * 8)) & 255) / 255;
+      const p = 1 - (1 - t) / (1 - floor[i]);
+      return Math.round(Math.max(0, Math.min(1, p)) * 255).toString(16).padStart(2, '0');
+    };
+    return '#' + ch(0) + ch(1) + ch(2);
+  };
+
+  function brand(floor, on) {
+    if (!on) {
+      ['--brand', '--sel', '--bar-ramp'].forEach(k => body.style.removeProperty(k));
+      return;
+    }
+    const r = RAMP.map(h => precomp(h, floor));
+    body.style.setProperty('--brand', r[0]);
+    body.style.setProperty('--sel',
+      `linear-gradient(180deg,${r[0]} 53.869%,${r[1]} 85.083%,${r[2]} 104.71%,${r[3]} 104.72%)`);
+    body.style.setProperty('--bar-ramp',
+      `linear-gradient(90deg,${r[0]} 63.043%,${r[1]} 89.902%,${r[2]} 101.08%,${r[3]} 108.1%)`);
+  }
 
   /* Legibility readout. A pair that fails on the monitor fails on the desk too, and the
      projected values are the design screened over the floor — so the numbers say outright
@@ -627,6 +662,33 @@ if (location.search.includes('selftest')) {
   seg[0].click();
   ok('tapping the active one clears it', !seg[0].classList.contains('is-on'));
   ok('cards default to unselected', !document.querySelector('.card.is-on'));
+
+  {   // Assist Mode takes several modes at once
+    const assists = [...document.querySelectorAll('.assistrow .opt')];
+    assists.forEach(c => c.classList.remove('is-on'));
+    assists[0].click(); assists[2].click();
+    ok('assist mode keeps more than one', assists.filter(c => c.classList.contains('is-on')).length === 2);
+    assists.forEach(c => c.classList.remove('is-on'));
+  }
+
+  {   /* the brand is pre-compensated for the floor, so the projected red comes back out as the
+         red that was drawn rather than a chalky version of it */
+    const box = document.getElementById('previewOn');
+    box.checked = true; box.dispatchEvent(new Event('change'));
+    const val = k => getComputedStyle(document.body).getPropertyValue(k).trim();
+    const floorRGB = /rgb\((\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(val('--floor')).slice(1).map(v => +v / 255);
+    const p = /([\da-f]{6})/i.exec(val('--brand'))[1];
+    const out = [0, 1, 2].map(i => {
+      const c = parseInt(p.slice(i * 2, i * 2 + 2), 16) / 255;
+      return Math.round((1 - (1 - c) * (1 - floorRGB[i])) * 255);
+    });
+    ok('the projected brand red lands back on #FA3030',
+       Math.abs(out[0] - 250) <= 2 && Math.abs(out[1] - 48) <= 2 && Math.abs(out[2] - 48) <= 2);
+    box.checked = false; box.dispatchEvent(new Event('change'));
+    // inline props are what the preview writes; the computed value would inherit from :root
+    ok('and the token is released when preview is off',
+       document.body.style.getPropertyValue('--brand') === '');
+  }
 
   const cards = [...document.querySelectorAll('.deck .slot')];
   ok('carousel is copies of one card component',
