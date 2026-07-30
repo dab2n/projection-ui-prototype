@@ -16,6 +16,18 @@
     <!-- ambient projection light -->
     <div class="beam"></div>
 
+    <!-- prototyping cursor and touch ripples. Inside the stage, so they live in design
+         coordinates and scale with the frame when it is recorded. -->
+    <div class="taps" id="taps"></div>
+    <div class="cursor" id="cursor"></div>
+
+    <!-- horizontal-only blur: a swipe smears along its direction, it does not go soft -->
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+      <filter id="smear" x="-20%" y="-5%" width="140%" height="110%">
+        <feGaussianBlur stdDeviation="7 0"/>
+      </filter>
+    </svg>
+
     <!-- ─────────────── 0. 팩 제안 / Pack suggestion ─────────────── -->
     <section class="screen" data-screen="pack">
       <div class="titleblock" style="width:560px">
@@ -369,7 +381,7 @@
       <span>라이트 필드 <i>(흰 책상용 극성)</i></span>
     </label>
     <label class="picker-check">
-      <input type="checkbox" id="previewOn">
+      <input type="checkbox" id="previewOn" checked>
       <span>프로젝션 프리뷰 <i>(가산 합성)</i></span>
     </label>
     <div class="picker-sliders" id="previewOpts">

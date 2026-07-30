@@ -104,6 +104,39 @@ body.is-preview .stage{
   box-shadow:none;
 }
 
+/* ── prototyping cursor & touch ─────────────────────────────
+   For screen recordings: the system pointer is hidden inside the frame and replaced with the
+   translucent disc UI prototypes use. It follows on its own rAF loop with heavy smoothing, so
+   the recording never shows the hard 1:1 jitter of a real mouse. */
+.stage{cursor:none}
+.cursor{
+  position:absolute;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;
+  border-radius:50%;pointer-events:none;z-index:40;opacity:0;
+  /* two-tone on purpose: the dark fill reads over the white cards, the light ring reads over
+     the dark field, so the cursor never disappears into whatever is under it */
+  background:rgba(10,14,16,.24);
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.8), 0 0 0 2.5px rgba(10,14,16,.28);
+  transition:opacity .25s var(--ease),width .18s var(--ease),height .18s var(--ease),
+             margin .18s var(--ease),background .18s var(--ease);
+}
+.cursor.is-in{opacity:1}
+.cursor.is-down{
+  width:22px;height:22px;margin:-11px 0 0 -11px;
+  background:rgba(10,14,16,.4);
+}
+
+.taps{position:absolute;inset:0;pointer-events:none;z-index:39;overflow:hidden}
+.tap{
+  position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;
+  background:rgba(10,14,16,.1);
+  box-shadow:0 0 0 2px rgba(255,255,255,.85), 0 0 0 3px rgba(10,14,16,.3);
+  animation:tap .62s var(--ease) forwards;
+}
+@keyframes tap{
+  from{transform:scale(.35);opacity:.95}
+  to{transform:scale(4.4);opacity:0}
+}
+
 /* ambient projector light */
 .beam{
   position:absolute; inset:0; pointer-events:none; z-index:6;
@@ -365,7 +398,10 @@ body.is-preview .stage{
   transform-style:preserve-3d;cursor:pointer;
   transition:transform .55s var(--ease),opacity .55s var(--ease),filter .55s var(--ease);
 }
-.slot[data-d="0"]{cursor:default}
+.slot[data-d="0"]{cursor:none}
+/* the swipe leaves a trail: a horizontal-only blur while the cards travel, cleared the moment
+   the transition ends so nothing is blurred at rest */
+.deck.is-moving .slot{filter:url(#smear)}
 .slot[data-far]{opacity:0;pointer-events:none}
 
 .packcard{

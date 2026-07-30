@@ -333,7 +333,17 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
       if (Math.abs(d) >= 2) slot.dataset.far = ''; else delete slot.dataset.far;
     });
   }
-  const centre = i => { at2 = Math.max(0, Math.min(PACKS.length - 1, i)); place(); };
+  let settle;
+  const centre = i => {
+    const was = at2;
+    at2 = Math.max(0, Math.min(PACKS.length - 1, i));
+    place();
+    if (at2 === was) return;
+    // the trail lives exactly as long as the slot transition does
+    deck.classList.add('is-moving');
+    clearTimeout(settle);
+    settle = setTimeout(() => deck.classList.remove('is-moving'), 560);
+  };
   place();
 
   /* swipe: one step as soon as the drag passes 44px — committing mid-gesture is the right
@@ -381,7 +391,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const sv = document.getElementById('sv'), hue = document.getElementById('hue');
   const svDot = document.getElementById('svDot'), hueDot = document.getElementById('hueDot');
   const hex = document.getElementById('pickerHex');
-  let h = 0, s = 0, v = 8;                                   // #141414
+  let h = 0, s = 0, v = 65.098;                              // #A6A6A6, the recording default
 
   const hsv2hex = (h, s, v) => {
     const f = n => {
@@ -517,6 +527,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   }
 
   on.onchange = () => { body.classList.toggle('is-preview', on.checked); apply(); };
+  on.dispatchEvent(new Event('change'));   // the panel ships checked, so honour it at boot
   onBgChange.push(apply);
 
   /* Light field: the whole polarity flips for a white desk — lit field, unlit type, dark cards.
@@ -550,6 +561,48 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   sessionStorage.removeItem('keep-screen');
   const want = kept || new URLSearchParams(location.search).get('at');
   show(Math.max(0, order.indexOf(want)));
+}
+
+/* ── prototyping cursor & touch ripples ──────────────────────────────────
+   Recording aid, not part of the projected UI. The disc chases the pointer on its own frame
+   loop with exponential smoothing, so what gets recorded is a gliding cursor rather than the
+   pointer's raw jitter. Everything is placed in design units: the stage is transform-scaled,
+   so client pixels have to be divided by that scale before they mean anything here. */
+{
+  const dot = document.getElementById('cursor');
+  const taps = document.getElementById('taps');
+  const EASE = 0.16;                 // per-frame approach; lower is smoother and laggier
+  let tx = 0, ty = 0, x = 0, y = 0, live = false;
+
+  const toStage = e => {
+    const r = stage.getBoundingClientRect();
+    const s = r.width / 1060;        // the stage is scaled, the coordinates inside it are not
+    return [(e.clientX - r.left) / s, (e.clientY - r.top) / s];
+  };
+
+  stage.addEventListener('pointermove', e => {
+    [tx, ty] = toStage(e);
+    if (!live) { x = tx; y = ty; live = true; dot.classList.add('is-in'); }
+  });
+  stage.addEventListener('pointerleave', () => { live = false; dot.classList.remove('is-in'); });
+  stage.addEventListener('pointerdown', e => {
+    dot.classList.add('is-down');
+    const [px, py] = toStage(e);
+    const ring = document.createElement('span');
+    ring.className = 'tap';
+    ring.style.left = px + 'px';
+    ring.style.top = py + 'px';
+    taps.append(ring);
+    ring.addEventListener('animationend', () => ring.remove());
+  });
+  addEventListener('pointerup', () => dot.classList.remove('is-down'));
+
+  (function follow() {
+    x += (tx - x) * EASE;
+    y += (ty - y) * EASE;
+    dot.style.transform = `translate(${x}px,${y}px)`;
+    requestAnimationFrame(follow);
+  })();
 }
 
 /* ── self-check: open index.html?selftest and watch the console ──────────
@@ -595,6 +648,13 @@ if (location.search.includes('selftest')) {
      cards[2].style.zIndex === '9' && cards[1].style.zIndex === '6');
   cards[3].click();
   ok('tapping a side card centres it', cards[3].dataset.d === '0' && cards[2].dataset.d === '-1');
+
+  // recording aids: the system pointer is replaced, taps leave a ring, a swipe leaves a trail
+  ok('the frame hides the system cursor', getComputedStyle(stage).cursor === 'none');
+  stage.dispatchEvent(new PointerEvent('pointerdown', { clientX: 400, clientY: 300, bubbles: true }));
+  ok('a tap spawns a ripple', document.querySelectorAll('.taps .tap').length === 1);
+  ok('the swipe leaves a trail while the cards travel',
+     document.getElementById('deck').classList.contains('is-moving'));
 
   show(order.indexOf('level'));
   ok('Next dims while a group is empty', !btnNext.classList.contains('is-ready'));
