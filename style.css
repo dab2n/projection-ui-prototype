@@ -98,6 +98,10 @@ body.is-unlit .fit{
   background:
     repeating-conic-gradient(#5a5a5a 0 25%,#8e8e8e 0 50%) 0 0/18px 18px;
 }
+/* Real projection view. The background token IS the desk, so the frame projects nothing there:
+   its own background drops to zero output and the desk shows straight through — as it does
+   through every other black area, including type knocked out of a white card. */
+body.is-real .stage{background:#000}
 body.is-preview .stage{
   mix-blend-mode:screen;
   filter:brightness(var(--gain,1));   /* projector gain only — no colour filtering */
@@ -251,9 +255,11 @@ body.is-preview .stage{
 .hit.is-on .hit-marker{opacity:1;transform:scale(1);animation:markerPulse 2.4s ease-in-out infinite .35s}
 .hit.is-on::before{opacity:0}
 @keyframes markerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-.figure-ring{position:absolute;left:153.68px;top:474.03px;width:337.13px;height:45.84px;animation:ring 5s ease-in-out infinite}
+.figure-ring{position:absolute;left:153.68px;top:474.03px;width:337.13px;height:45.84px;animation:ring 3.2s ease-in-out infinite}
 .figure-axis{position:absolute;left:310.08px;top:504.23px;width:24.09px;height:24.09px;animation:axis 3.2s ease-in-out infinite}
-@keyframes ring{0%,100%{opacity:.85;transform:scaleX(1)}50%{opacity:1;transform:scaleX(1.03)}}
+/* same duration and phase as the axis icon: the ring tilts as the icon slides, so the two read
+   as one gesture. Two different periods drifting past each other was the uncomfortable part. */
+@keyframes ring{0%,100%{transform:rotate(-.9deg)}50%{transform:rotate(.9deg)}}
 @keyframes axis{0%,100%{transform:translateX(-4px)}50%{transform:translateX(4px)}}
 .floorglow--figure{left:-13px;top:449.3px;width:677.94px;height:593.15px}
 

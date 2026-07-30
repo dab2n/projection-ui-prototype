@@ -157,23 +157,39 @@ onSelect.push(syncMarkers);
   const { width: W, height: H } = canvas;
   const FLOOR = 18, GAMMA = 0.55;   // tune: FLOOR = how much off-white is background
 
+  let looping = false, nudge = 0;
   const key = () => {
-    ctx.drawImage(video, 0, 0, W, H);
-    const img = ctx.getImageData(0, 0, W, H);
-    const p = img.data;
-    for (let i = 0; i < p.length; i += 4) {
-      // luminance key: the matte is off-white (~#f4f4f4) and compression adds noise,
-      // so anything within FLOOR of white drops out and the rest is curved up so the
-      // pale head and arms stay readable. Colours are left alone — the clip already
-      // carries the gradient the design wants.
-      const d = (255 - Math.min(p[i], p[i + 1], p[i + 2]) - FLOOR) / (255 - FLOOR);
-      p[i + 3] = d <= 0 ? 0 : Math.min(255, 255 * Math.pow(d, GAMMA));
+    // self-heal: a spell with the tab hidden leaves the clip paused, and nothing else here
+    // would ever start it again. Checked a few times a second, not every frame.
+    if (video.paused && ++nudge % 20 === 0) video.play().catch(() => {});
+    if (video.readyState >= 2) {
+      ctx.drawImage(video, 0, 0, W, H);
+      const img = ctx.getImageData(0, 0, W, H);
+      const p = img.data;
+      for (let i = 0; i < p.length; i += 4) {
+        // luminance key: the matte is off-white (~#f4f4f4) and compression adds noise,
+        // so anything within FLOOR of white drops out and the rest is curved up so the
+        // pale head and arms stay readable. Colours are left alone — the clip already
+        // carries the gradient the design wants.
+        const d = (255 - Math.min(p[i], p[i + 1], p[i + 2]) - FLOOR) / (255 - FLOOR);
+        p[i + 3] = d <= 0 ? 0 : Math.min(255, 255 * Math.pow(d, GAMMA));
+      }
+      ctx.putImageData(img, 0, 0);
     }
-    ctx.putImageData(img, 0, 0);
-    video.requestVideoFrameCallback ? video.requestVideoFrameCallback(key) : requestAnimationFrame(key);
+    requestAnimationFrame(key);
   };
 
-  video.addEventListener('loadeddata', () => { video.play().catch(() => {}); key(); }, { once: true });
+  /* rAF, not requestVideoFrameCallback. rVFC only fires while the video decodes, so a paused
+     tab killed the loop for good and the canvas was left blank — which is why the figure went
+     missing after a while of changing modes. rAF sleeps and wakes with the page, and start()
+     gets the clip playing again on every way back in. */
+  const start = () => {
+    video.play().catch(() => {});
+    if (!looping) { looping = true; requestAnimationFrame(key); }
+  };
+  video.addEventListener('loadeddata', start);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) start(); });
+  onShow.push(name => { if (name === 'injury') start(); });
 }
 
 /* ── Main workout ────────────────────────────────────────────────────────
@@ -474,6 +490,8 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const n = m ? parseInt(m[1], 16) : 0xf2efea;
     // real projection view: the desk sits at its own colour, so every black area of the frame
     // simply shows the desk. Ambient stops applying — that is the point of the view.
+    // real view: the desk sits at its own colour and the frame projects nothing on the
+    // background, so black areas — including type knocked out of a white card — are the desk
     const a = real.checked ? 1 : +ambient.value / 100;
     const rgb = [0, 1, 2].map(i => Math.round(((n >> (16 - i * 8)) & 255) * a));
     body.style.setProperty('--floor', `rgb(${rgb.join(' ')})`);
@@ -570,8 +588,13 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   };
 
   real.onchange = () => {
-    if (real.checked && !on.checked) { on.checked = true; on.dispatchEvent(new Event('change')); }
-    else apply();
+    body.classList.toggle('is-real', real.checked);
+    // the desk becomes the projection background that was picked, so the holes match it exactly
+    if (real.checked) {
+      hex.value = getComputedStyle(stage).getPropertyValue('--bg').trim().toUpperCase();
+      if (!on.checked) { on.checked = true; on.dispatchEvent(new Event('change')); return; }
+    }
+    apply();
   };
 
   const unlit = document.getElementById('unlitOn');
@@ -697,11 +720,17 @@ if (location.search.includes('selftest')) {
     ok('and the token is released when preview is off',
        document.body.style.getPropertyValue('--brand') === '');
 
-    // real projection view: the floor IS the desk, so every black area shows the desk colour
+    /* real projection view: the frame stops projecting its background, and the desk takes the
+       picked background colour — so a black glyph inside a white card is a hole onto the desk */
     const realBox = document.getElementById('realOn');
     realBox.checked = true; realBox.dispatchEvent(new Event('change'));
-    ok('real view puts the desk colour behind the black',
-       getComputedStyle(document.body).getPropertyValue('--floor').trim() === 'rgb(242 239 234)');
+    const hexToRgb = h => { const n = parseInt(/([\da-f]{6})/i.exec(h)[1], 16);
+      return `rgb(${n >> 16} ${(n >> 8) & 255} ${n & 255})`; };
+    ok('real view lays the picked background down as the desk',
+       getComputedStyle(document.body).getPropertyValue('--floor').trim() ===
+       hexToRgb(getComputedStyle(stage).getPropertyValue('--bg')));
+    ok('and the frame projects nothing where its background is',
+       getComputedStyle(stage).backgroundColor === 'rgb(0, 0, 0)');
     realBox.checked = false; realBox.dispatchEvent(new Event('change'));
     document.getElementById('previewOn').checked = false;
     document.getElementById('previewOn').dispatchEvent(new Event('change'));
