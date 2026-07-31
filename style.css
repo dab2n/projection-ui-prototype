@@ -196,17 +196,13 @@ body.is-unlit .shot{
 body.is-preview .stage{
   background:transparent;
   mix-blend-mode:normal;              /* laid over the desk, not screened onto it */
-  filter:brightness(var(--gain,1)) url(#proj);
+  filter:brightness(var(--gain,1));
   opacity:var(--dose,.92);            /* how much of the design the surface takes */
   box-shadow:none;
 }
-/* 리얼 프로젝션뷰 — the preview, unchanged, plus an outline on the black. Black is zero light,
-   so under the screen blend it is already invisible; that is correct but it also means an
-   unprojected shape leaves nothing to read. The filter strokes those areas faintly and leaves
-   the fill empty. Every other colour composites exactly as it does in the preview — same
-   blend, same gain, nothing remapped. */
-body.is-real .stage{filter:brightness(var(--gain,1)) url(#projEdge)}
-.filters{position:absolute;width:0;height:0}
+/* 리얼 프로젝션뷰 lays the desk down at its own colour instead of desk × ambient. Nothing is
+   drawn differently: the design goes on as designed, black included, and no line is added to
+   it that the design does not have. */
 
 /* ── prototyping cursor & touch ─────────────────────────────
    For screen recordings: the system pointer is hidden inside the frame and replaced with the
@@ -241,13 +237,6 @@ body.is-real .stage{filter:brightness(var(--gain,1)) url(#projEdge)}
 @keyframes tap{
   from{transform:scale(.6);opacity:.8}
   to{transform:scale(1.7);opacity:0}
-}
-/* In auto play the finger is over the mark it makes, and the hand is painted above the frame,
-   so a 36px ring lives entirely under a fingertip 150px wide on screen. The ripple has to
-   spread past the hand to be the touch feedback it is. */
-body.is-auto .tap{
-  width:200px;height:200px;margin:-100px 0 0 -100px;
-  box-shadow:0 0 0 2px rgba(255,255,255,.5);
 }
 
 /* a drag leaves the line it was drawn along. Placed at its start, rotated to its direction and

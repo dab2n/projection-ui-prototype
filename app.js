@@ -554,10 +554,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const apply = () => {
     // the desk is whatever the panel's picker is set to — there is only one colour here
     const n = parseInt(/([\da-f]{6})/i.exec(getComputedStyle(stage).getPropertyValue('--bg'))[1], 16);
-    // real projection view: the desk sits at its own colour, so every black area of the frame
-    // simply shows the desk. Ambient stops applying — that is the point of the view.
-    // real view: the desk sits at its own colour and the frame projects nothing on the
-    // background, so black areas — including type knocked out of a white card — are the desk
+    // real projection view lays the desk down at its own colour instead of desk × ambient
     const a = real.checked ? 1 : +ambient.value / 100;
     const rgb = [0, 1, 2].map(i => Math.round(((n >> (16 - i * 8)) & 255) * a));
     body.style.setProperty('--floor', `rgb(${rgb.join(' ')})`);
@@ -596,13 +593,11 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const [x, y] = [relLum(a), relLum(b)].sort((p, q) => q - p);
     return (x + 0.05) / (y + 0.05);
   };
-  /* what the surface ends up showing: the design at --dose over the desk, with black knocked
-     out to nothing. A colour whose channels sum below 1 is partly transparent, so it lands
-     between itself and the desk — which is what black doing nothing means. */
+  /* what the surface ends up showing: the design laid over the desk at --dose, as drawn.
+     Nothing is knocked out and no channel is remapped — black included. */
   const over = (c, floor) => {
     const d = +document.getElementById('dose').value / 100;
-    const a = Math.min(1, c[0] + c[1] + c[2]) * d;
-    return c.map((v, i) => v * a + floor[i] * (1 - a));
+    return c.map((v, i) => v * d + floor[i] * (1 - d));
   };
 
   function meter(floor) {
@@ -1154,13 +1149,12 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
     ok('the preview leaves the brand red exactly as drawn',
        document.body.style.getPropertyValue('--brand') === '' &&
        getComputedStyle(stage).getPropertyValue('--brand').trim().toLowerCase() === '#fa3030');
-    // black is the one value the projector cannot make: knocked out, so the desk comes through
-    ok('black is knocked out rather than screened',
-       getComputedStyle(stage).filter.includes('#proj') &&
-       getComputedStyle(stage).mixBlendMode === 'normal');
+    // the design goes down as designed: laid over at a dose, with no filter drawing on it
+    ok('the preview adds no line and knocks nothing out',
+       getComputedStyle(stage).mixBlendMode === 'normal' &&
+       !getComputedStyle(stage).filter.includes('url('));
 
-    /* real projection view: the frame stops projecting its background, and the desk takes the
-       picked background colour — so a black glyph inside a white card is a hole onto the desk */
+    /* real projection view: the desk takes the picked colour flat, with no ambient scaling */
     const realBox = document.getElementById('realOn');
     realBox.checked = true; realBox.dispatchEvent(new Event('change'));
     const hexToRgb = h => { const n = parseInt(/([\da-f]{6})/i.exec(h)[1], 16);

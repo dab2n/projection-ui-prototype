@@ -486,36 +486,6 @@
      blend; the outline is what makes an unprojected shape readable as a shape. Region is pinned
      to the frame's own box, otherwise the flood spills into the filter's 10% margin and the
      erode traces a rectangle out in space instead of the frame edge. -->
-<svg class="filters" aria-hidden="true">
-  <!-- The projection is the design laid over the desk with a dose of transparency, not light
-       screened onto it. Screen keeps the physics but spends all its headroom on a near-white
-       desk and the colour goes with it. Here every colour composites at the value it was drawn
-       in; only black is special, and black is nothing being projected — alpha 0, bare desk.
-       alpha = R+G+B clamped: black 0, a white card 1, #FA3030 1.36 → 1, so saturated colour
-       loses nothing. Flattened over black first, so a 4% white scrim reads as 4% light. -->
-  <filter id="proj" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-    <feFlood flood-color="#000"/>
-    <feComposite in="SourceGraphic" operator="over" result="lit"/>
-    <feColorMatrix in="lit" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  1 1 1 0 0"/>
-  </filter>
-
-  <!-- 리얼 프로젝션뷰: the same, plus a faint outline on the black so an unprojected shape
-       still reads as a shape. Region pinned to the frame's box, or the flood spills into the
-       filter's 10% margin and the erode traces a rectangle out in space. -->
-  <filter id="projEdge" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-    <feFlood flood-color="#000"/>
-    <feComposite in="SourceGraphic" operator="over" result="lit"/>
-    <feColorMatrix in="lit" type="matrix"
-      values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  1 1 1 0 0" result="knock"/>
-    <!-- white, alpha = 1 − (R+G+B): opaque only where the design emits nothing -->
-    <feColorMatrix in="lit" type="matrix"
-      values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -1 -1 -1 0 1" result="dark"/>
-    <feMorphology in="dark" operator="erode" radius="1.1" result="inner"/>
-    <feComposite in="dark" in2="inner" operator="out" result="edge"/>
-    <feComponentTransfer in="edge" result="faint"><feFuncA type="linear" slope=".55"/></feComponentTransfer>
-    <feMerge><feMergeNode in="knock"/><feMergeNode in="faint"/></feMerge>
-  </filter>
-</svg>
 
 <script src="app.js"></script>
 </body>
