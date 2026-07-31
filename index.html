@@ -440,6 +440,17 @@
   </div>
 </aside>
 
+<!-- 리얼 프로젝션뷰. A projector emits light; where the design is black it emits none, so that
+     area is not "dark" — it is a hole, and the desk under it is untouched. This turns the
+     frame's own light into its alpha: flatten it over black first (so a 4% white scrim reads as
+     4% light, not as solid white), then take alpha = R+G+B clamped. Black → 0, a white card →
+     1, #FA3030 → 1.36 → 1, so saturated colour keeps every bit of its chroma. -->
+<svg class="filters" aria-hidden="true"><filter id="knockout" color-interpolation-filters="sRGB">
+  <feFlood flood-color="#000"/>
+  <feComposite in="SourceGraphic" operator="over" result="lit"/>
+  <feColorMatrix in="lit" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  1 1 1 0 0"/>
+</filter></svg>
+
 <script src="app.js"></script>
 </body>
 </html>

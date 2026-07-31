@@ -590,7 +590,11 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     }).join('');
   }
 
-  on.onchange = () => { body.classList.toggle('is-preview', on.checked); apply(); };
+  on.onchange = () => {
+    body.classList.toggle('is-preview', on.checked);
+    body.classList.toggle('is-real', real.checked && on.checked);   // real view lives inside it
+    apply();
+  };
   on.dispatchEvent(new Event('change'));   // the panel ships checked, so honour it at boot
   onBgChange.push(apply);
 
@@ -606,6 +610,9 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   };
 
   real.onchange = () => {
+    // the class is what swaps the screen blend for the knockout filter — without it the switch
+    // only moved --floor, which the desk footage does not use, so it did nothing at all
+    body.classList.toggle('is-real', real.checked);
     if (real.checked && !on.checked) { on.checked = true; on.dispatchEvent(new Event('change')); }
     else apply();
   };
@@ -631,17 +638,23 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const loop = document.getElementById('loopOn');
   const SRC = 'Projection GUI.mov';        // the 4K original the cut should be taken from
 
-  /* ── perspective rig ── */
+  /* ── perspective rig ──
+     Defaults measured off the A4 sheet lying on the desk in the footage: it is foreshortened to
+     0.54 of the height it would have flat on, so cos⁻¹(0.54) ≈ 56°, and its edges converge at
+     the rate a camera ~3000px back gives at this frame size.
+     원근 does nothing at 기울기 0° — a plane square to the camera has no depth to project —
+     which is why it read as a dead control before the frame was laid down. */
   const KNOBS = [
-    ['rx',    '기울기', -70,   70,    0, 'deg', '°'],
+    ['rx',    '기울기', -70,   70,   56, 'deg', '°'],
     ['ry',    '좌우',   -70,   70,    0, 'deg', '°'],
     ['rz',    '회전',   -45,   45,    0, 'deg', '°'],
-    ['persp', '원근',   300, 4000, 1400, 'px',  'px'],
-    ['zoom',  '크기',    15,  160,  100, '%',   '%'],
-    ['tx',    'X',     -700,  700,    0, 'px',  'px'],
-    ['ty',    'Y',     -500,  500,    0, 'px',  'px'],
+    ['persp', '원근',   300, 4000, 3000, 'px',  'px'],
+    ['zoom',  '크기',    15,  160,  112, '%',   '%'],
+    ['tx',    'X',     -700,  700,  -25, 'px',  'px'],
+    ['ty',    'Y',     -500,  500,  105, 'px',  'px'],
   ];
-  const saved = JSON.parse(localStorage.getItem('rig') || '{}');
+  // rig2: the defaults changed, and a saved rig from before would have hidden them
+  const saved = JSON.parse(localStorage.getItem('rig2') || '{}');
   const rigRow = document.getElementById('rig');
   const inputs = {};
 
@@ -656,7 +669,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
       // % is a ratio in CSS terms, the rest carry their unit through untouched
       stage.style.setProperty('--' + k, unit === '%' ? r.value / 100 : r.value + unit);
       el.querySelector('b').textContent = r.value + suffix;
-      localStorage.setItem('rig', JSON.stringify(
+      localStorage.setItem('rig2', JSON.stringify(
         Object.fromEntries(Object.entries(inputs).map(([n, i]) => [n, +i.value]))));
     };
     r.oninput();
@@ -679,10 +692,12 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     band.style.width = ((Math.min(OUT, d) - IN) / d * 100) + '%';
   };
 
-  vid.addEventListener('loadedmetadata', () => {
+  const meta = () => {
     document.getElementById('tDur').textContent = mmss(vid.duration);
     drawCut();
-  });
+  };
+  vid.addEventListener('loadedmetadata', meta);
+  if (vid.readyState >= 1) meta();     // cached: the event fired before this listener existed
   vid.addEventListener('timeupdate', () => {
     // the cut is a playback range, not a destructive edit — leaving it wraps or stops here
     if (vid.currentTime >= OUT) { vid.currentTime = IN; if (!loop.checked) vid.pause(); }
@@ -880,17 +895,19 @@ if (location.search.includes('selftest')) {
   // tilted, pointer→design is projective; an affine inverse looks right at the centre and
   // drifts at the corners, which is exactly where the frame's controls are
   {
-    const f = document.getElementById('fit').getBoundingClientRect();
     stage.style.setProperty('--rx', '38deg');
     stage.style.setProperty('--rz', '9deg');
     const fwd = (x, y) => {                       // forward projection, via a different path
+      // read the frame's box here, not once up front: a scrollbar appearing mid-test moves the
+      // centre 7.5px and the round-trip fails on the reference point, not on the maths
+      const f = document.getElementById('fit').getBoundingClientRect();
       const p = new DOMMatrix(getComputedStyle(stage).transform)
         .transformPoint(new DOMPoint(x - 530, y - 331.5, 0, 1));
       return [p.x / p.w + f.left + f.width / 2, p.y / p.w + f.top + f.height / 2];
     };
     const back = unproject(...fwd(880, 120));
-    ok('the tilted frame still puts the cursor under the pointer',
-       Math.hypot(back[0] - 880, back[1] - 120) < 0.5);
+    const off = Math.hypot(back[0] - 880, back[1] - 120);
+    ok(`the tilted frame still puts the cursor under the pointer (${off.toFixed(2)}px)`, off < 0.5);
     document.getElementById('rigReset').click();
   }
 

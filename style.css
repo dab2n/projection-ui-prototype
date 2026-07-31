@@ -131,6 +131,21 @@ body.is-preview .stage{
   filter:brightness(var(--gain,1));   /* projector gain only — no colour filtering */
   box-shadow:none;
 }
+/* 리얼 프로젝션뷰 — the same fact as the screen blend, but cut instead of added: the frame's
+   own light becomes its alpha, so every black area is a literal hole and the desk behind it
+   arrives untouched, while everything that does emit keeps the colour it was drawn in. Over a
+   near-white desk the screen blend has almost no headroom left and washes the design out;
+   this keeps the card white and the type a hole through it, which is the thing to look at.
+   gain first, so the projector's output is what gets turned into alpha. */
+body.is-real .stage{
+  mix-blend-mode:normal;
+  filter:brightness(var(--gain,1)) url(#knockout);
+}
+/* the ambient spill is a mood layer standing in for a projector we could not point at a desk.
+   Here there is a real one in the footage, and the stand-in only draws a pale rectangle around
+   the frame — the one thing that must not read as an edge. */
+body.is-real .beam{display:none}
+.filters{position:absolute;width:0;height:0}
 
 /* ── prototyping cursor & touch ─────────────────────────────
    For screen recordings: the system pointer is hidden inside the frame and replaced with the
