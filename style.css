@@ -196,13 +196,13 @@ body.is-unlit .shot{
 body.is-preview .stage{
   background:transparent;
   mix-blend-mode:normal;              /* laid over the desk, not screened onto it */
-  filter:brightness(var(--gain,1));
-  opacity:var(--dose,.92);            /* how much of the design the surface takes */
+  filter:brightness(var(--gain,1)) url(#tone);   /* black 50%, white 80%, by value */
+  opacity:var(--dose,1);              /* a global multiplier on top of that */
   box-shadow:none;
 }
 /* 리얼 프로젝션뷰 lays the desk down at its own colour instead of desk × ambient. Nothing is
-   drawn differently: the design goes on as designed, black included, and no line is added to
-   it that the design does not have. */
+   drawn differently: the design goes on as designed and no line is added to it that the
+   design does not have. */
 
 /* ── prototyping cursor & touch ─────────────────────────────
    For screen recordings: the system pointer is hidden inside the frame and replaced with the
@@ -936,3 +936,5 @@ body.is-preview .picker-sliders{display:flex}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+.filters{position:absolute;width:0;height:0}

@@ -18,9 +18,11 @@
        this, so the frame and the footage under it stay locked while the crop tightens. -->
   <div class="shot" id="shot">
 
-  <!-- the desk itself. Not a backdrop image — this is the plate the UI gets composited onto,
-       so it sits inside the shot where the frame's screen blend can reach it. -->
-  <video class="deskvid" id="deskVid" src="assets/desk-cut.mp4" muted playsinline preload="auto"></video>
+  <!-- the desk itself, with the hand taken out of it. The hand comes back on top of the frame
+       from hand-matte.webm; leaving a copy down here meant two hands whenever the two clips
+       drifted a frame apart, and a pale rim where the UI showed through the matte's soft edge.
+       Not a backdrop image — it sits inside the shot so the frame composites onto it. -->
+  <video class="deskvid" id="deskVid" src="assets/desk-clean.mp4" muted playsinline preload="auto"></video>
 
   <!-- A4 sync guide. The GUI is 2560×1600 and was shot against an A4 lying on the desk, fitted
        to the sheet's width — so the sheet runs 418 design px past the frame top and bottom.
@@ -408,7 +410,7 @@
     <div class="picker-sliders" id="previewOpts">
       <label>환경광 <input type="range" id="ambient" min="0" max="60" value="18"><b id="ambientOut">18%</b></label>
       <label>프로젝터 <input type="range" id="gain" min="60" max="170" value="100"><b id="gainOut">100%</b></label>
-      <label>농도 <input type="range" id="dose" min="50" max="100" value="92"><b id="doseOut">92%</b></label>
+      <label>농도 <input type="range" id="dose" min="50" max="100" value="100"><b id="doseOut">100%</b></label>
       <p class="picker-cap">뷰 — 검정은 어느 쪽이든 투명하다</p>
       <label class="picker-check picker-check--sub" title="환경광을 빼고 책상을 자기 색 그대로 깐다. 검정 영역으로 책상색이 그대로 비친다.">
         <input type="checkbox" id="realOn">
@@ -486,6 +488,26 @@
      blend; the outline is what makes an unprojected shape readable as a shape. Region is pinned
      to the frame's own box, otherwise the flood spills into the filter's 10% margin and the
      erode traces a rectangle out in space instead of the frame edge. -->
+
+<!-- Projected opacity by value, not one flat number. A surface takes dark ink badly and light
+     ink well, and a single opacity over the whole frame makes the black look pasted on. Black
+     lands at 50%, white at 80%, and everything in between rides along. Nothing is remapped and
+     no line is added — only how much of each pixel the surface takes.
+     value = R+G+B clamped to 1, so #FA3030 (1.36) counts as fully lit and keeps white's 80%. -->
+<svg class="filters" aria-hidden="true">
+  <filter id="tone" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#000"/>
+    <feComposite in="SourceGraphic" operator="over" result="lit"/>
+    <feColorMatrix in="lit" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  1 1 1 0 0" result="v"/>
+    <feComponentTransfer in="v" result="toned">
+      <feFuncA type="linear" slope=".3" intercept=".5"/>
+    </feComponentTransfer>
+    <!-- back through the source's own alpha. Without this the frame's transparent background
+         counts as a black pixel and the whole frame turns into a 50% grey slab — transparent
+         is nothing being projected, which is not the same as projecting black. -->
+    <feComposite in="toned" in2="SourceGraphic" operator="in"/>
+  </filter>
+</svg>
 
 <script src="app.js"></script>
 </body>

@@ -343,7 +343,7 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     const next = Math.max(1, Math.min(MAX_ROUNDS, roundCount + +btn.dataset.stepDelta));
     if (next === roundCount && strikeMin) return;
     roundCount = next;
-    countTo(rounds, next, String, 260);
+    countTo(rounds, next, String, 420);   // long enough that a quick second tap flows into it
     strikeMin = strikeFor(next);
     layoutBars();
     countTo(totalMin, total());   // the count is the whole animation — no scale pop
@@ -659,7 +659,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const play = document.getElementById('play');
   const cutOut = document.getElementById('cutOut');
   const loop = document.getElementById('loopOn');
-  const SRC = 'assets/desk-cut.mp4';       // what the timeline above is showing
+  const SRC = 'assets/desk-clean.mp4';     // what the timeline above is showing
 
   /* ── perspective rig ──
      Defaults are the alignment found against desk-cut.mp4 by hand, not a derivation.
@@ -917,8 +917,10 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     { t: 46.2, at: 'level',     g: 0, o: 1 },
     { t: 51.2, at: 'level',     g: 1, o: 0 },
     // the last stretch is one long touch, so both taps land inside it: 4 → 5 → 6 rounds
-    { t: 58.1, at: 'main',      hit: '.step[data-step-delta="1"]', wait: 240 },
-    { t: 58.7, at: 'main',      hit: '.step[data-step-delta="1"]', wait: 240 },
+    /* two taps inside one hold. Close enough that the number tween and the bars' .5s width
+       transition retarget mid-flight, so 4 → 6 is one continuous move rather than two. */
+    { t: 58.15, at: 'main',     hit: '.step[data-step-delta="1"]', wait: 200 },
+    { t: 58.50, at: 'main',     hit: '.step[data-step-delta="1"]', wait: 200 },
   ];
 
   /* design coordinates of an element, for aiming the disc. offsetLeft chains up in design
@@ -1086,9 +1088,12 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const hv = document.getElementById('handVid');
   const box = document.getElementById('handOn');
 
+  /* 0.04s is one frame at 25fps. It used to be two, and two frames of drift with a hand in
+     motion showed as a second hand — the plate carried its own copy underneath. The plate is
+     hand-free now, so drift only moves the one hand slightly; the tolerance is tight anyway. */
   const sync = () => {
     if (!box.checked) return;
-    if (Math.abs(hv.currentTime - vid.currentTime) > 0.08) hv.currentTime = vid.currentTime;
+    if (Math.abs(hv.currentTime - vid.currentTime) > 0.04) hv.currentTime = vid.currentTime;
     if (vid.paused !== hv.paused) vid.paused ? hv.pause() : hv.play().catch(() => {});
   };
   ['timeupdate', 'seeked', 'play', 'pause'].forEach(e => vid.addEventListener(e, sync));
@@ -1149,10 +1154,13 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
     ok('the preview leaves the brand red exactly as drawn',
        document.body.style.getPropertyValue('--brand') === '' &&
        getComputedStyle(stage).getPropertyValue('--brand').trim().toLowerCase() === '#fa3030');
-    // the design goes down as designed: laid over at a dose, with no filter drawing on it
-    ok('the preview adds no line and knocks nothing out',
+    /* the only filter is opacity by value — black 50%, white 80%. Nothing draws a line on the
+       UI, and the frame's own transparent background stays transparent rather than counting
+       as a black pixel, which would turn the whole frame into a grey slab. */
+    ok('the preview changes opacity only, and leaves the frame background transparent',
        getComputedStyle(stage).mixBlendMode === 'normal' &&
-       !getComputedStyle(stage).filter.includes('url('));
+       getComputedStyle(stage).filter.includes('#tone') &&
+       document.querySelector('#tone feComposite[operator="in"]'));
 
     /* real projection view: the desk takes the picked colour flat, with no ambient scaling */
     const realBox = document.getElementById('realOn');
