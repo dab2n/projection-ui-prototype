@@ -101,13 +101,13 @@ body.is-desk .hint{display:none}   /* the shot wants the height more than the ca
 body.is-desk .stage{box-shadow:none}
 
 /* ── A4 sync guide ───────────────────────────────────────────
-   The shot was framed against an A4 lying on the desk and the 2560×1600 GUI is assumed to fit
-   its width, so the sheet is 1060 × 1060·(297/210) = 1499.14 design px and overhangs the frame
-   by 418.07 top and bottom. Carries the same rig transform as the frame — same custom props,
-   same origin, so the two stay locked together however the frame is laid down. */
+   The shot was framed against an A4 lying landscape on the desk and the 2560×1600 GUI is
+   assumed to fit its width, so the sheet is 1060 × 1060·(210/297) = 749.49 design px and
+   overhangs the frame by only 43.25 top and bottom. Carries the same rig transform as the
+   frame — same custom props, same origin — so the two stay locked however it is laid down. */
 .a4{
-  position:absolute; left:50%; top:50%; margin:-749.571px 0 0 -530px;
-  width:1060px;height:1499.143px;pointer-events:none;display:none;
+  position:absolute; left:50%; top:50%; margin:-374.747px 0 0 -530px;
+  width:1060px;height:749.495px;pointer-events:none;display:none;
   /* the bands are the pale white the guide is for; the hairline is so the guide can be found
      at all on a white desk, where pale white on pale white is nothing */
   box-shadow:inset 0 0 0 1px rgba(250,48,48,.5);
@@ -120,7 +120,7 @@ body.is-desk .stage{box-shadow:none}
 }
 body.is-a4 .a4{display:block}
 .a4 i{
-  position:absolute;left:0;width:100%;height:418.071px;
+  position:absolute;left:0;width:100%;height:43.247px;
   background:rgba(255,255,255,.18);box-shadow:inset 0 0 0 1px rgba(250,48,48,.32);
 }
 .a4 i:first-child{top:0}

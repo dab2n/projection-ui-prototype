@@ -13,7 +13,7 @@ const steps   = [...flowbar.querySelectorAll('li')];
    pass — whichever of the two is set explicitly wins and the other overflows. */
 const fitEl  = document.getElementById('fit');
 const canvas = document.getElementById('canvas');
-let AR = 16 / 9;
+let AR = 1920 / 1012;   // the plate's own aspect: nothing is cut until it is asked for
 
 const fit = () => {
   const full = document.fullscreenElement === canvas;
@@ -656,10 +656,11 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const SRC = 'Projection GUI.mov';        // the 4K original the cut should be taken from
 
   /* ── perspective rig ──
-     Defaults land the A4 guide on the actual sheet in the footage — that is what makes the
-     guide worth anything. The sheet sits at (858,687) of the 1920×1012 plate, so the crop
-     pulls it to the middle at 190%; there it is foreshortened to 0.54 of its flat height
-     (cos⁻¹ → 56°) and its far edge is 0.795× its near edge (→ camera ~3350px back).
+     Defaults put the frame down on the desk plane at the sheet in the footage. The plane comes
+     off that sheet: foreshortened to 0.588 of its flat depth (cos⁻¹ → 54°) with its far edge
+     0.772× its near edge (→ camera ~870px back at this rendering). Size follows from the GUI
+     being as wide as a landscape A4 — 297 against the sheet's 210 across, so 1.41× its width.
+     The crop starts at 100%: how much of the shot gets cut is a decision, not a default.
      The numbers are in screen px, so they hold at the window size they were found at — drag
      them back with 드래그 정렬 on any other.
      원근 does nothing at 기울기 0° — a plane square to the camera has no depth to project —
@@ -668,13 +669,14 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     ['rx',    '기울기', -70,   70,   54, 'deg', '°',  'rig'],
     ['ry',    '좌우',   -70,   70,    0, 'deg', '°',  'rig'],
     ['rz',    '회전',   -45,   45,    0, 'deg', '°',  'rig'],
-    ['persp', '원근',   300, 4000, 2148, 'px',  'px', 'rig'],
-    ['zoom',  '크기',    15,  160,   55, '%',   '%',  'rig'],
-    ['tx',    'X',     -900,  900,  -74, 'px',  'px', 'rig'],
-    ['ty',    'Y',     -700,  700,  -30, 'px',  'px', 'rig'],
-    ['vz',    '배율',   100,  320,  251, '%',   '%',  'crop'],
-    ['vx',    'X',     -900,  900,  200, 'px',  'px', 'crop'],
-    ['vy',    'Y',     -700,  700, -197, 'px',  'px', 'crop'],
+    ['persp', '원근',   200, 4000,  870, 'px',  'px', 'rig'],
+    ['zoom',  '크기',     8,  160,   31, '%',   '%',  'rig'],
+    ['tx',    'X',     -900,  900,  -80, 'px',  'px', 'rig'],
+    ['ty',    'Y',     -700,  700,   79, 'px',  'px', 'rig'],
+    // no crop by default — how much of the shot gets cut is a decision, not a default
+    ['vz',    '배율',   100,  400,  100, '%',   '%',  'crop'],
+    ['vx',    'X',     -900,  900,    0, 'px',  'px', 'crop'],
+    ['vy',    'Y',     -700,  700,    0, 'px',  'px', 'crop'],
   ];
   // rig2: the defaults changed, and a saved rig from before would have hidden them
   const saved = JSON.parse(localStorage.getItem('rig2') || '{}');
@@ -957,11 +959,11 @@ if (location.search.includes('selftest')) {
     const a = document.getElementById('a4'), s = getComputedStyle(a);
     ok('the A4 guide moves with the frame',
        s.transform === getComputedStyle(stage).transform && a.parentElement === canvas);
-    // GUI fitted to A4's width: 1060 × 297/210 tall, so it overhangs 418.07 top and bottom
+    // GUI fitted to a landscape A4's width: 1060 × 210/297, so it overhangs 43.25 top and bottom
     ok('the A4 guide is the sheet the shot was framed against',
-       Math.abs(parseFloat(s.height) - 1060 * 297 / 210) < 0.1 &&
+       Math.abs(parseFloat(s.height) - 1060 * 210 / 297) < 0.1 &&
        Math.abs(parseFloat(getComputedStyle(a.firstElementChild).height)
-                - (1060 * 297 / 210 - 663) / 2) < 0.1);
+                - (1060 * 210 / 297 - 663) / 2) < 0.1);
   }
   // tilted, pointer→design is projective; an affine inverse looks right at the centre and
   // drifts at the corners, which is exactly where the frame's controls are
