@@ -13,7 +13,7 @@ const steps   = [...flowbar.querySelectorAll('li')];
    pass — whichever of the two is set explicitly wins and the other overflows. */
 const fitEl  = document.getElementById('fit');
 const canvas = document.getElementById('canvas');
-let AR = 1920 / 1012;   // the plate's own aspect: nothing is cut until it is asked for
+let AR = 16 / 9;
 
 const fit = () => {
   const full = document.fullscreenElement === canvas;
@@ -58,9 +58,13 @@ const unproject = (cx, cy) => {
 
 /* ── navigation ─────────────────────────────────────────── */
 let at = 0;
+let hop;                // pending auto-advance, cancelled by any other navigation
 const onShow = [];      // fns notified with the screen name on every change
+/* set by the cursor block — the prototyping disc, driven from here in auto play */
+let aim = null, tapAt = null;
 
 function show(i) {
+  clearTimeout(hop);
   at = Math.max(0, Math.min(screens.length - 1, i));
   screens.forEach((s, n) => s.classList.toggle('is-active', n === at));
 
@@ -153,6 +157,19 @@ const refreshNext = () => {
   btnNext.classList.toggle('is-ready', !groups.length || [...groups].every(g => g.querySelector('.is-on')));
 };
 onSelect.push(refreshNext);
+
+/* Answering every group on a step IS the answer — Next does not need pressing. Hung off
+   onSelect and not off refreshNext, which also runs on entry: coming back to a step that is
+   already filled in would otherwise bounce straight forward again. The delay is so the
+   selection is seen before the screen goes. */
+onSelect.push(() => {
+  const cur = screens[at];
+  const groups = [...cur.querySelectorAll('[data-select]')];
+  clearTimeout(hop);
+  if (!groups.length || at >= screens.length - 1) return;
+  if (!groups.every(g => g.querySelector('.is-on'))) return;
+  hop = setTimeout(() => { if (screens[at] === cur) go(1); }, 900);
+});
 
 /* ── injury check: keyed silhouette + body-region hotspots ───────────────
    Normalised to the silhouette box. Taken from the Newton app's own body map for
@@ -653,26 +670,23 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const play = document.getElementById('play');
   const cutOut = document.getElementById('cutOut');
   const loop = document.getElementById('loopOn');
-  const SRC = 'Projection GUI.mov';        // the 4K original the cut should be taken from
+  const SRC = 'assets/desk-cut.mp4';       // what the timeline above is showing
 
   /* ── perspective rig ──
-     Defaults put the frame down on the desk plane at the sheet in the footage. The plane comes
-     off that sheet: foreshortened to 0.588 of its flat depth (cos⁻¹ → 54°) with its far edge
-     0.772× its near edge (→ camera ~870px back at this rendering). Size follows from the GUI
-     being as wide as a landscape A4 — 297 against the sheet's 210 across, so 1.41× its width.
-     The crop starts at 100%: how much of the shot gets cut is a decision, not a default.
+     Defaults are the alignment found against desk-cut.mp4 by hand, not a derivation.
+     The crop stays at 100%: how much of the shot gets cut is a decision, not a default.
      The numbers are in screen px, so they hold at the window size they were found at — drag
      them back with 드래그 정렬 on any other.
      원근 does nothing at 기울기 0° — a plane square to the camera has no depth to project —
      which is why it read as a dead control before the frame was laid down. */
   const KNOBS = [
-    ['rx',    '기울기', -70,   70,   54, 'deg', '°',  'rig'],
+    ['rx',    '기울기', -70,   70,   31, 'deg', '°',  'rig'],
     ['ry',    '좌우',   -70,   70,    0, 'deg', '°',  'rig'],
     ['rz',    '회전',   -45,   45,    0, 'deg', '°',  'rig'],
-    ['persp', '원근',   200, 4000,  870, 'px',  'px', 'rig'],
-    ['zoom',  '크기',     8,  160,   31, '%',   '%',  'rig'],
-    ['tx',    'X',     -900,  900,  -80, 'px',  'px', 'rig'],
-    ['ty',    'Y',     -700,  700,   79, 'px',  'px', 'rig'],
+    ['persp', '원근',   200, 4000, 2148, 'px',  'px', 'rig'],
+    ['zoom',  '크기',     8,  160,   32, '%',   '%',  'rig'],
+    ['tx',    'X',     -900,  900,  -33, 'px',  'px', 'rig'],
+    ['ty',    'Y',     -700,  700,   61, 'px',  'px', 'rig'],
     // no crop by default — how much of the shot gets cut is a decision, not a default
     ['vz',    '배율',   100,  400,  100, '%',   '%',  'crop'],
     ['vx',    'X',     -900,  900,    0, 'px',  'px', 'crop'],
@@ -837,15 +851,20 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     if (!live) { x = tx; y = ty; live = true; dot.classList.add('is-in'); }
   });
   stage.addEventListener('pointerleave', () => { live = false; dot.classList.remove('is-in'); });
-  stage.addEventListener('pointerdown', e => {
-    dot.classList.add('is-down');
-    const [px, py] = toStage(e);
+  tapAt = (px, py) => {
     const ring = document.createElement('span');
     ring.className = 'tap';
     ring.style.left = px + 'px';
     ring.style.top = py + 'px';
     taps.append(ring);
     ring.addEventListener('animationend', () => ring.remove());
+  };
+  // auto play drives the same disc the pointer does, so a recording cannot tell them apart
+  aim = (px, py) => { [tx, ty] = [px, py]; live = true; dot.classList.add('is-in'); };
+
+  stage.addEventListener('pointerdown', e => {
+    dot.classList.add('is-down');
+    tapAt(...toStage(e));
   });
   addEventListener('pointerup', () => dot.classList.remove('is-down'));
 
@@ -857,10 +876,103 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   })();
 }
 
+/* ── auto play: the footage drives the UI ────────────────────────────────
+   The person in the cut reaches for the desk twelve times — once per segment the edit kept.
+   Each of those is a beat here, timed to the middle of its segment in the assembled clip,
+   and the UI takes the action the reach stands for. The times are the edit's output, not a
+   guess: build the cut and they come out of the same script.
+
+   Not gesture recognition. The clip was shot against a bare desk with no UI to touch, so what
+   a given reach "means" was never in the footage to be read — it is authored here against it.
+   Anything that changes desk-cut.mp4 changes these numbers. */
+{
+  const auto = document.getElementById('autoOn');
+  const vid = document.getElementById('deskVid');
+  const BEATS = [
+    { t:  1.1, at: 'pack',      hit: '.slot[data-d="0"] .btn--primary' },
+    { t:  5.3, at: 'watch',     scroll: 250 },
+    { t: 11.0, at: 'watch',     scroll: 560 },
+    { t: 15.6, at: 'watch',     hit: '[data-go="location"]' },
+    // g/o index the step's own groups, which survives markup edits that a selector would not
+    { t: 20.4, at: 'location',  g: 0, o: 1 },
+    { t: 25.6, at: 'location',  g: 1, o: 0 },
+    { t: 31.4, at: 'condition', g: 0, o: 1 },
+    { t: 37.2, at: 'injury',    g: 0, o: 3 },
+    { t: 42.8, at: 'level',     g: 0, o: 1 },
+    { t: 48.4, at: 'level',     g: 1, o: 0 },
+    { t: 54.6, at: 'main',      hit: '.step[data-step-delta="1"]' },
+    { t: 61.1, at: 'main',      hit: '.step[data-step-delta="1"]' },
+  ];
+
+  /* design coordinates of an element, for aiming the disc. offsetLeft chains up in design
+     units and ignores the frame's transform, which is the whole point; the scroll frame's
+     own offset has to come back out. */
+  const designPos = el => {
+    let x = 0, y = 0, n = el;
+    while (n && n !== stage) {
+      x += n.offsetLeft; y += n.offsetTop;
+      const p = n.offsetParent;
+      if (p && p !== stage) { x -= p.scrollLeft; y -= p.scrollTop; }
+      n = p;
+    }
+    return [x + el.offsetWidth / 2, y + el.offsetHeight / 2];
+  };
+
+  const fire = (b, live) => {
+    const i = order.indexOf(b.at);
+    if (at !== i) show(i);
+    const sc = screens[i];
+    if (b.scroll !== undefined) {
+      sc.querySelector('.watch-scroll')?.scrollTo({ top: b.scroll, behavior: live ? 'smooth' : 'auto' });
+      return;
+    }
+    const el = b.hit ? sc.querySelector(b.hit)
+      : sc.querySelectorAll('[data-select]')[b.g]?.querySelectorAll('.opt')[b.o];
+    if (!el) return;
+    if (!live) return el.click();
+    const [x, y] = designPos(el);
+    aim?.(x, y);
+    setTimeout(() => { tapAt?.(x, y); el.click(); }, 380);   // the disc gets there first
+  };
+
+  let k = 0;
+  const rewind = () => {
+    document.querySelectorAll('.stage .opt.is-on').forEach(o => o.classList.remove('is-on'));
+    onSelect.forEach(fn => fn());
+    clearTimeout(hop);
+    show(0);
+    k = 0;
+  };
+
+  const tick = () => {
+    if (!auto.checked) return;
+    const n = BEATS.filter(b => b.t <= vid.currentTime).length;
+    if (n < k) { rewind(); BEATS.slice(0, n).forEach(b => fire(b, false)); k = n; return; }
+    while (k < n) fire(BEATS[k++], true);
+  };
+  vid.addEventListener('timeupdate', tick);
+  // the clip is a loop of one walkthrough, so the end of it is the start of the next
+  vid.addEventListener('ended', () => {
+    if (!auto.checked) return;
+    rewind();
+    vid.currentTime = 0;
+    vid.play().catch(() => {});
+  });
+
+  auto.onchange = () => {
+    document.body.classList.toggle('is-auto', auto.checked);
+    if (!auto.checked) return;
+    rewind();
+    vid.currentTime = 0;
+    vid.play().catch(() => {});
+  };
+  window.__beats = BEATS;                  // the selftest walks these without the clip
+}
+
 /* ── self-check: open index.html?selftest and watch the console ──────────
    Covers the two bits with real branching — exclusive multi-select and the
    stepper clamp. Everything else is markup. */
-if (location.search.includes('selftest')) {
+if (location.search.includes('selftest')) (async () => {   // async: one assert waits on a timer
   SNAP = true;                              // assert the numbers, not their tween
   const results = window.__selftest = [];   // also readable from devtools / automation
   const ok = (name, cond) => {
@@ -950,12 +1062,44 @@ if (location.search.includes('selftest')) {
   ok('no selectable control shows a system cursor',
      [...document.querySelectorAll('.card,.chip,.slot,.btn')].every(e => getComputedStyle(e).cursor === 'none'));
 
+  /* Auto play is a table of twelve beats aimed at elements by index. A beat that misses does
+     nothing and says nothing, so walk every one of them: each must land on the screen it names
+     and find something to press, and the times must be inside the cut and in order. */
+  {
+    const B = window.__beats;
+    ok('every beat names a screen that exists and something to press on it',
+       B.every(b => {
+         const sc = screens[order.indexOf(b.at)];
+         if (!sc) return false;
+         if (b.scroll !== undefined) return !!sc.querySelector('.watch-scroll');
+         return !!(b.hit ? sc.querySelector(b.hit)
+                         : sc.querySelectorAll('[data-select]')[b.g]?.querySelectorAll('.opt')[b.o]);
+       }));
+    ok('the beats run in order and inside the 64.4s cut',
+       B.every((b, i) => (i === 0 || b.t > B[i - 1].t) && b.t > 0 && b.t < 64.4));
+    // the flow only reaches the end if answering a step is enough to leave it
+    ok('the beats walk the whole flow to Main workout',
+       B.at(-1).at === order.at(-1) && new Set(B.map(b => b.at)).size === order.length);
+  }
+  // selection alone advances the step — Next is there but does not have to be pressed
+  {
+    show(order.indexOf('condition'));
+    const opts = [...screens[at].querySelectorAll('.grid2 .opt')];
+    opts.forEach(o => o.classList.remove('is-on'));
+    opts[1].click();
+    await new Promise(r => setTimeout(r, 1200));
+    ok('answering every group leaves the step without pressing Next', order[at] === 'injury');
+  }
+
   // desk plate: the footage has to be inside the canvas, or the preview's screen blend
   // composites the frame against nothing and "projection onto the desk" is just an overlay
   ok('the desk footage is the plate the frame blends onto',
      document.getElementById('deskVid').parentElement === canvas);
   // the guide is only worth anything if it is locked to the frame — same props, same origin
   {
+    // it ships off, and a display:none element does not resolve its transform to a matrix
+    const box = document.getElementById('a4On');
+    box.checked = true; box.dispatchEvent(new Event('change'));
     const a = document.getElementById('a4'), s = getComputedStyle(a);
     ok('the A4 guide moves with the frame',
        s.transform === getComputedStyle(stage).transform && a.parentElement === canvas);
@@ -964,6 +1108,7 @@ if (location.search.includes('selftest')) {
        Math.abs(parseFloat(s.height) - 1060 * 210 / 297) < 0.1 &&
        Math.abs(parseFloat(getComputedStyle(a.firstElementChild).height)
                 - (1060 * 210 / 297 - 663) / 2) < 0.1);
+    box.checked = false; box.dispatchEvent(new Event('change'));
   }
   // tilted, pointer→design is projective; an affine inverse looks right at the centre and
   // drifts at the corners, which is exactly where the frame's controls are
@@ -993,6 +1138,8 @@ if (location.search.includes('selftest')) {
   /* the inactive steps are the complaint that started this: they must all be identical, and
      they must stay identical with the preview on — no per-token colour recomputation */
   {
+    // opacity is transitioned; read it mid-flight and two steps that agree look like they don't
+    await new Promise(r => setTimeout(r, 400));
     const box = document.getElementById('previewOn');
     const inactive = () => steps.filter(li => !li.classList.contains('is-now'))
       .map(li => getComputedStyle(li).color + ' @' + getComputedStyle(li).opacity);
@@ -1056,7 +1203,7 @@ if (location.search.includes('selftest')) {
   ok('top bars shrink to stay proportional',
      parseFloat(document.querySelector('.tbar--stretch').style.width) < 105 &&
      parseFloat(document.querySelector('.tbar--learn').style.width) < 210);
-}
+})();
 
 /* ── dev-only live reload: poll Last-Modified, no deps ──── */
 if (['localhost', '127.0.0.1'].includes(location.hostname)) {

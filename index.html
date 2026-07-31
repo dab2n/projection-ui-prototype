@@ -17,7 +17,7 @@
 
   <!-- the desk itself. Not a backdrop image — this is the plate the UI gets composited onto,
        so it sits inside the canvas where the frame's screen blend can reach it. -->
-  <video class="deskvid" id="deskVid" src="assets/desk.mp4" muted playsinline preload="auto"></video>
+  <video class="deskvid" id="deskVid" src="assets/desk-cut.mp4" muted playsinline preload="auto"></video>
 
   <!-- A4 sync guide. The GUI is 2560×1600 and was shot against an A4 lying on the desk, fitted
        to the sheet's width — so the sheet runs 418 design px past the frame top and bottom.
@@ -408,6 +408,11 @@
         <input type="checkbox" id="unlitOn">
         <span>발광 영역만 보기</span>
       </label>
+      <p class="picker-cap">영상이 UI를 몬다</p>
+      <label class="picker-check picker-check--sub" title="컷 영상에서 손이 책상에 닿는 12번의 순간에 맞춰 UI가 스스로 넘어간다.">
+        <input type="checkbox" id="autoOn">
+        <span>오토 플레이 모드</span>
+      </label>
       <!-- reads the projected result, so it answers "will this text survive" with a number -->
       <dl class="picker-contrast" id="contrast"></dl>
       <p class="picker-note">투사되면 검정은 <b>광량 0</b> = 맨 책상이다. 그래서 가산 합성에서
@@ -450,14 +455,14 @@
     <div class="deskbar-row deskbar-row--rig" id="crop">
       <span class="deskbar-cap">크롭</span>
       <label>비율<select class="tsel" id="ar">
-        <option value="1.8972" selected>원본</option>
-        <option value="1.7778">16:9</option>
+        <option value="1.7778" selected>16:9</option>
+        <option value="1.8972">원본</option>
         <option value="1.6">16:10</option>
         <option value="1.3333">4:3</option>
         <option value="1">1:1</option>
         <option value="0.5625">9:16</option>
       </select></label>
-      <label class="picker-check" title="GUI가 A4 가로에 딱 맞는다고 보고, 위아래로 남는 여백을 표시한다"><input type="checkbox" id="a4On" checked><span>A4 가이드</span></label>
+      <label class="picker-check" title="GUI가 A4 가로에 딱 맞는다고 보고, 위아래로 남는 여백을 표시한다"><input type="checkbox" id="a4On"><span>A4 가이드</span></label>
     </div>
   </div>
 </aside>

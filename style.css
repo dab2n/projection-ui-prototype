@@ -67,6 +67,9 @@ body.is-desk{padding:0 260px 0 20px}
 }
 .canvas:fullscreen{box-shadow:none}
 body.is-align .canvas{cursor:move}
+/* nothing is driving the pointer in auto play, and the frame is small enough that the arrow
+   spends the take sitting on the desk beside it */
+body.is-auto .canvas{cursor:none}
 body.is-align .stage{pointer-events:none}   /* dragging must not press the UI underneath */
 
 .stage{
