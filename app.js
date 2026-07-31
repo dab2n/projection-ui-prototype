@@ -60,8 +60,8 @@ const unproject = (cx, cy) => {
 let at = 0;
 let hop;                // pending auto-advance, cancelled by any other navigation
 const onShow = [];      // fns notified with the screen name on every change
-/* set by the cursor block — the prototyping disc, driven from here in auto play */
-let aim = null, tapAt = null;
+/* set by the cursor and carousel blocks — driven from here in auto play */
+let aim = null, tapAt = null, deckTo = null, deckOpens = 0;
 
 function show(i) {
   clearTimeout(hop);
@@ -405,6 +405,9 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     });
   }
   const centre = i => { at2 = Math.max(0, Math.min(PACKS.length - 1, i)); place(); };
+  // auto play starts the deck one card off, so its first beat is a swipe onto the pack that opens
+  deckTo = centre;
+  deckOpens = CENTRE;
   place();
 
   /* swipe: one step as soon as the drag passes 44px — committing mid-gesture is the right
@@ -877,31 +880,32 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
 }
 
 /* ── auto play: the footage drives the UI ────────────────────────────────
-   The person in the cut reaches for the desk twelve times — once per segment the edit kept.
-   Each of those is a beat here, timed to the middle of its segment in the assembled clip,
-   and the UI takes the action the reach stands for. The times are the edit's output, not a
-   guess: build the cut and they come out of the same script.
+   The cut keeps eleven stretches and the person reaches for the desk once in each. Those are
+   the beats. The times are measured, not eyeballed: the fingertip is tracked through the
+   assembled clip (skin is the only warm thing against a cool desk, so R−B keys it), and the
+   beat sits in the middle of the hold at the deepest reach — the moment the finger is down.
 
-   Not gesture recognition. The clip was shot against a bare desk with no UI to touch, so what
-   a given reach "means" was never in the footage to be read — it is authored here against it.
-   Anything that changes desk-cut.mp4 changes these numbers. */
+   The order is the flow: the carousel is the first view and the first touch swipes it, then
+   the pack opens, the detail scrolls, Start goes. What each reach MEANS is authored, not
+   recognised: the clip was shot on a bare desk with no UI to touch, and every reach reads the
+   same way in the footage — come in, hold, withdraw. Rebuild desk-cut.mp4 and these move. */
 {
   const auto = document.getElementById('autoOn');
   const vid = document.getElementById('deskVid');
   const BEATS = [
-    { t:  1.1, at: 'pack',      hit: '.slot[data-d="0"] .btn--primary' },
-    { t:  5.3, at: 'watch',     scroll: 250 },
-    { t: 11.0, at: 'watch',     scroll: 560 },
-    { t: 15.6, at: 'watch',     hit: '[data-go="location"]' },
+    // from: where the disc starts, relative to where it lands — a swipe, not a tap
+    { t:  2.4, at: 'pack',      hit: '.slot[data-d="1"]', from: [300, 0] },
+    { t:  9.1, at: 'pack',      hit: '.slot[data-d="0"] .btn--primary' },
+    { t: 13.2, at: 'watch',     scroll: 430, aim: [740, 400], from: [0, -150] },
+    { t: 18.6, at: 'watch',     hit: '[data-go="location"]' },
     // g/o index the step's own groups, which survives markup edits that a selector would not
-    { t: 20.4, at: 'location',  g: 0, o: 1 },
-    { t: 25.6, at: 'location',  g: 1, o: 0 },
-    { t: 31.4, at: 'condition', g: 0, o: 1 },
-    { t: 37.2, at: 'injury',    g: 0, o: 3 },
-    { t: 42.8, at: 'level',     g: 0, o: 1 },
-    { t: 48.4, at: 'level',     g: 1, o: 0 },
-    { t: 54.6, at: 'main',      hit: '.step[data-step-delta="1"]' },
-    { t: 61.1, at: 'main',      hit: '.step[data-step-delta="1"]' },
+    { t: 23.0, at: 'location',  g: 0, o: 1 },
+    { t: 28.7, at: 'location',  g: 1, o: 0 },
+    { t: 34.6, at: 'condition', g: 0, o: 1 },
+    { t: 40.1, at: 'injury',    g: 0, o: 3 },
+    { t: 46.2, at: 'level',     g: 0, o: 1 },
+    { t: 51.2, at: 'level',     g: 1, o: 0 },
+    { t: 58.3, at: 'main',      hit: '.step[data-step-delta="1"]' },
   ];
 
   /* design coordinates of an element, for aiming the disc. offsetLeft chains up in design
@@ -922,17 +926,25 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const i = order.indexOf(b.at);
     if (at !== i) show(i);
     const sc = screens[i];
-    if (b.scroll !== undefined) {
-      sc.querySelector('.watch-scroll')?.scrollTo({ top: b.scroll, behavior: live ? 'smooth' : 'auto' });
+    const scroll = b.scroll !== undefined ? sc.querySelector('.watch-scroll') : null;
+    const el = scroll || (b.hit ? sc.querySelector(b.hit)
+      : sc.querySelectorAll('[data-select]')[b.g]?.querySelectorAll('.opt')[b.o]);
+    if (!el) return;
+    const act = () => scroll
+      ? scroll.scrollTo({ top: b.scroll, behavior: live ? 'smooth' : 'auto' })
+      : el.click();
+    if (!live) return act();
+
+    const [x, y] = b.aim || designPos(el);
+    if (b.from) {
+      // press where the finger lands, then carry the disc across while the UI follows
+      aim?.(x + b.from[0], y + b.from[1]);
+      setTimeout(() => { tapAt?.(x + b.from[0], y + b.from[1]); aim?.(x, y); }, 300);
+      setTimeout(act, 620);
       return;
     }
-    const el = b.hit ? sc.querySelector(b.hit)
-      : sc.querySelectorAll('[data-select]')[b.g]?.querySelectorAll('.opt')[b.o];
-    if (!el) return;
-    if (!live) return el.click();
-    const [x, y] = designPos(el);
     aim?.(x, y);
-    setTimeout(() => { tapAt?.(x, y); el.click(); }, 380);   // the disc gets there first
+    setTimeout(() => { tapAt?.(x, y); act(); }, 380);        // the disc gets there first
   };
 
   let k = 0;
@@ -940,7 +952,15 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     document.querySelectorAll('.stage .opt.is-on').forEach(o => o.classList.remove('is-on'));
     onSelect.forEach(fn => fn());
     clearTimeout(hop);
+    // the stepper is not a selection, so clearing is-on leaves it where the last pass put it
+    // and the round count climbs every loop. Its own button does the recompute.
+    const minus = document.querySelector('.step[data-step-delta="-1"]');
+    for (let n = 0; n < 20 && +rounds.textContent > 4; n++) minus.click();
     show(0);
+    // one card to the left of the pack that opens: the first touch is a swipe, and it has to
+    // arrive somewhere. Manual browsing still starts on the pack itself — and after show(),
+    // because entering the pack screen re-centres the deck.
+    deckTo?.(deckOpens - 1);
     k = 0;
   };
 
@@ -961,7 +981,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
 
   auto.onchange = () => {
     document.body.classList.toggle('is-auto', auto.checked);
-    if (!auto.checked) return;
+    if (!auto.checked) { deckTo?.(deckOpens); return; }
     rewind();
     vid.currentTime = 0;
     vid.play().catch(() => {});
@@ -1075,8 +1095,11 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
          return !!(b.hit ? sc.querySelector(b.hit)
                          : sc.querySelectorAll('[data-select]')[b.g]?.querySelectorAll('.opt')[b.o]);
        }));
-    ok('the beats run in order and inside the 64.4s cut',
-       B.every((b, i) => (i === 0 || b.t > B[i - 1].t) && b.t > 0 && b.t < 64.4));
+    ok('the beats run in order and inside the 62.8s cut',
+       B.every((b, i) => (i === 0 || b.t > B[i - 1].t) && b.t > 0 && b.t < 62.8));
+    // the carousel is the first view, and the first touch swipes it rather than opening it
+    ok('the clip opens on the carousel and the first touch is a swipe',
+       B[0].at === 'pack' && !!B[0].from && B[0].hit.includes('data-d="1"'));
     // the flow only reaches the end if answering a step is enough to leave it
     ok('the beats walk the whole flow to Main workout',
        B.at(-1).at === order.at(-1) && new Set(B.map(b => b.at)).size === order.length);
