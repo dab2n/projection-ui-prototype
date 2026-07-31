@@ -360,6 +360,11 @@
     </nav>
 
   </div>
+
+  <!-- the hand, keyed out of the same clip and laid over the frame. The projector is above the
+       desk and the hand is between them, so the hand covers what is projected — without this
+       the UI sits on top of the arm and the shot reads as two things stacked. -->
+  <video class="handlayer" id="handVid" src="assets/hand-matte.webm" muted playsinline preload="auto"></video>
   </div>
  </div>
 </div>
@@ -417,9 +422,9 @@
         <input type="checkbox" id="autoOn">
         <span>오토 플레이 모드</span>
       </label>
-      <label class="picker-check picker-check--sub" title="깨끗한 책상 프레임을 깔고 피부색을 키잉해 손을 지운다. 커서만 남는다.">
-        <input type="checkbox" id="noHandOn">
-        <span>손 지우기</span>
+      <label class="picker-check picker-check--sub" title="같은 클립에서 손만 키잉해 프레임 위에 얹는다. 손이 지나가는 자리의 UI가 가려진다.">
+        <input type="checkbox" id="handOn" checked>
+        <span>손이 UI를 가림</span>
       </label>
       <!-- reads the projected result, so it answers "will this text survive" with a number -->
       <dl class="picker-contrast" id="contrast"></dl>

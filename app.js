@@ -1066,21 +1066,35 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     vid.currentTime = 0;
     vid.play().catch(() => {});
   };
-  /* The hand is the thing standing between the projection and the camera, and a projector
-     cannot be occluded by what it is projecting onto. Keying it out against a clean frame of
-     the same desk leaves the surface and the disc doing the touching. Same edit, same beats,
-     same length — only the plate changes, so the playhead does not move. */
-  const nohand = document.getElementById('noHandOn');
-  nohand.onchange = () => {
-    const t = vid.currentTime, going = !vid.paused;
-    vid.src = `assets/desk-${nohand.checked ? 'nohand' : 'cut'}.mp4`;
-    vid.addEventListener('loadedmetadata', () => {
-      vid.currentTime = t;
-      if (going) vid.play().catch(() => {});
-    }, { once: true });
-  };
-
   window.__beats = BEATS;                  // the selftest walks these without the clip
+}
+
+/* ── the hand on top ─────────────────────────────────────────────────────
+   The projector is above the desk and the hand is between them, so the hand covers what is
+   projected. Without that the frame paints over the arm and the shot reads as two things
+   stacked. It is the same clip keyed to its skin (VP9 carries the alpha h.264 cannot), laid
+   over the frame in the same box, so the two register pixel for pixel.
+
+   Two elements decoding the same edit is the price: they are started and seeked together and
+   pulled back into line whenever they drift, which is cheaper than compositing per frame. */
+{
+  const body = document.body;
+  const vid = document.getElementById('deskVid');
+  const hv = document.getElementById('handVid');
+  const box = document.getElementById('handOn');
+
+  const sync = () => {
+    if (!box.checked) return;
+    if (Math.abs(hv.currentTime - vid.currentTime) > 0.08) hv.currentTime = vid.currentTime;
+    if (vid.paused !== hv.paused) vid.paused ? hv.pause() : hv.play().catch(() => {});
+  };
+  ['timeupdate', 'seeked', 'play', 'pause'].forEach(e => vid.addEventListener(e, sync));
+
+  box.onchange = () => {
+    body.classList.toggle('is-hand', box.checked);
+    if (box.checked) sync(); else hv.pause();      // no reason to decode what is not shown
+  };
+  box.dispatchEvent(new Event('change'));
 }
 
 /* ── self-check: open index.html?selftest and watch the console ──────────
@@ -1216,6 +1230,15 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
   // composites the frame against nothing and "projection onto the desk" is just an overlay
   ok('the desk footage is the plate the frame blends onto',
      document.getElementById('deskVid').parentElement === shot);
+  /* the hand has to be painted after the frame, and in the frame's own box. Behind it, the UI
+     paints over the arm and the shot reads as an overlay instead of something photographed. */
+  {
+    const hv = document.getElementById('handVid');
+    ok('the hand is painted over the frame, not under it',
+       shot.lastElementChild === hv && hv.previousElementSibling === stage);
+    ok('the hand registers with the plate it was keyed from',
+       getComputedStyle(hv).transform === getComputedStyle(document.getElementById('deskVid')).transform);
+  }
   // the guide is only worth anything if it is locked to the frame — same props, same origin
   {
     // it ships off, and a display:none element does not resolve its transform to a matrix

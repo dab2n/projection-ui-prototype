@@ -108,6 +108,14 @@ body.is-align .stage{pointer-events:none}   /* dragging must not press the UI un
   transform:translate(var(--vx,0px),var(--vy,0px)) scale(var(--vz,1));
 }
 body.is-desk .deskvid{display:block}
+/* the hand again, this time over the frame. Same box, same crop, same object-fit as the plate
+   under it, so the two register pixel for pixel — it is the same clip. */
+.handlayer{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  display:none;pointer-events:none;
+  transform:translate(var(--vx,0px),var(--vy,0px)) scale(var(--vz,1));
+}
+body.is-desk.is-hand .handlayer{display:block}
 body.is-desk .hint{display:none}   /* the shot wants the height more than the caption does */
 body.is-desk .stage{box-shadow:none}
 
