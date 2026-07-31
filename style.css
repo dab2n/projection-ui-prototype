@@ -238,6 +238,13 @@ body.is-real .stage{filter:brightness(var(--gain,1)) url(#hollow)}
   from{transform:scale(.6);opacity:.8}
   to{transform:scale(1.7);opacity:0}
 }
+/* In auto play the finger is over the mark it makes, and the hand is painted above the frame,
+   so a 36px ring lives entirely under a fingertip 150px wide on screen. The ripple has to
+   spread past the hand to be the touch feedback it is. */
+body.is-auto .tap{
+  width:200px;height:200px;margin:-100px 0 0 -100px;
+  box-shadow:0 0 0 2px rgba(255,255,255,.5);
+}
 
 /* a drag leaves the line it was drawn along. Placed at its start, rotated to its direction and
    grown to its length, so one element covers any drag on any screen. */

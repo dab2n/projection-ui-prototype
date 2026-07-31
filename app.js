@@ -928,13 +928,15 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     { t: 13.2, at: 'watch',     scroll: 430, aim: [740, 400], from: [0, -150] },
     { t: 18.6, at: 'watch',     hit: '[data-go="location"]' },
     // g/o index the step's own groups, which survives markup edits that a selector would not
-    { t: 23.0, at: 'location',  g: 0, o: 1 },
-    { t: 28.7, at: 'location',  g: 1, o: 0 },
+    { t: 23.0, at: 'location',  g: 0, o: 0 },     // Indoor
+    { t: 28.7, at: 'location',  g: 1, o: 1 },     // Standard
     { t: 34.6, at: 'condition', g: 0, o: 1 },
-    { t: 40.1, at: 'injury',    g: 0, o: 3 },
+    { t: 40.1, at: 'injury',    g: 0, o: 0 },     // None — and no marker on the body map
     { t: 46.2, at: 'level',     g: 0, o: 1 },
     { t: 51.2, at: 'level',     g: 1, o: 0 },
-    { t: 58.3, at: 'main',      hit: '.step[data-step-delta="1"]' },
+    // the last stretch is one long touch, so both taps land inside it: 4 → 5 → 6 rounds
+    { t: 58.1, at: 'main',      hit: '.step[data-step-delta="1"]' },
+    { t: 58.7, at: 'main',      hit: '.step[data-step-delta="1"]' },
   ];
 
   /* design coordinates of an element, for aiming the disc. offsetLeft chains up in design
@@ -964,26 +966,23 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
       : el.click();
     if (!live) return act();
 
-    const [x, y] = b.aim || designPos(el);
+    // press where the finger actually is, not where the control is: the disc is riding the
+    // tracked tip, and snapping it to the button would be a jump nothing in the shot made
+    const [x, y] = tipAt(b.t) || b.aim || designPos(el);
     if (b.from) {
-      // press at the start, carry the disc across, leave the line it was drawn along
-      const [x0, y0] = [x + b.from[0], y + b.from[1]];
-      lead(x0, y0, 260);
-      setTimeout(() => { press?.(x0, y0); trailTo?.(x0, y0, x, y); lead(x, y, 640); }, 260);
-      setTimeout(act, 620);
-      return;
+      const p0 = tipAt(b.t - LEAD);          // the line the finger came along
+      if (p0) trailTo?.(p0[0], p0[1], x, y);
     }
-    lead(x, y, 340);
-    setTimeout(() => { press?.(x, y); act(); }, 340);           // the disc gets there first
+    press?.(x, y);
+    act();
   };
 
   /* The disc rides the real fingertip. hand.json is that tip tracked through the cut at 10fps
      in thousandths of the plate, null where no hand is in shot — so when the hand leaves, the
      disc is simply not shown and fades on its own. A beat borrows it for the length of the
      press and hands it straight back. */
-  let hand = null, leadTo = null, leadUntil = 0;
+  let hand = null;
   fetch('assets/hand.json').then(r => r.json()).then(d => hand = d).catch(() => {});
-  const lead = (x, y, ms) => { leadTo = [x, y]; leadUntil = performance.now() + ms; };
 
   /* plate pixel → design px. The video element carries the crop and the shot transform, so its
      client box already has both; object-fit:cover then covers that box with the plate. */
@@ -993,14 +992,23 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     return unproject(r.left + r.width / 2 + (u - 960) * s,
                      r.top + r.height / 2 + (v - 506) * s);
   };
+  // the tracked fingertip at a moment, in design coordinates, or null when no hand is in shot
+  const tipAt = t => {
+    const p = hand?.[Math.round(t * 10)];
+    return p && plateToDesign(p[0] / 1000 * 1920, p[1] / 1000 * 1012);
+  };
 
+  /* The disc is a touch mark, not a mouse pointer: it belongs on screen while the finger is on
+     the desk and nowhere else. Showing it whenever a hand was in frame meant it rode the hand
+     back out of shot every time, which is the one thing a touch mark never does. */
+  const LEAD = 0.55, HOLD = 0.45;
   (function follow() {
     requestAnimationFrame(follow);
     if (!auto.checked) return;
-    if (performance.now() < leadUntil && leadTo) return aim?.(...leadTo);
-    const p = hand?.[Math.round(vid.currentTime * 10)];
+    const t = vid.currentTime;
+    const p = BEATS.some(b => t > b.t - LEAD && t < b.t + HOLD) && tipAt(t);
     if (!p) return cursorShow?.(false);
-    aim?.(...plateToDesign(p[0] / 1000 * 1920, p[1] / 1000 * 1012));
+    aim?.(...p);
   })();
 
   /* Auto play frames the projection, not the room: push the shot in until the frame's own
@@ -1031,10 +1039,12 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     document.querySelectorAll('.stage .opt.is-on').forEach(o => o.classList.remove('is-on'));
     onSelect.forEach(fn => fn());
     clearTimeout(hop);
-    // the stepper is not a selection, so clearing is-on leaves it where the last pass put it
-    // and the round count climbs every loop. Its own button does the recompute.
+    /* The stepper is not a selection, so clearing is-on leaves it where the last pass put it
+       and the round count climbs every loop. Its own button does the recompute — but the
+       readout is tweened, so the count of clicks has to come from the tween's target and not
+       from re-reading the text, which lags and drove it all the way to the floor. */
     const minus = document.querySelector('.step[data-step-delta="-1"]');
-    for (let n = 0; n < 20 && +rounds.textContent > 4; n++) minus.click();
+    for (let n = +(rounds.dataset.tweenTo ?? rounds.textContent); n > 4; n--) minus.click();
     show(0);
     // one card past the pack that opens, so the swipe brings it in from the left the way the
     // hand moves. Manual browsing still starts on that pack — and this goes after show(),
@@ -1215,6 +1225,13 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
     // the flow only reaches the end if answering a step is enough to leave it
     ok('the beats walk the whole flow to Main workout',
        B.at(-1).at === order.at(-1) && new Set(B.map(b => b.at)).size === order.length);
+    // the answers the run has to give, by name rather than by index
+    const label = b => screens[order.indexOf(b.at)]
+      .querySelectorAll('[data-select]')[b.g].querySelectorAll('.opt')[b.o].textContent.trim();
+    ok('the run answers Indoor, Standard and None',
+       label(B[4]) === 'Indoor' && label(B[5]).startsWith('Standard') && label(B[7]) === 'None');
+    ok('two taps on the stepper, so rounds land on 6',
+       B.filter(b => b.hit?.includes('step-delta="1"')).length === 2);
   }
   // selection alone advances the step — Next is there but does not have to be pressed
   {
