@@ -408,6 +408,7 @@
     <div class="picker-sliders" id="previewOpts">
       <label>환경광 <input type="range" id="ambient" min="0" max="60" value="18"><b id="ambientOut">18%</b></label>
       <label>프로젝터 <input type="range" id="gain" min="60" max="170" value="100"><b id="gainOut">100%</b></label>
+      <label>농도 <input type="range" id="dose" min="50" max="100" value="92"><b id="doseOut">92%</b></label>
       <p class="picker-cap">뷰 — 검정은 어느 쪽이든 투명하다</p>
       <label class="picker-check picker-check--sub" title="환경광을 빼고 책상을 자기 색 그대로 깐다. 검정 영역으로 책상색이 그대로 비친다.">
         <input type="checkbox" id="realOn">
@@ -486,17 +487,33 @@
      to the frame's own box, otherwise the flood spills into the filter's 10% margin and the
      erode traces a rectangle out in space instead of the frame edge. -->
 <svg class="filters" aria-hidden="true">
-  <filter id="hollow" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+  <!-- The projection is the design laid over the desk with a dose of transparency, not light
+       screened onto it. Screen keeps the physics but spends all its headroom on a near-white
+       desk and the colour goes with it. Here every colour composites at the value it was drawn
+       in; only black is special, and black is nothing being projected — alpha 0, bare desk.
+       alpha = R+G+B clamped: black 0, a white card 1, #FA3030 1.36 → 1, so saturated colour
+       loses nothing. Flattened over black first, so a 4% white scrim reads as 4% light. -->
+  <filter id="proj" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
     <feFlood flood-color="#000"/>
     <feComposite in="SourceGraphic" operator="over" result="lit"/>
-    <!-- white, with alpha = 1 − (R+G+B): opaque only where the design emits nothing.
-         #FA3030 lands at −0.36 → 0, so saturated colour is never treated as black. -->
+    <feColorMatrix in="lit" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  1 1 1 0 0"/>
+  </filter>
+
+  <!-- 리얼 프로젝션뷰: the same, plus a faint outline on the black so an unprojected shape
+       still reads as a shape. Region pinned to the frame's box, or the flood spills into the
+       filter's 10% margin and the erode traces a rectangle out in space. -->
+  <filter id="projEdge" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#000"/>
+    <feComposite in="SourceGraphic" operator="over" result="lit"/>
+    <feColorMatrix in="lit" type="matrix"
+      values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  1 1 1 0 0" result="knock"/>
+    <!-- white, alpha = 1 − (R+G+B): opaque only where the design emits nothing -->
     <feColorMatrix in="lit" type="matrix"
       values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -1 -1 -1 0 1" result="dark"/>
     <feMorphology in="dark" operator="erode" radius="1.1" result="inner"/>
     <feComposite in="dark" in2="inner" operator="out" result="edge"/>
     <feComponentTransfer in="edge" result="faint"><feFuncA type="linear" slope=".55"/></feComponentTransfer>
-    <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="faint"/></feMerge>
+    <feMerge><feMergeNode in="knock"/><feMergeNode in="faint"/></feMerge>
   </filter>
 </svg>
 

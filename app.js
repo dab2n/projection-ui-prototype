@@ -545,6 +545,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const ambient = document.getElementById('ambient');
   const real = document.getElementById('realOn');
   const gain = document.getElementById('gain');
+  const dose = document.getElementById('dose');
 
   /* No palette remap. The rule is: keep the designed colour and lower its opacity — hue and
      value stay exactly as drawn, and after the additive composite a lowered alpha lands nearer
@@ -561,48 +562,22 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const rgb = [0, 1, 2].map(i => Math.round(((n >> (16 - i * 8)) & 255) * a));
     body.style.setProperty('--floor', `rgb(${rgb.join(' ')})`);
     body.style.setProperty('--gain', +gain.value / 100);
+    body.style.setProperty('--dose', +dose.value / 100);
     ambientOut.textContent = ambient.value + '%';
     gainOut.textContent = gain.value + '%';
+    doseOut.textContent = dose.value + '%';
     const on = body.classList.contains('is-preview');
     // a drop shadow is light being removed, and a projector cannot do that
     if (on) body.style.setProperty('--sel-shadow', '0 0 0 rgba(0,0,0,0)');
     else body.style.removeProperty('--sel-shadow');
-    brand(rgb.map(v => v / 255), on);
     meter(rgb.map(v => v / 255));
   };
 
-  /* Keeping the red red.
-     The floor adds its own light to every channel, so a colour composited over it comes out
-     with its dark channels lifted — #FA3030 lands around #FA5353 and the red goes chalky. The
-     projector can pull those channels down, though, so solve the composite backwards: emit
-     P = 1 - (1-T)/(1-floor) and the desk shows T, the colour as drawn. Below the floor it
-     clamps to zero, which is simply as saturated as the surface allows.
-
-     Only the brand and the ramp get this. Neutrals are left alone on purpose — pre-compensating
-     those is what previously pulled every token off in its own direction. */
-  const RAMP = ['#fa3030', '#fe6e3c', '#fec389', '#d1feff'];
-  const precomp = (hex, floor) => {
-    const n = parseInt(/([\da-f]{6})/i.exec(hex)[1], 16);
-    const ch = i => {
-      const t = ((n >> (16 - i * 8)) & 255) / 255;
-      const p = 1 - (1 - t) / (1 - floor[i]);
-      return Math.round(Math.max(0, Math.min(1, p)) * 255).toString(16).padStart(2, '0');
-    };
-    return '#' + ch(0) + ch(1) + ch(2);
-  };
-
-  function brand(floor, on) {
-    if (!on) {
-      ['--brand', '--sel', '--bar-ramp'].forEach(k => body.style.removeProperty(k));
-      return;
-    }
-    const r = RAMP.map(h => precomp(h, floor));
-    body.style.setProperty('--brand', r[0]);
-    body.style.setProperty('--sel',
-      `linear-gradient(180deg,${r[0]} 53.869%,${r[1]} 85.083%,${r[2]} 104.71%,${r[3]} 104.72%)`);
-    body.style.setProperty('--bar-ramp',
-      `linear-gradient(90deg,${r[0]} 63.043%,${r[1]} 89.902%,${r[2]} 101.08%,${r[3]} 108.1%)`);
-  }
+  /* No pre-compensation any more. It solved the additive composite backwards so the red came
+     back off the desk as drawn — but the composite is no longer additive. The design is laid
+     over the surface at --dose with black knocked out, so every colour arrives at the value it
+     was drawn in, give or take the dose. Correcting for a lift that no longer happens would
+     only push the red the other way. */
 
   /* Legibility readout. A pair that fails on the monitor fails on the desk too, and the
      projected values are the design screened over the floor — so the numbers say outright
@@ -621,7 +596,14 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const [x, y] = [relLum(a), relLum(b)].sort((p, q) => q - p);
     return (x + 0.05) / (y + 0.05);
   };
-  const screenOver = (c, floor) => c.map((v, i) => 1 - (1 - v) * (1 - floor[i]));
+  /* what the surface ends up showing: the design at --dose over the desk, with black knocked
+     out to nothing. A colour whose channels sum below 1 is partly transparent, so it lands
+     between itself and the desk — which is what black doing nothing means. */
+  const over = (c, floor) => {
+    const d = +document.getElementById('dose').value / 100;
+    const a = Math.min(1, c[0] + c[1] + c[2]) * d;
+    return c.map((v, i) => v * a + floor[i] * (1 - a));
+  };
 
   function meter(floor) {
     const on = body.classList.contains('is-preview');
@@ -631,7 +613,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
       ['브랜드 / 배경', rd('--brand'), rd('--bg')],
     ];
     out.innerHTML = pairs.map(([name, fg, bg]) => {
-      const r = on ? ratio(screenOver(fg, floor), screenOver(bg, floor)) : ratio(fg, bg);
+      const r = on ? ratio(over(fg, floor), over(bg, floor)) : ratio(fg, bg);
       return `<dt>${name}</dt><dd class="${r < 4.5 ? 'is-bad' : ''}">${r.toFixed(1)}:1</dd>`;
     }).join('');
   }
@@ -665,7 +647,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
 
   const unlit = document.getElementById('unlitOn');
   unlit.onchange = () => body.classList.toggle('is-unlit', unlit.checked && on.checked);
-  [ambient, gain].forEach(el => el.oninput = apply);
+  [ambient, gain, dose].forEach(el => el.oninput = apply);
   apply();
 }
 
@@ -923,10 +905,15 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     // from: where the disc starts, relative to where it lands — a swipe, not a tap.
     // The hand crosses left to right here, so the deck travels right and the card that was on
     // the left is the one that arrives. Tracked, not assumed: hand.json opens at x .16 → .54.
-    { t:  2.4, at: 'pack',      hit: '.slot[data-d="-1"]', from: [-300, 0] },
-    { t:  9.1, at: 'pack',      hit: '.slot[data-d="0"] .btn--primary' },
-    { t: 13.2, at: 'watch',     scroll: 430, aim: [740, 400], from: [0, -150] },
-    { t: 18.6, at: 'watch',     hit: '[data-go="location"]' },
+    /* wait: how long the touch is held before the UI answers. ms: how long the move takes.
+       The two drags start when the finger starts moving, not when it stops — the tracked tip
+       crosses from x .15 to .49 between 0.8s and 1.5s, and rises from y 1.00 to .61 between
+       12.6s and 13.3s. Both are ~0.7s, which is what the UI is given. */
+    { t:  0.9, at: 'pack',      hit: '.slot[data-d="-1"]', from: [-300, 0], wait: 0 },
+    { t:  9.1, at: 'pack',      hit: '.slot[data-d="0"] .btn--primary', wait: 480 },
+    { t: 12.7, at: 'watch',     scroll: 430, aim: [740, 400], from: [0, -150], wait: 0, ms: 700 },
+    // the finger lands at 18.2 and holds to 19.3, so the press is seen well before the screen goes
+    { t: 18.3, at: 'watch',     hit: '[data-go="location"]', wait: 600 },
     // g/o index the step's own groups, which survives markup edits that a selector would not
     { t: 23.0, at: 'location',  g: 0, o: 0 },     // Indoor
     { t: 28.7, at: 'location',  g: 1, o: 1 },     // Standard
@@ -935,8 +922,8 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     { t: 46.2, at: 'level',     g: 0, o: 1 },
     { t: 51.2, at: 'level',     g: 1, o: 0 },
     // the last stretch is one long touch, so both taps land inside it: 4 → 5 → 6 rounds
-    { t: 58.1, at: 'main',      hit: '.step[data-step-delta="1"]' },
-    { t: 58.7, at: 'main',      hit: '.step[data-step-delta="1"]' },
+    { t: 58.1, at: 'main',      hit: '.step[data-step-delta="1"]', wait: 240 },
+    { t: 58.7, at: 'main',      hit: '.step[data-step-delta="1"]', wait: 240 },
   ];
 
   /* design coordinates of an element, for aiming the disc. offsetLeft chains up in design
@@ -961,9 +948,18 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const el = scroll || (b.hit ? sc.querySelector(b.hit)
       : sc.querySelectorAll('[data-select]')[b.g]?.querySelectorAll('.opt')[b.o]);
     if (!el) return;
-    const act = () => scroll
-      ? scroll.scrollTo({ top: b.scroll, behavior: live ? 'smooth' : 'auto' })
-      : el.click();
+    /* Chrome's smooth scroll is ~300ms whatever the distance, which outran the finger every
+       time. Tweened here over the length of the drag instead. */
+    const glide = to => {
+      const from = scroll.scrollTop, t0 = performance.now(), ms = b.ms || 900;
+      (function step(now) {
+        const k = Math.min(1, (now - t0) / ms);
+        scroll.scrollTop = from + (to - from) * (1 - (1 - k) ** 3);
+        if (k < 1) requestAnimationFrame(step);
+      })(t0);
+    };
+    const act = () => scroll ? (live ? glide(b.scroll) : (scroll.scrollTop = b.scroll))
+                             : el.click();
     if (!live) return act();
 
     // press where the finger actually is, not where the control is: the disc is riding the
@@ -974,7 +970,9 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
       if (p0) trailTo?.(p0[0], p0[1], x, y);
     }
     press?.(x, y);
-    act();
+    // the press has to be seen before the screen answers it, or the UI arrives ahead of the
+    // hand and the two read as unrelated. b.wait is how long the touch is held first.
+    setTimeout(act, b.wait ?? 380);
   };
 
   /* The disc rides the real fingertip. hand.json is that tip tracked through the cut at 10fps
@@ -1148,23 +1146,18 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
     assists.forEach(c => c.classList.remove('is-on'));
   }
 
-  {   /* the brand is pre-compensated for the floor, so the projected red comes back out as the
-         red that was drawn rather than a chalky version of it */
+  {   /* Nothing is remapped now. The design is laid over the surface at --dose with black
+         knocked out, so a colour arrives at the value it was drawn in — which is the whole
+         point of dropping the additive model. The brand token has to come through untouched. */
     const box = document.getElementById('previewOn');
     box.checked = true; box.dispatchEvent(new Event('change'));
-    const val = k => getComputedStyle(document.body).getPropertyValue(k).trim();
-    const floorRGB = /rgb\((\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(val('--floor')).slice(1).map(v => +v / 255);
-    const p = /([\da-f]{6})/i.exec(val('--brand'))[1];
-    const out = [0, 1, 2].map(i => {
-      const c = parseInt(p.slice(i * 2, i * 2 + 2), 16) / 255;
-      return Math.round((1 - (1 - c) * (1 - floorRGB[i])) * 255);
-    });
-    ok('the projected brand red lands back on #FA3030',
-       Math.abs(out[0] - 250) <= 2 && Math.abs(out[1] - 48) <= 2 && Math.abs(out[2] - 48) <= 2);
-    box.checked = false; box.dispatchEvent(new Event('change'));
-    // inline props are what the preview writes; the computed value would inherit from :root
-    ok('and the token is released when preview is off',
-       document.body.style.getPropertyValue('--brand') === '');
+    ok('the preview leaves the brand red exactly as drawn',
+       document.body.style.getPropertyValue('--brand') === '' &&
+       getComputedStyle(stage).getPropertyValue('--brand').trim().toLowerCase() === '#fa3030');
+    // black is the one value the projector cannot make: knocked out, so the desk comes through
+    ok('black is knocked out rather than screened',
+       getComputedStyle(stage).filter.includes('#proj') &&
+       getComputedStyle(stage).mixBlendMode === 'normal');
 
     /* real projection view: the frame stops projecting its background, and the desk takes the
        picked background colour — so a black glyph inside a white card is a hole onto the desk */

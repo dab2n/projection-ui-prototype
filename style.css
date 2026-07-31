@@ -78,6 +78,9 @@ body.is-align .canvas{cursor:move}
 /* nothing is driving the pointer in auto play, and the frame is small enough that the arrow
    spends the take sitting on the desk beside it */
 body.is-auto .canvas{cursor:none}
+/* the deck's own .55s snap outran the finger, which takes ~0.7s to cross. Matched to it, so
+   the card travels with the hand instead of arriving before it. */
+body.is-auto .slot{transition-duration:.75s}
 body.is-align .stage{pointer-events:none}   /* dragging must not press the UI underneath */
 
 .stage{
@@ -192,8 +195,9 @@ body.is-unlit .shot{
    and equally the type knocked out of a white card. */
 body.is-preview .stage{
   background:transparent;
-  mix-blend-mode:screen;
-  filter:brightness(var(--gain,1));   /* projector gain only — no colour filtering */
+  mix-blend-mode:normal;              /* laid over the desk, not screened onto it */
+  filter:brightness(var(--gain,1)) url(#proj);
+  opacity:var(--dose,.92);            /* how much of the design the surface takes */
   box-shadow:none;
 }
 /* 리얼 프로젝션뷰 — the preview, unchanged, plus an outline on the black. Black is zero light,
@@ -201,7 +205,7 @@ body.is-preview .stage{
    unprojected shape leaves nothing to read. The filter strokes those areas faintly and leaves
    the fill empty. Every other colour composites exactly as it does in the preview — same
    blend, same gain, nothing remapped. */
-body.is-real .stage{filter:brightness(var(--gain,1)) url(#hollow)}
+body.is-real .stage{filter:brightness(var(--gain,1)) url(#projEdge)}
 .filters{position:absolute;width:0;height:0}
 
 /* ── prototyping cursor & touch ─────────────────────────────
