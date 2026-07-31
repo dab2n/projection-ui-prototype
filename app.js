@@ -7,6 +7,12 @@ const appbar  = document.getElementById('appbar');
 const flowbar = document.getElementById('flowbar');
 const steps   = [...flowbar.querySelectorAll('li')];
 
+/* Hooks the later blocks fill in — the prototyping disc, the carousel and the auto crop, all
+   driven from auto play. Declared up here because fit() reaches for recrop on the first call,
+   and a `let` further down would still be in its dead zone. */
+let aim = null, tapAt = null, press = null, trailTo = null, cursorShow = null;
+let deckTo = null, deckOpens = 0, recrop = null;
+
 /* ── size the shot, then fit the 1060×663 frame inside it ───
    The canvas is a fixed-aspect crop of the footage rather than the browser window, so it is
    sized here and not in CSS: aspect-ratio plus max-width/max-height cannot letterbox in one
@@ -30,6 +36,7 @@ const fit = () => {
   canvas.style.height = w / AR + 'px';
   canvas.style.marginBottom = full ? '0px' : bar + 'px';   // .fit centres it; push it clear
   canvas.style.setProperty('--s', Math.min(w / 1060, w / AR / 663));
+  recrop?.();                              // the auto crop is a fraction of the canvas box
 };
 addEventListener('resize', fit);
 addEventListener('fullscreenchange', fit);
@@ -42,9 +49,13 @@ fit();
    leaves. The origin is the untransformed centre: every transform here is taken about
    transform-origin:center, and the canvas centres the frame without transforming, so the
    canvas's centre is that point. */
+const shot = document.getElementById('shot');
+const shotM = () => new DOMMatrix(getComputedStyle(shot).transform);
+
 const unproject = (cx, cy) => {
   const f = canvas.getBoundingClientRect();
-  const m = new DOMMatrix(getComputedStyle(stage).transform);
+  // shot first, then the frame: both are taken about the same centre, so they compose
+  const m = shotM().multiply(new DOMMatrix(getComputedStyle(stage).transform));
   const X = cx - (f.left + f.width / 2), Y = cy - (f.top + f.height / 2);
   // Xw = r0·p, Yw = r1·p, w = r2·p with p = (x, y, 1)
   const r0 = [m.m11, m.m21, m.m41], r1 = [m.m12, m.m22, m.m42], r2 = [m.m14, m.m24, m.m44];
@@ -60,8 +71,6 @@ const unproject = (cx, cy) => {
 let at = 0;
 let hop;                // pending auto-advance, cancelled by any other navigation
 const onShow = [];      // fns notified with the screen name on every change
-/* set by the cursor and carousel blocks — driven from here in auto play */
-let aim = null, tapAt = null, deckTo = null, deckOpens = 0;
 
 function show(i) {
   clearTimeout(hop);
@@ -713,6 +722,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
       // % is a ratio in CSS terms, the rest carry their unit through untouched
       canvas.style.setProperty('--' + k, unit === '%' ? r.value / 100 : r.value + unit);
       el.querySelector('b').textContent = r.value + suffix;
+      recrop?.();                          // moving the frame moves what the auto crop frames
       localStorage.setItem('rig2', JSON.stringify(
         Object.fromEntries(Object.entries(inputs).map(([n, i]) => [n, +i.value]))));
     };
@@ -864,6 +874,23 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   };
   // auto play drives the same disc the pointer does, so a recording cannot tell them apart
   aim = (px, py) => { [tx, ty] = [px, py]; live = true; dot.classList.add('is-in'); };
+  cursorShow = on => dot.classList.toggle('is-in', on);
+  press = (px, py) => {
+    aim(px, py);
+    tapAt(px, py);
+    dot.classList.add('is-press');                 // tightens onto the point, then lets go
+    setTimeout(() => dot.classList.remove('is-press'), 200);
+  };
+  trailTo = (x0, y0, x1, y1) => {
+    const s = document.createElement('span');
+    s.className = 'trail';
+    s.style.left = x0 + 'px';
+    s.style.top = y0 + 'px';
+    s.style.width = Math.hypot(x1 - x0, y1 - y0) + 'px';
+    s.style.transform = `rotate(${Math.atan2(y1 - y0, x1 - x0)}rad)`;
+    taps.append(s);
+    s.addEventListener('animationend', () => s.remove());
+  };
 
   stage.addEventListener('pointerdown', e => {
     dot.classList.add('is-down');
@@ -893,8 +920,10 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const auto = document.getElementById('autoOn');
   const vid = document.getElementById('deskVid');
   const BEATS = [
-    // from: where the disc starts, relative to where it lands — a swipe, not a tap
-    { t:  2.4, at: 'pack',      hit: '.slot[data-d="1"]', from: [300, 0] },
+    // from: where the disc starts, relative to where it lands — a swipe, not a tap.
+    // The hand crosses left to right here, so the deck travels right and the card that was on
+    // the left is the one that arrives. Tracked, not assumed: hand.json opens at x .16 → .54.
+    { t:  2.4, at: 'pack',      hit: '.slot[data-d="-1"]', from: [-300, 0] },
     { t:  9.1, at: 'pack',      hit: '.slot[data-d="0"] .btn--primary' },
     { t: 13.2, at: 'watch',     scroll: 430, aim: [740, 400], from: [0, -150] },
     { t: 18.6, at: 'watch',     hit: '[data-go="location"]' },
@@ -937,14 +966,64 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
 
     const [x, y] = b.aim || designPos(el);
     if (b.from) {
-      // press where the finger lands, then carry the disc across while the UI follows
-      aim?.(x + b.from[0], y + b.from[1]);
-      setTimeout(() => { tapAt?.(x + b.from[0], y + b.from[1]); aim?.(x, y); }, 300);
+      // press at the start, carry the disc across, leave the line it was drawn along
+      const [x0, y0] = [x + b.from[0], y + b.from[1]];
+      lead(x0, y0, 260);
+      setTimeout(() => { press?.(x0, y0); trailTo?.(x0, y0, x, y); lead(x, y, 640); }, 260);
       setTimeout(act, 620);
       return;
     }
-    aim?.(x, y);
-    setTimeout(() => { tapAt?.(x, y); act(); }, 380);        // the disc gets there first
+    lead(x, y, 340);
+    setTimeout(() => { press?.(x, y); act(); }, 340);           // the disc gets there first
+  };
+
+  /* The disc rides the real fingertip. hand.json is that tip tracked through the cut at 10fps
+     in thousandths of the plate, null where no hand is in shot — so when the hand leaves, the
+     disc is simply not shown and fades on its own. A beat borrows it for the length of the
+     press and hands it straight back. */
+  let hand = null, leadTo = null, leadUntil = 0;
+  fetch('assets/hand.json').then(r => r.json()).then(d => hand = d).catch(() => {});
+  const lead = (x, y, ms) => { leadTo = [x, y]; leadUntil = performance.now() + ms; };
+
+  /* plate pixel → design px. The video element carries the crop and the shot transform, so its
+     client box already has both; object-fit:cover then covers that box with the plate. */
+  const plateToDesign = (u, v) => {
+    const r = vid.getBoundingClientRect();
+    const s = Math.max(r.width / 1920, r.height / 1012);
+    return unproject(r.left + r.width / 2 + (u - 960) * s,
+                     r.top + r.height / 2 + (v - 506) * s);
+  };
+
+  (function follow() {
+    requestAnimationFrame(follow);
+    if (!auto.checked) return;
+    if (performance.now() < leadUntil && leadTo) return aim?.(...leadTo);
+    const p = hand?.[Math.round(vid.currentTime * 10)];
+    if (!p) return cursorShow?.(false);
+    aim?.(...plateToDesign(p[0] / 1000 * 1920, p[1] / 1000 * 1012));
+  })();
+
+  /* Auto play frames the projection, not the room: push the shot in until the frame's own
+     projected box fills FILL of the canvas, and put its centre in the middle. Measured off the
+     frame's matrix rather than its bounding rect, which is the shot transform's own output. */
+  const FILL = 0.74;
+  recrop = () => {
+    if (!auto.checked) {
+      ['--k', '--kx', '--ky'].forEach(p => shot.style.removeProperty(p));
+      return;
+    }
+    const m = new DOMMatrix(getComputedStyle(stage).transform);
+    const pts = [[0, 0], [1060, 0], [1060, 663], [0, 663]].map(([x, y]) => {
+      const p = m.transformPoint(new DOMPoint(x - 530, y - 331.5, 0, 1));
+      return [p.x / p.w, p.y / p.w];
+    });
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+    const r = canvas.getBoundingClientRect();
+    const z = Math.min(r.width * FILL / (x1 - x0), r.height * FILL / (y1 - y0));
+    shot.style.setProperty('--k', z);
+    shot.style.setProperty('--kx', -(x0 + x1) / 2 * z + 'px');
+    shot.style.setProperty('--ky', -(y0 + y1) / 2 * z + 'px');
   };
 
   let k = 0;
@@ -957,10 +1036,10 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const minus = document.querySelector('.step[data-step-delta="-1"]');
     for (let n = 0; n < 20 && +rounds.textContent > 4; n++) minus.click();
     show(0);
-    // one card to the left of the pack that opens: the first touch is a swipe, and it has to
-    // arrive somewhere. Manual browsing still starts on the pack itself — and after show(),
+    // one card past the pack that opens, so the swipe brings it in from the left the way the
+    // hand moves. Manual browsing still starts on that pack — and this goes after show(),
     // because entering the pack screen re-centres the deck.
-    deckTo?.(deckOpens - 1);
+    deckTo?.(deckOpens + 1);
     k = 0;
   };
 
@@ -981,11 +1060,26 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
 
   auto.onchange = () => {
     document.body.classList.toggle('is-auto', auto.checked);
-    if (!auto.checked) { deckTo?.(deckOpens); return; }
+    recrop();
+    if (!auto.checked) { deckTo?.(deckOpens); cursorShow?.(false); return; }
     rewind();
     vid.currentTime = 0;
     vid.play().catch(() => {});
   };
+  /* The hand is the thing standing between the projection and the camera, and a projector
+     cannot be occluded by what it is projecting onto. Keying it out against a clean frame of
+     the same desk leaves the surface and the disc doing the touching. Same edit, same beats,
+     same length — only the plate changes, so the playhead does not move. */
+  const nohand = document.getElementById('noHandOn');
+  nohand.onchange = () => {
+    const t = vid.currentTime, going = !vid.paused;
+    vid.src = `assets/desk-${nohand.checked ? 'nohand' : 'cut'}.mp4`;
+    vid.addEventListener('loadedmetadata', () => {
+      vid.currentTime = t;
+      if (going) vid.play().catch(() => {});
+    }, { once: true });
+  };
+
   window.__beats = BEATS;                  // the selftest walks these without the clip
 }
 
@@ -1099,7 +1193,11 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
        B.every((b, i) => (i === 0 || b.t > B[i - 1].t) && b.t > 0 && b.t < 62.8));
     // the carousel is the first view, and the first touch swipes it rather than opening it
     ok('the clip opens on the carousel and the first touch is a swipe',
-       B[0].at === 'pack' && !!B[0].from && B[0].hit.includes('data-d="1"'));
+       B[0].at === 'pack' && !!B[0].from && B[0].hit.includes('.slot'));
+    /* The disc travelling one way while the card arrives from the other is exactly the bug
+       this had: a drag to the right has to bring in the card that was on the left. */
+    ok('the swipe and the card it brings in agree on direction',
+       Math.sign(B[0].from[0]) === (B[0].hit.includes('"-1"') ? -1 : 1));
     // the flow only reaches the end if answering a step is enough to leave it
     ok('the beats walk the whole flow to Main workout',
        B.at(-1).at === order.at(-1) && new Set(B.map(b => b.at)).size === order.length);
@@ -1114,10 +1212,10 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
     ok('answering every group leaves the step without pressing Next', order[at] === 'injury');
   }
 
-  // desk plate: the footage has to be inside the canvas, or the preview's screen blend
+  // desk plate: the footage has to be inside the shot, or the preview's screen blend
   // composites the frame against nothing and "projection onto the desk" is just an overlay
   ok('the desk footage is the plate the frame blends onto',
-     document.getElementById('deskVid').parentElement === canvas);
+     document.getElementById('deskVid').parentElement === shot);
   // the guide is only worth anything if it is locked to the frame — same props, same origin
   {
     // it ships off, and a display:none element does not resolve its transform to a matrix
@@ -1125,7 +1223,7 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
     box.checked = true; box.dispatchEvent(new Event('change'));
     const a = document.getElementById('a4'), s = getComputedStyle(a);
     ok('the A4 guide moves with the frame',
-       s.transform === getComputedStyle(stage).transform && a.parentElement === canvas);
+       s.transform === getComputedStyle(stage).transform && a.parentElement === shot);
     // GUI fitted to a landscape A4's width: 1060 × 210/297, so it overhangs 43.25 top and bottom
     ok('the A4 guide is the sheet the shot was framed against',
        Math.abs(parseFloat(s.height) - 1060 * 210 / 297) < 0.1 &&
@@ -1142,7 +1240,7 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
       // read the box here, not once up front: a scrollbar appearing mid-test moves the centre
       // 7.5px and the round-trip fails on the reference point, not on the maths
       const f = canvas.getBoundingClientRect();
-      const p = new DOMMatrix(getComputedStyle(stage).transform)
+      const p = shotM().multiply(new DOMMatrix(getComputedStyle(stage).transform))
         .transformPoint(new DOMPoint(x - 530, y - 331.5, 0, 1));
       return [p.x / p.w + f.left + f.width / 2, p.y / p.w + f.top + f.height / 2];
     };

@@ -14,9 +14,12 @@
  <!-- the shot. A fixed-aspect window, not the browser window: what gets recorded is a crop of
       the footage, so the crop has to be something you can see the edges of while composing. -->
  <div class="canvas" id="canvas">
+  <!-- everything in the shot moves together. Auto play pushes in on the projection through
+       this, so the frame and the footage under it stay locked while the crop tightens. -->
+  <div class="shot" id="shot">
 
   <!-- the desk itself. Not a backdrop image — this is the plate the UI gets composited onto,
-       so it sits inside the canvas where the frame's screen blend can reach it. -->
+       so it sits inside the shot where the frame's screen blend can reach it. -->
   <video class="deskvid" id="deskVid" src="assets/desk-cut.mp4" muted playsinline preload="auto"></video>
 
   <!-- A4 sync guide. The GUI is 2560×1600 and was shot against an A4 lying on the desk, fitted
@@ -357,6 +360,7 @@
     </nav>
 
   </div>
+  </div>
  </div>
 </div>
 
@@ -409,9 +413,13 @@
         <span>발광 영역만 보기</span>
       </label>
       <p class="picker-cap">영상이 UI를 몬다</p>
-      <label class="picker-check picker-check--sub" title="컷 영상에서 손이 책상에 닿는 12번의 순간에 맞춰 UI가 스스로 넘어간다.">
+      <label class="picker-check picker-check--sub" title="컷 영상에서 손이 책상에 닿는 순간에 맞춰 UI가 스스로 넘어간다. 샷은 프로젝션 중심으로 자동 크롭된다.">
         <input type="checkbox" id="autoOn">
         <span>오토 플레이 모드</span>
+      </label>
+      <label class="picker-check picker-check--sub" title="깨끗한 책상 프레임을 깔고 피부색을 키잉해 손을 지운다. 커서만 남는다.">
+        <input type="checkbox" id="noHandOn">
+        <span>손 지우기</span>
       </label>
       <!-- reads the projected result, so it answers "will this text survive" with a number -->
       <dl class="picker-contrast" id="contrast"></dl>

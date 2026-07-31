@@ -65,6 +65,14 @@ body.is-desk{padding:0 260px 0 20px}
   position:relative;overflow:hidden;
   background:#0b0b0b;box-shadow:0 0 0 1px #232323;
 }
+/* one transform over the whole shot. Auto play sets it so the projection fills the frame —
+   push in on the UI and the desk under it comes with it, which a crop on the video alone
+   cannot do. Every background lives here too, so the frame's screen blend still finds it. */
+.shot{
+  position:absolute;inset:0;
+  transform:translate(var(--kx,0px),var(--ky,0px)) scale(var(--k,1));
+  transform-origin:center;
+}
 .canvas:fullscreen{box-shadow:none}
 body.is-align .canvas{cursor:move}
 /* nothing is driving the pointer in auto play, and the frame is small enough that the arrow
@@ -160,14 +168,14 @@ body.is-light .beam{opacity:.35}
    floor. --floor is the desk reflecting ambient light, which is exactly what "black" looks
    like, and nothing in the UI can come out darker than it. Screen over that floor is the sum;
    the projector's own output is scaled by brightness() for its gain. */
-body.is-preview .canvas{background:var(--floor,#2b2a28);isolation:isolate}
+body.is-preview .shot{background:var(--floor,#2b2a28);isolation:isolate}
 /* with the footage running, the desk is the footage — the flat floor plate would just cover it.
    Placed after the rule above so it wins the tie on specificity. */
-body.is-desk .canvas{background:#000;isolation:isolate}
+body.is-desk .shot{background:#000;isolation:isolate}
 /* "Show only what emits light". Because screen-blending makes black the identity, every unlit
    pixel is literally transparent — over a checker it reads as a hole, which is what the
    projector puts on the desk: nothing. */
-body.is-unlit .canvas{
+body.is-unlit .shot{
   background:
     repeating-conic-gradient(#5a5a5a 0 25%,#8e8e8e 0 50%) 0 0/18px 18px;
 }
@@ -221,6 +229,27 @@ body.is-real .stage{filter:brightness(var(--gain,1)) url(#hollow)}
 @keyframes tap{
   from{transform:scale(.6);opacity:.8}
   to{transform:scale(1.7);opacity:0}
+}
+
+/* a drag leaves the line it was drawn along. Placed at its start, rotated to its direction and
+   grown to its length, so one element covers any drag on any screen. */
+.trail{
+  position:absolute;height:3px;margin-top:-1.5px;border-radius:99px;transform-origin:0 50%;
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.55));
+  animation:trail .7s var(--ease) forwards;
+}
+@keyframes trail{
+  0%{opacity:0}
+  22%{opacity:1}
+  100%{opacity:0}
+}
+
+/* the press: the disc tightens onto the point and lets go, the way a fingertip lands */
+.cursor.is-press{
+  width:19px;height:19px;margin:-9.5px 0 0 -9.5px;
+  background:linear-gradient(180deg,#ffffff 0%,rgba(255,255,255,.7) 45%,rgba(255,255,255,.12) 100%);
+  transition:width .12s var(--ease),height .12s var(--ease),margin .12s var(--ease),
+             background .12s var(--ease);
 }
 
 /* ambient projector light */
