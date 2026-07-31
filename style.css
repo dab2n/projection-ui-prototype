@@ -52,8 +52,26 @@ img{display:block}
 
 /* ── stage & fit ─────────────────────────────────────────── */
 .fit{position:relative;display:grid;place-items:center;width:100%;flex:1;min-height:0}
+/* the colour panel is fixed and reserves no space; the transport panel is handled in fit(),
+   which has to measure it anyway */
+body.is-desk{padding:0 260px 0 20px}
+/* the shot: a fixed-aspect window sized by fit(), everything inside it is what gets recorded.
+   The frame and the A4 guide are pinned to the centre by hand rather than centred by a grid:
+   both overflow the canvas (663 and 1499 tall against ~500), and a grid row grows to its
+   tallest item, so the 1499px guide was pushing the frame a thousand pixels down the page —
+   and even alone the frame sat half its overflow low, which is exactly the point unproject()
+   takes as the origin. */
+.canvas{
+  position:relative;overflow:hidden;
+  background:#0b0b0b;box-shadow:0 0 0 1px #232323;
+}
+.canvas:fullscreen{box-shadow:none}
+body.is-align .canvas{cursor:move}
+body.is-align .stage{pointer-events:none}   /* dragging must not press the UI underneath */
+
 .stage{
-  position:relative; width:1060px; height:663px; overflow:hidden;
+  position:absolute; left:50%; top:50%; margin:-331.5px 0 0 -530px;
+  width:1060px; height:663px; overflow:hidden;
   background:var(--bg); border-radius:6px;
   /* --s fits the frame to the viewport; everything else is the rig that lays it down onto the
      desk. perspective() has to sit inside the transform (not on the parent) because the parent
@@ -69,16 +87,44 @@ img{display:block}
 }
 
 /* ── desk plate ──────────────────────────────────────────────
-   The footage of the real desk, sized to cover .fit. It is a sibling under the frame rather
-   than a body background so that the preview's screen blend composites against it — what you
-   see is then the actual projection onto the actual desk, not a mock-up of one. */
+   The footage of the real desk, sized to cover the canvas. It is a sibling under the frame
+   rather than a body background so that the preview's screen blend composites against it —
+   what you see is then the actual projection onto the actual desk, not a mock-up of one.
+   --vz/--vx/--vy are the crop: which part of the shot the canvas is looking at. */
 .deskvid{
   position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   display:none;background:#000;
+  transform:translate(var(--vx,0px),var(--vy,0px)) scale(var(--vz,1));
 }
 body.is-desk .deskvid{display:block}
-body.is-desk .hint{visibility:hidden}
+body.is-desk .hint{display:none}   /* the shot wants the height more than the caption does */
 body.is-desk .stage{box-shadow:none}
+
+/* ── A4 sync guide ───────────────────────────────────────────
+   The shot was framed against an A4 lying on the desk and the 2560×1600 GUI is assumed to fit
+   its width, so the sheet is 1060 × 1060·(297/210) = 1499.14 design px and overhangs the frame
+   by 418.07 top and bottom. Carries the same rig transform as the frame — same custom props,
+   same origin, so the two stay locked together however the frame is laid down. */
+.a4{
+  position:absolute; left:50%; top:50%; margin:-749.571px 0 0 -530px;
+  width:1060px;height:1499.143px;pointer-events:none;display:none;
+  /* the bands are the pale white the guide is for; the hairline is so the guide can be found
+     at all on a white desk, where pale white on pale white is nothing */
+  box-shadow:inset 0 0 0 1px rgba(250,48,48,.5);
+  transform:
+    translate(var(--tx,0px),var(--ty,0px))
+    perspective(var(--persp,1400px))
+    rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) rotate(var(--rz,0deg))
+    scale(calc(var(--s,1) * var(--zoom,1)));
+  transform-origin:center;
+}
+body.is-a4 .a4{display:block}
+.a4 i{
+  position:absolute;left:0;width:100%;height:418.071px;
+  background:rgba(255,255,255,.18);box-shadow:inset 0 0 0 1px rgba(250,48,48,.32);
+}
+.a4 i:first-child{top:0}
+.a4 i:last-child{bottom:0}
 .hint{margin:0 0 16px;font-size:13px;color:#5a5a5a;letter-spacing:-.3px}
 
 /* ── light field ─────────────────────────────────────────────
@@ -111,14 +157,14 @@ body.is-light .beam{opacity:.35}
    floor. --floor is the desk reflecting ambient light, which is exactly what "black" looks
    like, and nothing in the UI can come out darker than it. Screen over that floor is the sum;
    the projector's own output is scaled by brightness() for its gain. */
-body.is-preview .fit{background:var(--floor,#2b2a28);isolation:isolate}
+body.is-preview .canvas{background:var(--floor,#2b2a28);isolation:isolate}
 /* with the footage running, the desk is the footage — the flat floor plate would just cover it.
    Placed after the rule above so it wins the tie on specificity. */
-body.is-desk .fit{background:#000;isolation:isolate}
+body.is-desk .canvas{background:#000;isolation:isolate}
 /* "Show only what emits light". Because screen-blending makes black the identity, every unlit
    pixel is literally transparent — over a checker it reads as a hole, which is what the
    projector puts on the desk: nothing. */
-body.is-unlit .fit{
+body.is-unlit .canvas{
   background:
     repeating-conic-gradient(#5a5a5a 0 25%,#8e8e8e 0 50%) 0 0/18px 18px;
 }
@@ -131,20 +177,12 @@ body.is-preview .stage{
   filter:brightness(var(--gain,1));   /* projector gain only — no colour filtering */
   box-shadow:none;
 }
-/* 리얼 프로젝션뷰 — the same fact as the screen blend, but cut instead of added: the frame's
-   own light becomes its alpha, so every black area is a literal hole and the desk behind it
-   arrives untouched, while everything that does emit keeps the colour it was drawn in. Over a
-   near-white desk the screen blend has almost no headroom left and washes the design out;
-   this keeps the card white and the type a hole through it, which is the thing to look at.
-   gain first, so the projector's output is what gets turned into alpha. */
-body.is-real .stage{
-  mix-blend-mode:normal;
-  filter:brightness(var(--gain,1)) url(#knockout);
-}
-/* the ambient spill is a mood layer standing in for a projector we could not point at a desk.
-   Here there is a real one in the footage, and the stand-in only draws a pale rectangle around
-   the frame — the one thing that must not read as an edge. */
-body.is-real .beam{display:none}
+/* 리얼 프로젝션뷰 — the preview, unchanged, plus an outline on the black. Black is zero light,
+   so under the screen blend it is already invisible; that is correct but it also means an
+   unprojected shape leaves nothing to read. The filter strokes those areas faintly and leaves
+   the fill empty. Every other colour composites exactly as it does in the preview — same
+   blend, same gain, nothing remapped. */
+body.is-real .stage{filter:brightness(var(--gain,1)) url(#hollow)}
 .filters{position:absolute;width:0;height:0}
 
 /* ── prototyping cursor & touch ─────────────────────────────
@@ -829,11 +867,15 @@ body.is-preview .picker-sliders{display:flex}
 .deskbar-body{padding:9px 10px 10px;display:flex;flex-direction:column;gap:8px}
 .deskbar.is-folded .deskbar-body{display:none}
 .deskbar-row{display:flex;align-items:center;gap:8px}
-.deskbar-row--rig{flex-wrap:wrap;gap:6px 12px;padding-top:8px;border-top:1px solid #2b2b2b}
+.deskbar-row--rig{flex-wrap:wrap;gap:5px 10px;padding-top:7px;border-top:1px solid #2b2b2b}
 .deskbar-cap{color:#7c7c7c}
-.deskbar-row--rig label{display:flex;align-items:center;gap:6px;color:#9a9a9a}
-.deskbar-row--rig input[type=range]{width:78px;height:13px;accent-color:#fa3030}
-.deskbar-row--rig b{min-width:40px;font-family:ui-monospace,monospace;color:#e6e6e6;text-align:right}
+.deskbar-row--rig label{display:flex;align-items:center;gap:5px;color:#9a9a9a}
+.deskbar-row--rig input[type=range]{width:62px;height:13px;accent-color:#fa3030}
+.deskbar-row--rig b{min-width:36px;font-family:ui-monospace,monospace;color:#e6e6e6;text-align:right}
+.tsel{
+  height:21px;border:1px solid #333;border-radius:5px;background:#141414;color:#e6e6e6;
+  font:inherit;font-family:ui-monospace,monospace;padding:0 4px;
+}
 
 .tbtn{
   height:23px;min-width:23px;padding:0 6px;border-radius:5px;border:1px solid #333;

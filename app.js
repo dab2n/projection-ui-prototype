@@ -7,15 +7,32 @@ const appbar  = document.getElementById('appbar');
 const flowbar = document.getElementById('flowbar');
 const steps   = [...flowbar.querySelectorAll('li')];
 
-/* ── fit the 1060×663 frame to the viewport ─────────────── */
+/* ── size the shot, then fit the 1060×663 frame inside it ───
+   The canvas is a fixed-aspect crop of the footage rather than the browser window, so it is
+   sized here and not in CSS: aspect-ratio plus max-width/max-height cannot letterbox in one
+   pass — whichever of the two is set explicitly wins and the other overflows. */
+const fitEl  = document.getElementById('fit');
+const canvas = document.getElementById('canvas');
+let AR = 16 / 9;
+
 const fit = () => {
-  const pad = 64;
-  stage.style.setProperty('--s', Math.min(
-    (innerWidth - pad) / 1060,
-    (innerHeight - pad - 40) / 663,
-  ));
+  const full = document.fullscreenElement === canvas;
+  // the transport panel is fixed, so it reserves no space of its own — measure it and hold the
+  // shot clear of it, or the part being composed is the part hidden behind the controls.
+  // Measured here rather than by a ResizeObserver: those deliver during the rendering steps,
+  // which a background tab does not run, and the layout would silently stay wrong.
+  const bar = document.body.classList.contains('is-desk')
+    ? document.getElementById('deskbar').offsetHeight + 40 : 0;
+  const W = full ? innerWidth : fitEl.clientWidth - 24;
+  const H = (full ? innerHeight : fitEl.clientHeight - 24) - bar;
+  const w = Math.max(120, Math.min(W, H * AR));
+  canvas.style.width = w + 'px';
+  canvas.style.height = w / AR + 'px';
+  canvas.style.marginBottom = full ? '0px' : bar + 'px';   // .fit centres it; push it clear
+  canvas.style.setProperty('--s', Math.min(w / 1060, w / AR / 663));
 };
 addEventListener('resize', fit);
+addEventListener('fullscreenchange', fit);
 fit();
 
 /* client px → design px inside the frame.
@@ -23,10 +40,10 @@ fit();
    scale — an affine inverse drifts further the more it is tilted. On the frame's own plane
    (z=0) the matrix collapses to a 3×3 homography, so drop the z column and solve the 2×2 it
    leaves. The origin is the untransformed centre: every transform here is taken about
-   transform-origin:center, and .fit centres the frame without transforming, so .fit's centre
-   is that point. */
+   transform-origin:center, and the canvas centres the frame without transforming, so the
+   canvas's centre is that point. */
 const unproject = (cx, cy) => {
-  const f = document.getElementById('fit').getBoundingClientRect();
+  const f = canvas.getBoundingClientRect();
   const m = new DOMMatrix(getComputedStyle(stage).transform);
   const X = cx - (f.left + f.width / 2), Y = cy - (f.top + f.height / 2);
   // Xw = r0·p, Yw = r1·p, w = r2·p with p = (x, y, 1)
@@ -639,35 +656,43 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const SRC = 'Projection GUI.mov';        // the 4K original the cut should be taken from
 
   /* ── perspective rig ──
-     Defaults measured off the A4 sheet lying on the desk in the footage: it is foreshortened to
-     0.54 of the height it would have flat on, so cos⁻¹(0.54) ≈ 56°, and its edges converge at
-     the rate a camera ~3000px back gives at this frame size.
+     Defaults land the A4 guide on the actual sheet in the footage — that is what makes the
+     guide worth anything. The sheet sits at (858,687) of the 1920×1012 plate, so the crop
+     pulls it to the middle at 190%; there it is foreshortened to 0.54 of its flat height
+     (cos⁻¹ → 56°) and its far edge is 0.795× its near edge (→ camera ~3350px back).
+     The numbers are in screen px, so they hold at the window size they were found at — drag
+     them back with 드래그 정렬 on any other.
      원근 does nothing at 기울기 0° — a plane square to the camera has no depth to project —
      which is why it read as a dead control before the frame was laid down. */
   const KNOBS = [
-    ['rx',    '기울기', -70,   70,   56, 'deg', '°'],
-    ['ry',    '좌우',   -70,   70,    0, 'deg', '°'],
-    ['rz',    '회전',   -45,   45,    0, 'deg', '°'],
-    ['persp', '원근',   300, 4000, 3000, 'px',  'px'],
-    ['zoom',  '크기',    15,  160,  112, '%',   '%'],
-    ['tx',    'X',     -700,  700,  -25, 'px',  'px'],
-    ['ty',    'Y',     -500,  500,  105, 'px',  'px'],
+    ['rx',    '기울기', -70,   70,   54, 'deg', '°',  'rig'],
+    ['ry',    '좌우',   -70,   70,    0, 'deg', '°',  'rig'],
+    ['rz',    '회전',   -45,   45,    0, 'deg', '°',  'rig'],
+    ['persp', '원근',   300, 4000, 2148, 'px',  'px', 'rig'],
+    ['zoom',  '크기',    15,  160,   55, '%',   '%',  'rig'],
+    ['tx',    'X',     -900,  900,  -74, 'px',  'px', 'rig'],
+    ['ty',    'Y',     -700,  700,  -30, 'px',  'px', 'rig'],
+    ['vz',    '배율',   100,  320,  251, '%',   '%',  'crop'],
+    ['vx',    'X',     -900,  900,  200, 'px',  'px', 'crop'],
+    ['vy',    'Y',     -700,  700, -197, 'px',  'px', 'crop'],
   ];
   // rig2: the defaults changed, and a saved rig from before would have hidden them
   const saved = JSON.parse(localStorage.getItem('rig2') || '{}');
-  const rigRow = document.getElementById('rig');
   const inputs = {};
 
-  KNOBS.forEach(([k, label, min, max, def, unit, suffix]) => {
+  KNOBS.forEach(([k, label, min, max, def, unit, suffix, row]) => {
     const el = document.createElement('label');
     el.innerHTML = `${label}<input type="range" min="${min}" max="${max}" value="${def}"
       aria-label="${label}"><b></b>`;
-    rigRow.insertBefore(el, document.getElementById('rigReset'));
+    const host = document.getElementById(row);
+    host.insertBefore(el, row === 'rig' ? document.getElementById('rigReset') : null);
     const r = inputs[k] = el.querySelector('input');
     r.value = saved[k] ?? def;
     r.oninput = () => {
+      // set on the canvas, not the frame: the A4 guide is a sibling and reads the same props,
+      // which is what keeps it locked to the frame however the rig is dialled
       // % is a ratio in CSS terms, the rest carry their unit through untouched
-      stage.style.setProperty('--' + k, unit === '%' ? r.value / 100 : r.value + unit);
+      canvas.style.setProperty('--' + k, unit === '%' ? r.value / 100 : r.value + unit);
       el.querySelector('b').textContent = r.value + suffix;
       localStorage.setItem('rig2', JSON.stringify(
         Object.fromEntries(Object.entries(inputs).map(([n, i]) => [n, +i.value]))));
@@ -676,6 +701,35 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   });
   document.getElementById('rigReset').onclick = () =>
     KNOBS.forEach(([k, , , , def]) => { inputs[k].value = def; inputs[k].oninput(); });
+
+  /* Dragging beats hunting for the right slider when the job is lining two images up. The
+     values are plain screen px — translate() is the outermost function in both transforms, so
+     it lands in the canvas's own unscaled space. */
+  const align = document.getElementById('alignOn');
+  align.onchange = () => body.classList.toggle('is-align', align.checked);
+  canvas.addEventListener('pointerdown', e => {
+    if (!align.checked) return;
+    const [kx, ky] = e.shiftKey ? ['vx', 'vy'] : ['tx', 'ty'];   // shift drags the crop
+    const x0 = e.clientX, y0 = e.clientY, ax = +inputs[kx].value, ay = +inputs[ky].value;
+    canvas.setPointerCapture(e.pointerId);
+    const move = ev => {
+      inputs[kx].value = ax + ev.clientX - x0; inputs[kx].oninput();
+      inputs[ky].value = ay + ev.clientY - y0; inputs[ky].oninput();
+    };
+    const up = () => {
+      canvas.removeEventListener('pointermove', move);
+      canvas.removeEventListener('pointerup', up);
+    };
+    canvas.addEventListener('pointermove', move);
+    canvas.addEventListener('pointerup', up);
+  });
+
+  const ar = document.getElementById('ar');
+  ar.onchange = () => { AR = +ar.value; fit(); };
+
+  const a4 = document.getElementById('a4On');
+  a4.onchange = () => body.classList.toggle('is-a4', a4.checked);
+  a4.dispatchEvent(new Event('change'));
 
   /* ── transport ── */
   const mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
@@ -724,8 +778,9 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
       () => prompt('복사해서 쓰세요', cmd));
   };
 
+  // the canvas, not the document: fullscreen is for recording, and the panels are not in the shot
   document.getElementById('fullOn').onclick = () => document.fullscreenElement
-    ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    ? document.exitFullscreen() : canvas.requestFullscreen();
 
   /* space plays, unless something focused wants it (a range steps, a button clicks) */
   addEventListener('keydown', e => {
@@ -735,13 +790,18 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   });
 
   const deskOn = document.getElementById('deskOn');
-  deskOn.onchange = () => { body.classList.toggle('is-desk', deskOn.checked); if (!deskOn.checked) vid.pause(); };
+  deskOn.onchange = () => {
+    body.classList.toggle('is-desk', deskOn.checked);
+    if (!deskOn.checked) vid.pause();
+    fit();
+  };
   deskOn.dispatchEvent(new Event('change'));
 
   const foldBar = document.getElementById('deskbar');
   document.getElementById('deskFold').onclick = e => {
     foldBar.classList.toggle('is-folded');
     e.target.textContent = foldBar.classList.contains('is-folded') ? '+' : '–';
+    fit();                                   // folding the panel gives the shot its space back
   };
 }
 
@@ -888,19 +948,30 @@ if (location.search.includes('selftest')) {
   ok('no selectable control shows a system cursor',
      [...document.querySelectorAll('.card,.chip,.slot,.btn')].every(e => getComputedStyle(e).cursor === 'none'));
 
-  // desk plate: the footage has to be inside .fit, or the preview's screen blend composites
-  // the frame against nothing and the "projection onto the desk" is just an overlay
+  // desk plate: the footage has to be inside the canvas, or the preview's screen blend
+  // composites the frame against nothing and "projection onto the desk" is just an overlay
   ok('the desk footage is the plate the frame blends onto',
-     document.getElementById('deskVid').parentElement === document.getElementById('fit'));
+     document.getElementById('deskVid').parentElement === canvas);
+  // the guide is only worth anything if it is locked to the frame — same props, same origin
+  {
+    const a = document.getElementById('a4'), s = getComputedStyle(a);
+    ok('the A4 guide moves with the frame',
+       s.transform === getComputedStyle(stage).transform && a.parentElement === canvas);
+    // GUI fitted to A4's width: 1060 × 297/210 tall, so it overhangs 418.07 top and bottom
+    ok('the A4 guide is the sheet the shot was framed against',
+       Math.abs(parseFloat(s.height) - 1060 * 297 / 210) < 0.1 &&
+       Math.abs(parseFloat(getComputedStyle(a.firstElementChild).height)
+                - (1060 * 297 / 210 - 663) / 2) < 0.1);
+  }
   // tilted, pointer→design is projective; an affine inverse looks right at the centre and
   // drifts at the corners, which is exactly where the frame's controls are
   {
-    stage.style.setProperty('--rx', '38deg');
-    stage.style.setProperty('--rz', '9deg');
+    canvas.style.setProperty('--rx', '38deg');   // on the canvas, so rigReset can undo it
+    canvas.style.setProperty('--rz', '9deg');
     const fwd = (x, y) => {                       // forward projection, via a different path
-      // read the frame's box here, not once up front: a scrollbar appearing mid-test moves the
-      // centre 7.5px and the round-trip fails on the reference point, not on the maths
-      const f = document.getElementById('fit').getBoundingClientRect();
+      // read the box here, not once up front: a scrollbar appearing mid-test moves the centre
+      // 7.5px and the round-trip fails on the reference point, not on the maths
+      const f = canvas.getBoundingClientRect();
       const p = new DOMMatrix(getComputedStyle(stage).transform)
         .transformPoint(new DOMPoint(x - 530, y - 331.5, 0, 1));
       return [p.x / p.w + f.left + f.width / 2, p.y / p.w + f.top + f.height / 2];

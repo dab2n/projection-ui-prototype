@@ -11,10 +11,18 @@
 <body>
 
 <div class="fit" id="fit">
+ <!-- the shot. A fixed-aspect window, not the browser window: what gets recorded is a crop of
+      the footage, so the crop has to be something you can see the edges of while composing. -->
+ <div class="canvas" id="canvas">
 
   <!-- the desk itself. Not a backdrop image — this is the plate the UI gets composited onto,
-       so it sits inside .fit where the frame's screen blend can reach it. -->
+       so it sits inside the canvas where the frame's screen blend can reach it. -->
   <video class="deskvid" id="deskVid" src="assets/desk.mp4" muted playsinline preload="auto"></video>
+
+  <!-- A4 sync guide. The GUI is 2560×1600 and was shot against an A4 lying on the desk, fitted
+       to the sheet's width — so the sheet runs 418 design px past the frame top and bottom.
+       Line those bands up with the real sheet and the projection is where it was shot. -->
+  <div class="a4" id="a4"><i></i><i></i></div>
 
   <div class="stage" id="stage">
 
@@ -349,6 +357,7 @@
     </nav>
 
   </div>
+ </div>
 </div>
 
 <p class="hint">← → 방향키 · 클릭으로 이동 &nbsp;|&nbsp; 1060 × 663 projection frame</p>
@@ -435,21 +444,43 @@
     <!-- knobs are built by app.js from one table, so label/range/readout/persistence stay in step -->
     <div class="deskbar-row deskbar-row--rig" id="rig">
       <span class="deskbar-cap">투시</span>
+      <label class="picker-check" title="프레임을 끌어서 옮긴다. Shift를 누르고 끌면 영상 크롭이 움직인다."><input type="checkbox" id="alignOn"><span>드래그 정렬</span></label>
       <button class="tbtn tbtn--wide" id="rigReset">리셋</button>
+    </div>
+    <div class="deskbar-row deskbar-row--rig" id="crop">
+      <span class="deskbar-cap">크롭</span>
+      <label>비율<select class="tsel" id="ar">
+        <option value="1.7778" selected>16:9</option>
+        <option value="1.8972">원본</option>
+        <option value="1.6">16:10</option>
+        <option value="1.3333">4:3</option>
+        <option value="1">1:1</option>
+        <option value="0.5625">9:16</option>
+      </select></label>
+      <label class="picker-check" title="GUI가 A4 가로에 딱 맞는다고 보고, 위아래로 남는 여백을 표시한다"><input type="checkbox" id="a4On" checked><span>A4 가이드</span></label>
     </div>
   </div>
 </aside>
 
-<!-- 리얼 프로젝션뷰. A projector emits light; where the design is black it emits none, so that
-     area is not "dark" — it is a hole, and the desk under it is untouched. This turns the
-     frame's own light into its alpha: flatten it over black first (so a 4% white scrim reads as
-     4% light, not as solid white), then take alpha = R+G+B clamped. Black → 0, a white card →
-     1, #FA3030 → 1.36 → 1, so saturated colour keeps every bit of its chroma. -->
-<svg class="filters" aria-hidden="true"><filter id="knockout" color-interpolation-filters="sRGB">
-  <feFlood flood-color="#000"/>
-  <feComposite in="SourceGraphic" operator="over" result="lit"/>
-  <feColorMatrix in="lit" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  1 1 1 0 0"/>
-</filter></svg>
+<!-- 리얼 프로젝션뷰 — the preview exactly, plus one thing: black areas get a faint outline and
+     keep an empty fill. Black is already zero light and therefore invisible under the screen
+     blend; the outline is what makes an unprojected shape readable as a shape. Region is pinned
+     to the frame's own box, otherwise the flood spills into the filter's 10% margin and the
+     erode traces a rectangle out in space instead of the frame edge. -->
+<svg class="filters" aria-hidden="true">
+  <filter id="hollow" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feFlood flood-color="#000"/>
+    <feComposite in="SourceGraphic" operator="over" result="lit"/>
+    <!-- white, with alpha = 1 − (R+G+B): opaque only where the design emits nothing.
+         #FA3030 lands at −0.36 → 0, so saturated colour is never treated as black. -->
+    <feColorMatrix in="lit" type="matrix"
+      values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -1 -1 -1 0 1" result="dark"/>
+    <feMorphology in="dark" operator="erode" radius="1.1" result="inner"/>
+    <feComposite in="dark" in2="inner" operator="out" result="edge"/>
+    <feComponentTransfer in="edge" result="faint"><feFuncA type="linear" slope=".55"/></feComponentTransfer>
+    <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="faint"/></feMerge>
+  </filter>
+</svg>
 
 <script src="app.js"></script>
 </body>
