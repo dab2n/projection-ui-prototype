@@ -51,13 +51,34 @@ img{display:block}
 .pixel{font-family:'OffBit Dot',ui-monospace,monospace;font-weight:700}
 
 /* ── stage & fit ─────────────────────────────────────────── */
-.fit{display:grid;place-items:center;width:100%;flex:1;min-height:0}
+.fit{position:relative;display:grid;place-items:center;width:100%;flex:1;min-height:0}
 .stage{
   position:relative; width:1060px; height:663px; overflow:hidden;
   background:var(--bg); border-radius:6px;
-  transform:scale(var(--s,1)); transform-origin:center;
+  /* --s fits the frame to the viewport; everything else is the rig that lays it down onto the
+     desk. perspective() has to sit inside the transform (not on the parent) because the parent
+     is also the desk plate, and the desk must not tilt — it is already in the camera's
+     perspective. Order: place it, then project it, then rotate about the frame's own centre. */
+  transform:
+    translate(var(--tx,0px),var(--ty,0px))
+    perspective(var(--persp,1400px))
+    rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) rotate(var(--rz,0deg))
+    scale(calc(var(--s,1) * var(--zoom,1)));
+  transform-origin:center;
   box-shadow:0 40px 120px rgba(0,0,0,.6);
 }
+
+/* ── desk plate ──────────────────────────────────────────────
+   The footage of the real desk, sized to cover .fit. It is a sibling under the frame rather
+   than a body background so that the preview's screen blend composites against it — what you
+   see is then the actual projection onto the actual desk, not a mock-up of one. */
+.deskvid{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  display:none;background:#000;
+}
+body.is-desk .deskvid{display:block}
+body.is-desk .hint{visibility:hidden}
+body.is-desk .stage{box-shadow:none}
 .hint{margin:0 0 16px;font-size:13px;color:#5a5a5a;letter-spacing:-.3px}
 
 /* ── light field ─────────────────────────────────────────────
@@ -91,6 +112,9 @@ body.is-light .beam{opacity:.35}
    like, and nothing in the UI can come out darker than it. Screen over that floor is the sum;
    the projector's own output is scaled by brightness() for its gain. */
 body.is-preview .fit{background:var(--floor,#2b2a28);isolation:isolate}
+/* with the footage running, the desk is the footage — the flat floor plate would just cover it.
+   Placed after the rule above so it wins the tie on specificity. */
+body.is-desk .fit{background:#000;isolation:isolate}
 /* "Show only what emits light". Because screen-blending makes black the identity, every unlit
    pixel is literally transparent — over a checker it reads as a hole, which is what the
    projector puts on the desk: nothing. */
@@ -773,6 +797,42 @@ body.is-preview .picker-sliders{display:flex}
 .picker-contrast dt{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .picker-contrast dd{margin:0;font-family:ui-monospace,monospace;text-align:right;color:#e6e6e6}
 .picker-contrast dd.is-bad{color:#fa3030}
+
+/* ── desk plate rig ──────────────────────────────────────── */
+.deskbar{
+  position:fixed;left:20px;bottom:20px;right:270px;z-index:50;
+  background:#1c1c1c;border:1px solid #2e2e2e;border-radius:12px;
+  box-shadow:0 18px 50px rgba(0,0,0,.55);color:#e6e6e6;
+  font-size:12px;letter-spacing:-.2px;user-select:none;
+}
+.deskbar-head{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid #2e2e2e}
+.deskbar-head b{font-weight:500;color:#bdbdbd}
+.deskbar-time{font-family:ui-monospace,monospace;color:#7a7a7a}
+.deskbar-time b{color:#e6e6e6}
+.deskbar-cut{margin-right:auto;color:#7a7a7a;font-family:ui-monospace,monospace}
+.deskbar-cut.is-set{color:#fa3030}
+.deskbar-body{padding:9px 10px 10px;display:flex;flex-direction:column;gap:8px}
+.deskbar.is-folded .deskbar-body{display:none}
+.deskbar-row{display:flex;align-items:center;gap:8px}
+.deskbar-row--rig{flex-wrap:wrap;gap:6px 12px;padding-top:8px;border-top:1px solid #2b2b2b}
+.deskbar-cap{color:#7c7c7c}
+.deskbar-row--rig label{display:flex;align-items:center;gap:6px;color:#9a9a9a}
+.deskbar-row--rig input[type=range]{width:78px;height:13px;accent-color:#fa3030}
+.deskbar-row--rig b{min-width:40px;font-family:ui-monospace,monospace;color:#e6e6e6;text-align:right}
+
+.tbtn{
+  height:23px;min-width:23px;padding:0 6px;border-radius:5px;border:1px solid #333;
+  background:#141414;color:#cfcfcf;display:grid;place-items:center;line-height:1;
+  font-family:ui-monospace,monospace;
+}
+.tbtn:hover{border-color:#555;color:#fff}
+.tbtn--play{font-size:10px}
+.tbtn--wide{font-family:inherit;padding:0 9px}
+
+/* the playhead is a native range; the cut is painted as a band behind its track */
+.tl{position:relative;flex:1;min-width:0;display:flex;align-items:center;height:23px}
+.tl-band{position:absolute;top:9px;height:5px;border-radius:99px;background:rgba(250,48,48,.55);pointer-events:none}
+.tl input[type=range]{width:100%;height:23px;accent-color:#fa3030;background:none}
 
 /* ── a11y ────────────────────────────────────────────────── */
 :focus-visible{outline:2px solid #fa3030;outline-offset:3px;border-radius:6px}

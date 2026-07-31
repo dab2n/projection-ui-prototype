@@ -10,7 +10,12 @@
 </head>
 <body>
 
-<div class="fit">
+<div class="fit" id="fit">
+
+  <!-- the desk itself. Not a backdrop image — this is the plate the UI gets composited onto,
+       so it sits inside .fit where the frame's screen blend can reach it. -->
+  <video class="deskvid" id="deskVid" src="assets/desk.mp4" muted playsinline preload="auto"></video>
+
   <div class="stage" id="stage">
 
     <!-- ambient projection light -->
@@ -400,6 +405,37 @@
         검정은 곧 투명이고, 위 체크박스로 실제로 빛이 나가는 영역만 볼 수 있다.
         흰 책상에서는 <b>맨 책상이 가장 어두운 값</b>이므로, 밝은 배경을 쓰면 글자는 반대로
         어두워야 읽힌다.</p>
+    </div>
+  </div>
+</aside>
+
+<!-- desk plate rig: transport for the footage, and the perspective that lays the frame down
+     onto the desk instead of leaving it flat against the camera -->
+<aside class="deskbar" id="deskbar">
+  <header class="deskbar-head">
+    <label class="picker-check"><input type="checkbox" id="deskOn" checked><span><b>책상 영상</b></span></label>
+    <span class="deskbar-time"><b id="tCur">0:00</b> / <span id="tDur">0:00</span></span>
+    <span class="deskbar-cut" id="cutOut">전체</span>
+    <button class="picker-fold" id="deskFold" aria-label="Fold panel">–</button>
+  </header>
+  <div class="deskbar-body">
+    <div class="deskbar-row">
+      <button class="tbtn tbtn--play" id="play" aria-label="Play/Pause">▶</button>
+      <div class="tl">
+        <div class="tl-band" id="tlBand" hidden></div>
+        <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Seek">
+      </div>
+      <button class="tbtn" id="markIn" title="현재 위치를 컷 시작으로">[</button>
+      <button class="tbtn" id="markOut" title="현재 위치를 컷 끝으로">]</button>
+      <button class="tbtn" id="clearCut" title="컷 해제">✕</button>
+      <label class="picker-check"><input type="checkbox" id="loopOn" checked><span>컷 반복</span></label>
+      <button class="tbtn tbtn--wide" id="copyCut" title="이 컷을 실제로 잘라내는 ffmpeg 명령을 복사한다">컷 내보내기</button>
+      <button class="tbtn tbtn--wide" id="fullOn">전체화면</button>
+    </div>
+    <!-- knobs are built by app.js from one table, so label/range/readout/persistence stay in step -->
+    <div class="deskbar-row deskbar-row--rig" id="rig">
+      <span class="deskbar-cap">투시</span>
+      <button class="tbtn tbtn--wide" id="rigReset">리셋</button>
     </div>
   </div>
 </aside>

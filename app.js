@@ -18,6 +18,27 @@ const fit = () => {
 addEventListener('resize', fit);
 fit();
 
+/* client px → design px inside the frame.
+   The frame can carry a 3D tilt to match the desk, which makes this a projective map, not a
+   scale — an affine inverse drifts further the more it is tilted. On the frame's own plane
+   (z=0) the matrix collapses to a 3×3 homography, so drop the z column and solve the 2×2 it
+   leaves. The origin is the untransformed centre: every transform here is taken about
+   transform-origin:center, and .fit centres the frame without transforming, so .fit's centre
+   is that point. */
+const unproject = (cx, cy) => {
+  const f = document.getElementById('fit').getBoundingClientRect();
+  const m = new DOMMatrix(getComputedStyle(stage).transform);
+  const X = cx - (f.left + f.width / 2), Y = cy - (f.top + f.height / 2);
+  // Xw = r0·p, Yw = r1·p, w = r2·p with p = (x, y, 1)
+  const r0 = [m.m11, m.m21, m.m41], r1 = [m.m12, m.m22, m.m42], r2 = [m.m14, m.m24, m.m44];
+  const A = r0.map((v, i) => v - X * r2[i]);   // A·p = 0
+  const B = r1.map((v, i) => v - Y * r2[i]);   // B·p = 0
+  const det = A[0] * B[1] - B[0] * A[1];
+  if (!det) return [530, 331.5];
+  return [(-A[2] * B[1] + B[2] * A[1]) / det + 530,
+          (-A[0] * B[2] + B[0] * A[2]) / det + 331.5];
+};
+
 /* ── navigation ─────────────────────────────────────────── */
 let at = 0;
 const onShow = [];      // fns notified with the screen name on every change
@@ -595,6 +616,120 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   apply();
 }
 
+/* ── desk plate: footage, cut, and the perspective rig ───────────────────
+   The frame is projected onto a desk that the camera sees at an angle, so a frame drawn square
+   to the screen can never sit on it. The rig is seven knobs that put it there, and they are
+   the one thing here worth persisting: alignment takes a minute to find and a refresh restarts
+   the flow by design. */
+{
+  const body = document.body;
+  const vid  = document.getElementById('deskVid');
+  const seek = document.getElementById('seek');
+  const band = document.getElementById('tlBand');
+  const play = document.getElementById('play');
+  const cutOut = document.getElementById('cutOut');
+  const loop = document.getElementById('loopOn');
+  const SRC = 'Projection GUI.mov';        // the 4K original the cut should be taken from
+
+  /* ── perspective rig ── */
+  const KNOBS = [
+    ['rx',    '기울기', -70,   70,    0, 'deg', '°'],
+    ['ry',    '좌우',   -70,   70,    0, 'deg', '°'],
+    ['rz',    '회전',   -45,   45,    0, 'deg', '°'],
+    ['persp', '원근',   300, 4000, 1400, 'px',  'px'],
+    ['zoom',  '크기',    15,  160,  100, '%',   '%'],
+    ['tx',    'X',     -700,  700,    0, 'px',  'px'],
+    ['ty',    'Y',     -500,  500,    0, 'px',  'px'],
+  ];
+  const saved = JSON.parse(localStorage.getItem('rig') || '{}');
+  const rigRow = document.getElementById('rig');
+  const inputs = {};
+
+  KNOBS.forEach(([k, label, min, max, def, unit, suffix]) => {
+    const el = document.createElement('label');
+    el.innerHTML = `${label}<input type="range" min="${min}" max="${max}" value="${def}"
+      aria-label="${label}"><b></b>`;
+    rigRow.insertBefore(el, document.getElementById('rigReset'));
+    const r = inputs[k] = el.querySelector('input');
+    r.value = saved[k] ?? def;
+    r.oninput = () => {
+      // % is a ratio in CSS terms, the rest carry their unit through untouched
+      stage.style.setProperty('--' + k, unit === '%' ? r.value / 100 : r.value + unit);
+      el.querySelector('b').textContent = r.value + suffix;
+      localStorage.setItem('rig', JSON.stringify(
+        Object.fromEntries(Object.entries(inputs).map(([n, i]) => [n, +i.value]))));
+    };
+    r.oninput();
+  });
+  document.getElementById('rigReset').onclick = () =>
+    KNOBS.forEach(([k, , , , def]) => { inputs[k].value = def; inputs[k].oninput(); });
+
+  /* ── transport ── */
+  const mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  let IN = 0, OUT = Infinity, scrubbing = false;
+
+  const drawCut = () => {
+    const d = vid.duration || 0;
+    const set = IN > 0 || OUT < d;
+    band.hidden = !set;
+    cutOut.textContent = set ? `컷 ${mmss(IN)} – ${mmss(Math.min(OUT, d))}` : '전체';
+    cutOut.classList.toggle('is-set', set);
+    if (!set || !d) return;
+    band.style.left = (IN / d * 100) + '%';
+    band.style.width = ((Math.min(OUT, d) - IN) / d * 100) + '%';
+  };
+
+  vid.addEventListener('loadedmetadata', () => {
+    document.getElementById('tDur').textContent = mmss(vid.duration);
+    drawCut();
+  });
+  vid.addEventListener('timeupdate', () => {
+    // the cut is a playback range, not a destructive edit — leaving it wraps or stops here
+    if (vid.currentTime >= OUT) { vid.currentTime = IN; if (!loop.checked) vid.pause(); }
+    document.getElementById('tCur').textContent = mmss(vid.currentTime);
+    if (!scrubbing && vid.duration) seek.value = vid.currentTime / vid.duration * 1000;
+  });
+  const icon = () => play.textContent = vid.paused ? '▶' : '❚❚';
+  ['play', 'pause'].forEach(e => vid.addEventListener(e, icon));
+
+  play.onclick = () => vid.paused ? vid.play() : vid.pause();
+  seek.oninput = () => { scrubbing = true; vid.currentTime = seek.value / 1000 * (vid.duration || 0); };
+  seek.onchange = () => scrubbing = false;
+  document.getElementById('markIn').onclick  = () => { IN = vid.currentTime; if (OUT <= IN) OUT = Infinity; drawCut(); };
+  document.getElementById('markOut').onclick = () => { OUT = vid.currentTime; if (IN >= OUT) IN = 0; drawCut(); };
+  document.getElementById('clearCut').onclick = () => { IN = 0; OUT = Infinity; drawCut(); };
+
+  /* Trimming in the browser would mean re-encoding 4K in JS. The cut lives here, the actual
+     file gets cut by the one command that already does it losslessly. */
+  document.getElementById('copyCut').onclick = e => {
+    const cmd = `ffmpeg -ss ${IN.toFixed(2)} -to ${Math.min(OUT, vid.duration).toFixed(2)}`
+      + ` -i "${SRC}" -c copy cut.mov`;
+    navigator.clipboard.writeText(cmd).then(
+      () => { e.target.textContent = '복사됨'; setTimeout(() => e.target.textContent = '컷 내보내기', 1200); },
+      () => prompt('복사해서 쓰세요', cmd));
+  };
+
+  document.getElementById('fullOn').onclick = () => document.fullscreenElement
+    ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+
+  /* space plays, unless something focused wants it (a range steps, a button clicks) */
+  addEventListener('keydown', e => {
+    if (e.code === 'Space' && !/INPUT|BUTTON|TEXTAREA/.test(document.activeElement.tagName)) {
+      e.preventDefault(); play.click();
+    }
+  });
+
+  const deskOn = document.getElementById('deskOn');
+  deskOn.onchange = () => { body.classList.toggle('is-desk', deskOn.checked); if (!deskOn.checked) vid.pause(); };
+  deskOn.dispatchEvent(new Event('change'));
+
+  const foldBar = document.getElementById('deskbar');
+  document.getElementById('deskFold').onclick = e => {
+    foldBar.classList.toggle('is-folded');
+    e.target.textContent = foldBar.classList.contains('is-folded') ? '+' : '–';
+  };
+}
+
 /* ── boot ───────────────────────────────────────────────────
    Refresh always restarts the flow from the first screen, so the whole thing can be walked
    through from the top again. The hash still tracks where you are, but it is not what boot
@@ -610,19 +745,15 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
 /* ── prototyping cursor & touch ripples ──────────────────────────────────
    Recording aid, not part of the projected UI. The disc chases the pointer on its own frame
    loop with exponential smoothing, so what gets recorded is a gliding cursor rather than the
-   pointer's raw jitter. Everything is placed in design units: the stage is transform-scaled,
-   so client pixels have to be divided by that scale before they mean anything here. */
+   pointer's raw jitter. Everything is placed in design units, so client pixels go through
+   unproject() — which also keeps the disc under the pointer once the frame is tilted. */
 {
   const dot = document.getElementById('cursor');
   const taps = document.getElementById('taps');
   const EASE = 0.16;                 // per-frame approach; lower is smoother and laggier
   let tx = 0, ty = 0, x = 0, y = 0, live = false;
 
-  const toStage = e => {
-    const r = stage.getBoundingClientRect();
-    const s = r.width / 1060;        // the stage is scaled, the coordinates inside it are not
-    return [(e.clientX - r.left) / s, (e.clientY - r.top) / s];
-  };
+  const toStage = e => unproject(e.clientX, e.clientY);
 
   stage.addEventListener('pointermove', e => {
     [tx, ty] = toStage(e);
@@ -742,6 +873,27 @@ if (location.search.includes('selftest')) {
   ok('no selectable control shows a system cursor',
      [...document.querySelectorAll('.card,.chip,.slot,.btn')].every(e => getComputedStyle(e).cursor === 'none'));
 
+  // desk plate: the footage has to be inside .fit, or the preview's screen blend composites
+  // the frame against nothing and the "projection onto the desk" is just an overlay
+  ok('the desk footage is the plate the frame blends onto',
+     document.getElementById('deskVid').parentElement === document.getElementById('fit'));
+  // tilted, pointer→design is projective; an affine inverse looks right at the centre and
+  // drifts at the corners, which is exactly where the frame's controls are
+  {
+    const f = document.getElementById('fit').getBoundingClientRect();
+    stage.style.setProperty('--rx', '38deg');
+    stage.style.setProperty('--rz', '9deg');
+    const fwd = (x, y) => {                       // forward projection, via a different path
+      const p = new DOMMatrix(getComputedStyle(stage).transform)
+        .transformPoint(new DOMPoint(x - 530, y - 331.5, 0, 1));
+      return [p.x / p.w + f.left + f.width / 2, p.y / p.w + f.top + f.height / 2];
+    };
+    const back = unproject(...fwd(880, 120));
+    ok('the tilted frame still puts the cursor under the pointer',
+       Math.hypot(back[0] - 880, back[1] - 120) < 0.5);
+    document.getElementById('rigReset').click();
+  }
+
   show(order.indexOf('level'));
   ok('Next dims while a group is empty', !btnNext.classList.contains('is-ready'));
   seg[1].click();
@@ -786,15 +938,19 @@ if (location.search.includes('selftest')) {
 
   show(order.indexOf('main'));
 
-  // geometry that kept drifting away from the Figma nodes — offsetWidth ignores the
-  // scale transform the inactive screens carry, so it reads the design units directly
-  const box = s => { const e = document.querySelector(s); return [e.offsetWidth, e.offsetHeight]; };
+  // geometry that kept drifting away from the Figma nodes. The used height, not offsetHeight:
+  // transforms don't touch either, but offsetHeight is rounded to whole pixels and the hero is
+  // 519.5 tall — which side it rounded to depended on the window size.
+  const box = s => {
+    const c = getComputedStyle(document.querySelector(s));
+    return [parseFloat(c.width), parseFloat(c.height)];
+  };
   const is = (s, w, h) => { const [a, b] = box(s); return a === w && (h === undefined || b === h); };
   // the scroll frame starts under the back tab (y=124) and runs to the frame bottom
   ok('pack detail scrolls from below the back tab to the node\'s clip line', is('.watch-scroll', 360, 413));
   ok('the info block scrolls with it', !!document.querySelector('.watch-scroll .watch-info'));
   ok('Main workout has no Skip', appbar.dataset.skip === 'off');
-  ok('hero is 360×519 r40', is('.hero', 360, 519));
+  ok('hero is 360×519.5 r40', is('.hero', 360, 519.5));
   ok('Total card is 360×171', is('.total', 360, 171));
   ok('graph bars are 105 / 210', is('.tbar--stretch', 105) && is('.tbar--learn', 210));
 
