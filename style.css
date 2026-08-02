@@ -80,17 +80,26 @@ body.is-align .canvas{cursor:move}
 body.is-auto .canvas,body.is-take .canvas{cursor:none}
 /* a take is recorded, so the disc has no business in it — there is no pointer to stand in for */
 body.is-take .cursor{display:none}
-/* the take's own trigger, in the margin beside the frame. Only in fullscreen, only while no take
-   is running. A glyph and not a word on purpose: at 16:9 the frame takes the full height and
-   leaves ~5% of the width either side, and a labelled button does not fit that on a small
-   display — it would end up sitting on the projection it is supposed to stay off. */
-.takestart{
-  position:absolute;left:10px;top:50%;transform:translateY(-50%);z-index:20;display:none;
+/* the take's own controls, in the margin beside the frame, and only in fullscreen. Glyphs and
+   not words on purpose: at 16:9 the frame takes the full height and leaves ~5% of the width
+   either side, and a labelled button does not fit that on a small display — it would end up
+   sitting on the projection it is supposed to stay off. */
+.takebar{
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);z-index:20;
+  display:none;flex-direction:column;gap:6px;
+  transition:opacity .2s var(--ease);
+}
+.takebar button{
   width:30px;height:30px;border-radius:50%;background:#1c1c1c;box-shadow:0 0 0 1px #333;
   color:#cfcfcf;font-size:11px;text-align:center;line-height:30px;
 }
-.takestart:hover{background:#262626;color:#fff}
-body.is-full:not(.is-take) .takestart{display:block}
+.takebar button:hover{background:#262626;color:#fff}
+body.is-full .takebar{display:flex}
+/* running: out of the recording but not out of reach — invisible until aimed at */
+body.is-take .takebar{opacity:0}
+body.is-take .takebar:hover{opacity:1}
+body.is-take #takeStart{display:none}
+body:not(.is-take) #takeStop,body:not(.is-take) #takeAgain{display:none}
 /* the deck's own .55s snap outran the finger, which takes ~0.7s to cross. Matched to it, so
    the card travels with the hand instead of arriving before it. */
 body.is-auto .slot,body.is-take .slot{transition-duration:.75s}

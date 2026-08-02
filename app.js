@@ -1190,17 +1190,23 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     } while (mine === take);
   };
 
+  // bumping the token is the stop: the loop checks it after every pause and gives up on itself
+  const stopTake = () => { take++; document.body.classList.remove('is-take'); };
+
   /* Fullscreen only arms it. Going fullscreen and having the flow leave under you is the wrong
-     way round — the recording starts when the recorder says so, which is what the margin button
-     is for. Leaving fullscreen abandons whatever take is running. */
+     way round — the recording starts when the recorder says so, which is what the margin
+     controls are for. Leaving fullscreen abandons whatever take is running. */
   addEventListener('fullscreenchange', () => {
     const full = document.fullscreenElement === canvas;
     document.body.classList.toggle('is-full', full);
-    if (full) return;
-    take++;
-    document.body.classList.remove('is-take');
+    if (!full) stopTake();
   });
-  document.getElementById('takeStart').onclick = () => { if (!auto.checked) runTake(); };
+  // ▶ and ↺ are the same instruction — runTake rewinds first, and starting a second one
+  // abandons the first by taking the token off it
+  const again = () => { if (!auto.checked) runTake(); };
+  document.getElementById('takeStart').onclick = again;
+  document.getElementById('takeAgain').onclick = again;
+  document.getElementById('takeStop').onclick = stopTake;
 
   window.__beats = BEATS;                  // the selftest walks these without the clip
   window.__take = runTake;
@@ -1376,16 +1382,26 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
        getComputedStyle(document.getElementById('cursor')).display === 'none');
     document.body.classList.remove('is-take');
 
-    /* the trigger: fullscreen arms, the button starts. Going fullscreen and having the flow
-       leave without being asked is the thing this replaced. */
-    const trigger = document.getElementById('takeStart');
-    const shown = () => getComputedStyle(trigger).display !== 'none';
-    ok('the take trigger stays out of the way until fullscreen', !shown());
+    /* the controls: fullscreen arms, ▶ starts, ■ stops, ↺ starts over. Going fullscreen and
+       having the flow leave without being asked is the thing this replaced. */
+    const bar = document.getElementById('takeBar');
+    const btn = id => getComputedStyle(document.getElementById(id)).display !== 'none';
+    ok('the take controls stay out of the way until fullscreen',
+       getComputedStyle(bar).display === 'none');
     document.body.classList.add('is-full');
-    ok('fullscreen shows it and starts nothing on its own',
-       shown() && !document.body.classList.contains('is-take'));
+    ok('fullscreen offers only Start, and starts nothing on its own',
+       btn('takeStart') && !btn('takeStop') && !btn('takeAgain') &&
+       !document.body.classList.contains('is-take'));
     document.body.classList.add('is-take');
-    ok('and it takes itself off screen for the take', !shown());
+    ok('a running take offers stop and start-over instead',
+       !btn('takeStart') && btn('takeStop') && btn('takeAgain'));
+    /* invisible, not gone: buttons must not be in a screen recording, and a take that can only
+       be stopped by leaving fullscreen is worse than one you have to reach for.
+       After the fade, not during it — read mid-transition this says 0.9 and fails. */
+    await new Promise(r => setTimeout(r, 260));
+    ok('and they are invisible while it runs, without being unreachable',
+       getComputedStyle(bar).opacity === '0' &&
+       getComputedStyle(document.getElementById('takeStop')).pointerEvents !== 'none');
     document.body.classList.remove('is-full', 'is-take');
   }
   // selection alone advances the step — Next is there but does not have to be pressed

@@ -373,11 +373,17 @@
   <video class="handlayer" id="handVid" src="assets/hand-matte.webm" muted playsinline preload="auto"></video>
   </div>
 
-  <!-- take trigger. Outside the frame on purpose: it sits in the margin the 16:9 crop leaves
-       beside the 1060×663 projection, so it is never in the recording, and it takes itself away
-       the moment the take starts. Fullscreen alone does nothing — the recording is armed by
-       hand, so the first frame of it is the first screen sliding in. -->
-  <button class="takestart" id="takeStart" title="테이크 시작">▶</button>
+  <!-- take controls. Outside the frame on purpose: they sit in the margin the 16:9 crop leaves
+       beside the 1060×663 projection. Fullscreen alone does nothing — the recording is armed by
+       hand, so the first frame of it is the first screen sliding in. Once it is running the
+       column goes invisible rather than away: a screen recording must not have buttons in it,
+       and a take you cannot stop without leaving fullscreen is worse. Reach for it and it
+       comes back. -->
+  <div class="takebar" id="takeBar">
+    <button id="takeStart" title="테이크 시작">▶</button>
+    <button id="takeStop"  title="정지">■</button>
+    <button id="takeAgain" title="처음부터 다시">↺</button>
+  </div>
  </div>
 </div>
 
