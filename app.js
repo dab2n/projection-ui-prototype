@@ -925,23 +925,27 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
        The two drags start when the finger starts moving, not when it stops — the tracked tip
        crosses from x .15 to .49 between 0.8s and 1.5s, and rises from y 1.00 to .61 between
        12.6s and 13.3s. Both are ~0.7s, which is what the UI is given. */
-    { t:  0.9, at: 'pack',      hit: '.slot[data-d="-1"]', from: [-300, 0], wait: 0 },
-    { t:  9.1, at: 'pack',      hit: '.slot[data-d="0"] .btn--primary', wait: 480 },
-    { t: 12.7, at: 'watch',     scroll: 430, aim: [740, 400], from: [0, -150], wait: 0, ms: 700 },
+    /* gap: the take's own pause before this beat, in ms. The footage's pauses are the person's
+       — reaching in, settling, withdrawing — and none of that happens in a screen recording,
+       so the take keeps the order and the targets and sets its own pace. */
+    { t:  0.9, at: 'pack',      hit: '.slot[data-d="-1"]', from: [-300, 0], wait: 0, gap: 1500 },
+    { t:  9.1, at: 'pack',      hit: '.slot[data-d="0"] .btn--primary', wait: 480, gap: 1500 },
+    { t: 12.7, at: 'watch',     scroll: 430, aim: [740, 400], from: [0, -150], wait: 0, ms: 700, gap: 1500 },
     // the finger lands at 18.2 and holds to 19.3, so the press is seen well before the screen goes
-    { t: 18.3, at: 'watch',     hit: '[data-go="location"]', wait: 600 },
+    { t: 18.3, at: 'watch',     hit: '[data-go="location"]', wait: 600, gap: 1800 },
     // g/o index the step's own groups, which survives markup edits that a selector would not
-    { t: 23.0, at: 'location',  g: 0, o: 0 },     // Indoor
-    { t: 28.7, at: 'location',  g: 1, o: 1 },     // Standard
-    { t: 34.6, at: 'condition', g: 0, o: 1 },
-    { t: 40.1, at: 'injury',    g: 0, o: 0 },     // None — and no marker on the body map
-    { t: 46.2, at: 'level',     g: 0, o: 1 },
-    { t: 51.2, at: 'level',     g: 1, o: 0 },
+    { t: 23.0, at: 'location',  g: 0, o: 0, gap: 1300 },     // Indoor
+    { t: 28.7, at: 'location',  g: 1, o: 1, gap: 1200 },     // Standard
+    { t: 34.6, at: 'condition', g: 0, o: 1, gap: 1500 },     // About the Same as Usual
+    // the body map runs its own loop on arrival; the take waits for it before answering None
+    { t: 40.1, at: 'injury',    g: 0, o: 0, gap: 3800 },     // None — and no marker on the map
+    { t: 46.2, at: 'level',     g: 0, o: 1, gap: 1500 },     // Standard
+    { t: 51.2, at: 'level',     g: 1, o: 0, gap: 1200 },     // Quiet On
     // the last stretch is one long touch, so both taps land inside it: 4 → 5 → 6 rounds
     /* two taps inside one hold. Close enough that the number tween and the bars' .5s width
        transition retarget mid-flight, so 4 → 6 is one continuous move rather than two. */
-    { t: 58.15, at: 'main',     hit: '.step[data-step-delta="1"]', wait: 200 },
-    { t: 58.50, at: 'main',     hit: '.step[data-step-delta="1"]', wait: 200 },
+    { t: 58.15, at: 'main',     hit: '.step[data-step-delta="1"]', wait: 200, gap: 1700 },
+    { t: 58.50, at: 'main',     hit: '.step[data-step-delta="1"]', wait: 200, gap: 350 },
   ];
 
   /* design coordinates of an element, for aiming the disc. offsetLeft chains up in design
@@ -958,7 +962,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     return [x + el.offsetWidth / 2, y + el.offsetHeight / 2];
   };
 
-  const fire = (b, live) => {
+  const fire = (b, live, quiet) => {
     const i = order.indexOf(b.at);
     if (at !== i) show(i);
     const sc = screens[i];
@@ -979,6 +983,9 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const act = () => scroll ? (live ? glide(b.scroll) : (scroll.scrollTop = b.scroll))
                              : el.click();
     if (!live) return act();
+    /* the take has no finger and shows no disc, so there is nothing for the UI to answer after
+       — b.wait exists only to let a press be seen first */
+    if (quiet) return act();
 
     // press where the finger actually is, not where the control is: the disc is riding the
     // tracked tip, and snapping it to the button would be a jump nothing in the shot made
@@ -1105,7 +1112,39 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     vid.currentTime = 0;
     vid.play().catch(() => {});
   };
+  /* ── the take: 전체화면 plays the flow through, and that is what gets recorded ──────────
+     No clip, no clock, no cursor — nothing to press means nothing to show pressing it. Same
+     beats in the same order, each after its own gap, so the recording can be laid over footage
+     of a real hand later without a second pointer in the shot. Auto play mode keeps the clip
+     driving instead: there the disc is riding a tracked fingertip, which is the point of it. */
+  let take = 0;                            // bumping it abandons whatever take is in flight
+  const nap = ms => new Promise(r => setTimeout(r, ms));
+
+  const runTake = async () => {
+    const mine = ++take;
+    document.body.classList.add('is-take');
+    cursorShow?.(false);
+    await nap(500);              // let the window finish resizing before the first screen enters
+    if (mine !== take) return;
+    do {
+      rewind();
+      for (const b of BEATS) {
+        await nap(b.gap ?? 1200);
+        if (mine !== take) return;
+        fire(b, true, true);
+      }
+      await nap(2600);                     // hold on the finished screen, then go again
+    } while (mine === take);
+  };
+
+  addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement === canvas && !auto.checked) return runTake();
+    take++;
+    document.body.classList.remove('is-take');
+  });
+
   window.__beats = BEATS;                  // the selftest walks these without the clip
+  window.__take = runTake;
 }
 
 /* ── the hand on top ─────────────────────────────────────────────────────
@@ -1270,6 +1309,13 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
        label(B[4]) === 'Indoor' && label(B[5]).startsWith('Standard') && label(B[7]) === 'None');
     ok('two taps on the stepper, so rounds land on 6',
        B.filter(b => b.hit?.includes('step-delta="1"')).length === 2);
+    // the take walks the same beats on its own timer, so a beat without one stalls it
+    ok('every beat carries the pause the take waits out before it', B.every(b => b.gap > 0));
+    /* 전체화면 is the recording, and a recording of a cursor nobody is moving is a bug in it */
+    document.body.classList.add('is-take');
+    ok('the take shows no cursor',
+       getComputedStyle(document.getElementById('cursor')).display === 'none');
+    document.body.classList.remove('is-take');
   }
   // selection alone advances the step — Next is there but does not have to be pressed
   {

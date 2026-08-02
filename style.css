@@ -77,10 +77,12 @@ body{padding:0 260px 0 20px}
 body.is-align .canvas{cursor:move}
 /* nothing is driving the pointer in auto play, and the frame is small enough that the arrow
    spends the take sitting on the desk beside it */
-body.is-auto .canvas{cursor:none}
+body.is-auto .canvas,body.is-take .canvas{cursor:none}
+/* a take is recorded, so the disc has no business in it — there is no pointer to stand in for */
+body.is-take .cursor{display:none}
 /* the deck's own .55s snap outran the finger, which takes ~0.7s to cross. Matched to it, so
    the card travels with the hand instead of arriving before it. */
-body.is-auto .slot{transition-duration:.75s}
+body.is-auto .slot,body.is-take .slot{transition-duration:.75s}
 body.is-align .stage{pointer-events:none}   /* dragging must not press the UI underneath */
 
 .stage{
