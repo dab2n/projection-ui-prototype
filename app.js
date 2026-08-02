@@ -1397,11 +1397,16 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
        !btn('takeStart') && btn('takeStop') && btn('takeAgain'));
     /* invisible, not gone: buttons must not be in a screen recording, and a take that can only
        be stopped by leaving fullscreen is worse than one you have to reach for.
-       After the fade, not during it — read mid-transition this says 0.9 and fails. */
-    await new Promise(r => setTimeout(r, 260));
+       Read off a copy parked out of the window, because the real one answers :hover — and
+       wherever the pointer happens to be resting is not something a test gets to decide. */
+    const probe = bar.cloneNode(false);
+    probe.style.left = '-9999px';
+    canvas.append(probe);
+    await new Promise(r => setTimeout(r, 260));       // after the fade, not during it
     ok('and they are invisible while it runs, without being unreachable',
-       getComputedStyle(bar).opacity === '0' &&
+       getComputedStyle(probe).opacity === '0' &&
        getComputedStyle(document.getElementById('takeStop')).pointerEvents !== 'none');
+    probe.remove();
     document.body.classList.remove('is-full', 'is-take');
   }
   // selection alone advances the step — Next is there but does not have to be pressed
@@ -1520,6 +1525,17 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
   ok('the info block scrolls with it', !!document.querySelector('.watch-scroll .watch-info'));
   ok('Main workout has no Skip', appbar.dataset.skip === 'off');
   ok('hero is 360×519.5 r40', is('.hero', 360, 519.5));
+  /* node 138:4986, measured on the card the deck opens: its title is one line, which is what
+     308.81 assumes — a card whose title wraps is taller by a line and always was. The height is
+     a thumbnail plus a text row plus two paddings, so it lands a fraction off what Figma
+     reports; a pixel of tolerance, not an exact match. */
+  {
+    const c = document.querySelectorAll('.deck .slot')[deckOpens].querySelector('.packcard');
+    const s = getComputedStyle(c);
+    ok('the pack card is the 377 × 308.8 r40 the deck was drawn with',
+       parseFloat(s.width) === 377 && Math.abs(parseFloat(s.height) - 308.81) < 1 &&
+       s.borderRadius === '40px');
+  }
   ok('Total card is 360×171', is('.total', 360, 171));
   ok('graph bars are 105 / 210', is('.tbar--stretch', 105) && is('.tbar--learn', 210));
 

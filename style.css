@@ -565,15 +565,20 @@ body.is-preview .stage{
 }
 .screen.is-active .deck-glow,.screen.is-active .deck-haze{animation:fade .6s var(--ease) both .18s}
 
+/* node 138:4986 — 377.31 × 308.81, r40, 4.49 of card showing all the way round the thumb.
+   The height came off the thumbnail: it was 189 against the design's 212.91, which made the
+   card read as a wide strip rather than the near-square the deck was drawn with. */
 .packcard{
   width:100%;
-  background:var(--surface);border-radius:24px;padding:4.5px;color:var(--ink-2);
+  background:var(--surface);border-radius:40px;padding:4.5px;color:var(--ink-2);
   box-shadow:0 30px 80px rgba(0,0,0,.45);
 }
 /* only the card in the middle floats */
 .slot[data-d="0"] .packcard{animation:float 6s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-.packcard-thumb{position:relative;height:189px;border-radius:20px;overflow:hidden}
+/* 35.5 and not 40: the thumb is inset 4.5, and an inner corner concentric with an outer one is
+   the outer radius less the inset — matched radii would leave a widening white crescent */
+.packcard-thumb{position:relative;height:212.9px;border-radius:35.5px;overflow:hidden}
 /* per-pack crop: PACKS sets --pos so a face is never cut off by the wide thumb box */
 .packcard-thumb > img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 22%)}
 .packcard-creator{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;font-weight:500;font-size:15px;color:var(--ink-2)}
@@ -590,7 +595,13 @@ body.is-preview .stage{
    carries the flame's real proportion, and pinning both axes to a square squashed it. */
 .packcard-hot img{height:16px;width:auto}
 .avatar{width:24px;height:24px;border-radius:50%;object-fit:cover}
-.packcard-info{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px}
+/* 86.92 tall in the design, and its padding is not symmetric: the text block starts 16 in from
+   the left, the button stops 10.44 from the right, and the row sits 18 down from the seam with
+   22.5 under it. Centred vertically, which lands the button at the y the design has it. */
+.packcard-info{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px 10.5px 22.5px 16px;
+}
 .packcard-text .t2{margin:0;max-width:183px;display:block}
 .meta{margin:4px 0 0;display:flex;align-items:center;gap:5px;font-size:13px;line-height:1.4;color:var(--n500)}
 .meta i{width:3px;height:3px;border-radius:50%;background:var(--n400)}
@@ -602,7 +613,7 @@ body.is-preview .stage{
 }
 .btn img{width:14px;height:14px;filter:brightness(0) invert(1)}
 .btn:active{transform:scale(.97)}
-.btn--primary{height:40px;padding:0 18px;font-size:16px;background:#fa3030}
+.btn--primary{height:40.5px;padding:0 25.5px;font-size:16px;background:#fa3030}
 .btn--start{position:absolute;left:576px;top:521px;width:328px;height:54px;font-size:20px;background:#fa3030;z-index:8}
 
 /* ── 1. Pack detail (node 705:7647) ───────────────────────
