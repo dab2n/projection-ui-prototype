@@ -11,7 +11,7 @@ const steps   = [...flowbar.querySelectorAll('li')];
    driven from auto play. Declared up here because fit() reaches for recrop on the first call,
    and a `let` further down would still be in its dead zone. */
 let aim = null, tapAt = null, press = null, trailTo = null, cursorShow = null;
-let deckTo = null, deckOpens = 0, recrop = null;
+let deckTo = null, deckOpens = 0, deckHome = 0, recrop = null;
 
 /* ── size the shot, then fit the 1060×663 frame inside it ───
    The canvas is a fixed-aspect crop of the footage rather than the browser window, so it is
@@ -355,14 +355,22 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
    middle. Images are placeholders already in the repo; `pos` is the crop each one needs
    so the wide thumb box never cuts a head off. */
 {
+  /* by: who made it. Only the pack that opens is Iaan's — the rest are other creators, or the
+     deck reads as one person's five packs. The three landscape thumbs are already the 1.8:1 the
+     box is, so they need no crop of their own. */
   const PACKS = [
-    { img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%' },
-    { img: 'more-footwork.png', title: 'Footwork for Small Spaces',    kind: 'Creator Pack', len: '15m', pos: '50% 25%' },
-    { img: 'pack-thumb.png',    title: '7m Indoor Boxing Basics',      kind: 'Creator Pack', len: '7m',  pos: '50% 10%', hot: true, go: 'watch' },
-    { img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 20%' },
-    { img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 45%' },
+    { img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%', by: ['Devon', 'avatar-devon.jpg'] },
+    { img: 'more-footwork.png', title: 'Footwork for Small Spaces',    kind: 'Creator Pack', len: '15m', pos: '50% 50%', by: ['Sena',  'avatar-sena.jpg'] },
+    { img: 'pack-thumb.png',    title: 'Indoor Boxing Steps',          kind: 'Creator Pack', len: '7m',  pos: '50% 10%', by: ['Iaan',  'avatar-laan.png'], hot: true, go: 'watch' },
+    { img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 50%', by: ['Mara',  'avatar-mara.jpg'] },
+    { img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 50%', by: ['Noel',  'avatar-noel.jpg'] },
   ];
-  const CENTRE = 2;
+  /* The deck opens on The Boxer's Steps, not on the pack that leads anywhere: the first screen
+     is a shelf, and the first touch in the footage is the swipe off it. OPENS is the one with a
+     `go`; it sits directly left of home, which is what the footage's left-to-right swipe brings
+     in. Move either one and the first touch lands on a card that goes nowhere. */
+  const CENTRE = 3;
+  const OPENS  = PACKS.findIndex(p => p.go);
 
   const deck = document.getElementById('deck');
   const tpl  = document.getElementById('packTpl');
@@ -373,6 +381,9 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     img.alt = p.title;
     img.style.setProperty('--pos', p.pos);
     slot.querySelector('.t2').textContent = p.title;
+    const [name, face] = p.by;
+    slot.querySelector('.packcard-creator span').textContent = name;
+    slot.querySelector('.packcard-creator .avatar').src = `assets/${face}`;
     const [kind, len] = slot.querySelectorAll('.meta span');
     kind.textContent = p.kind;
     len.textContent = p.len;
@@ -413,9 +424,10 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     });
   }
   const centre = i => { at2 = Math.max(0, Math.min(PACKS.length - 1, i)); place(); };
-  // auto play starts the deck one card off, so its first beat is a swipe onto the pack that opens
+  // auto play rewinds to home, so its first beat is the swipe off it onto the pack that opens
   deckTo = centre;
-  deckOpens = CENTRE;
+  deckHome = CENTRE;
+  deckOpens = OPENS;
   place();
 
   /* swipe: one step as soon as the drag passes 44px — committing mid-gesture is the right
@@ -1063,10 +1075,10 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     const minus = document.querySelector('.step[data-step-delta="-1"]');
     for (let n = +(rounds.dataset.tweenTo ?? rounds.textContent); n > 4; n--) minus.click();
     show(0);
-    // one card past the pack that opens, so the swipe brings it in from the left the way the
-    // hand moves. Manual browsing still starts on that pack — and this goes after show(),
-    // because entering the pack screen re-centres the deck.
-    deckTo?.(deckOpens + 1);
+    // the deck's own home, which sits one card right of the pack that opens — so the swipe
+    // brings that pack in from the left the way the hand moves. Goes after show(), because
+    // entering the pack screen re-centres the deck.
+    deckTo?.(deckHome);
     k = 0;
   };
 
@@ -1088,7 +1100,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   auto.onchange = () => {
     document.body.classList.toggle('is-auto', auto.checked);
     recrop();
-    if (!auto.checked) { deckTo?.(deckOpens); cursorShow?.(false); return; }
+    if (!auto.checked) { deckTo?.(deckHome); cursorShow?.(false); return; }
     rewind();
     vid.currentTime = 0;
     vid.play().catch(() => {});
@@ -1203,13 +1215,21 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
   const cards = [...document.querySelectorAll('.deck .slot')];
   ok('carousel is copies of one card component',
      cards.length === 5 && cards.every(c => c.querySelector('.packcard-thumb > img') && c.querySelector('.btn')));
-  ok('the boxing pack starts centred', cards[2].dataset.d === '0');
+  ok('the deck starts on The Boxer’s Steps',
+     cards[deckHome].dataset.d === '0' &&
+     cards[deckHome].querySelector('.t2').textContent.startsWith('The Boxer'));
+  /* the swipe in the footage goes one card left, so the pack it lands on has to be the one
+     directly left of home — otherwise the first touch opens nothing */
+  ok('the pack that opens sits one swipe left of it', deckOpens === deckHome - 1);
+  ok('every card names its own creator',
+     new Set(cards.map(c => c.querySelector('.packcard-creator span').textContent)).size === cards.length);
   // the blur has to land between the side cards and the middle one, or it has nothing to blur
   ok('the deck blur sits under the middle card and over the rest',
      getComputedStyle(document.querySelector('.deck-haze')).zIndex === '7' &&
-     cards[2].style.zIndex === '9' && cards[1].style.zIndex === '6');
-  cards[3].click();
-  ok('tapping a side card centres it', cards[3].dataset.d === '0' && cards[2].dataset.d === '-1');
+     cards[deckHome].style.zIndex === '9' && cards[deckHome - 1].style.zIndex === '6');
+  cards[1].click();
+  ok('tapping a side card centres it', cards[1].dataset.d === '0' && cards[2].dataset.d === '1');
+  deckTo(deckHome);
 
   // recording aids: the system pointer is replaced, taps leave a ring, a swipe leaves a trail
   ok('the frame hides the system cursor', getComputedStyle(stage).cursor === 'none');
