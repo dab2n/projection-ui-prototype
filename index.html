@@ -370,6 +370,12 @@
        the UI sits on top of the arm and the shot reads as two things stacked. -->
   <video class="handlayer" id="handVid" src="assets/hand-matte.webm" muted playsinline preload="auto"></video>
   </div>
+
+  <!-- take trigger. Outside the frame on purpose: it sits in the margin the 16:9 crop leaves
+       beside the 1060×663 projection, so it is never in the recording, and it takes itself away
+       the moment the take starts. Fullscreen alone does nothing — the recording is armed by
+       hand, so the first frame of it is the first screen sliding in. -->
+  <button class="takestart" id="takeStart" title="테이크 시작">▶</button>
  </div>
 </div>
 

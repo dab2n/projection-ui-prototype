@@ -1092,6 +1092,11 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
        from re-reading the text, which lags and drove it all the way to the floor. */
     const minus = document.querySelector('.step[data-step-delta="-1"]');
     for (let n = +(rounds.dataset.tweenTo ?? rounds.textContent); n > 4; n--) minus.click();
+    /* the take opens on the first screen sliding in, so the entrance has to replay even when
+       that screen is already the one showing — and a class it already carries, toggled to the
+       value it already has, animates nothing. Off, settle the layout, back on. */
+    screens[0].classList.remove('is-active');
+    void screens[0].offsetWidth;
     show(0);
     // the deck's own home, which sits one card right of the pack that opens — so the swipe
     // brings that pack in from the left the way the hand moves. Goes after show(), because
@@ -1148,11 +1153,17 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     } while (mine === take);
   };
 
+  /* Fullscreen only arms it. Going fullscreen and having the flow leave under you is the wrong
+     way round — the recording starts when the recorder says so, which is what the margin button
+     is for. Leaving fullscreen abandons whatever take is running. */
   addEventListener('fullscreenchange', () => {
-    if (document.fullscreenElement === canvas && !auto.checked) return runTake();
+    const full = document.fullscreenElement === canvas;
+    document.body.classList.toggle('is-full', full);
+    if (full) return;
     take++;
     document.body.classList.remove('is-take');
   });
+  document.getElementById('takeStart').onclick = () => { if (!auto.checked) runTake(); };
 
   window.__beats = BEATS;                  // the selftest walks these without the clip
   window.__take = runTake;
@@ -1327,6 +1338,18 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
     ok('the take shows no cursor',
        getComputedStyle(document.getElementById('cursor')).display === 'none');
     document.body.classList.remove('is-take');
+
+    /* the trigger: fullscreen arms, the button starts. Going fullscreen and having the flow
+       leave without being asked is the thing this replaced. */
+    const trigger = document.getElementById('takeStart');
+    const shown = () => getComputedStyle(trigger).display !== 'none';
+    ok('the take trigger stays out of the way until fullscreen', !shown());
+    document.body.classList.add('is-full');
+    ok('fullscreen shows it and starts nothing on its own',
+       shown() && !document.body.classList.contains('is-take'));
+    document.body.classList.add('is-take');
+    ok('and it takes itself off screen for the take', !shown());
+    document.body.classList.remove('is-full', 'is-take');
   }
   // selection alone advances the step — Next is there but does not have to be pressed
   {
