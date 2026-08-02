@@ -462,6 +462,15 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   const clip = hero.querySelector('.hero-clip');
   let armed = false;
   onShow.push(name => {
+    /* back at the shelf the detail has not been opened yet, so re-arm: a take that loops has
+       to open it the same way every time, and the scroll is timed off that dissolve */
+    if (name === 'pack') {
+      armed = false;
+      clip.pause();
+      clip.currentTime = 0;
+      hero.classList.remove('is-playing');
+      return;
+    }
     if (name !== 'watch' || armed) return;
     armed = true;
     setTimeout(() => { clip.play().catch(() => {}); hero.classList.add('is-playing'); }, 1000);
@@ -930,13 +939,15 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
        so the take keeps the order and the targets and sets its own pace. */
     { t:  0.9, at: 'pack',      hit: '.slot[data-d="-1"]', from: [-300, 0], wait: 0, gap: 1500 },
     { t:  9.1, at: 'pack',      hit: '.slot[data-d="0"] .btn--primary', wait: 480, gap: 1500 },
-    { t: 12.7, at: 'watch',     scroll: 430, aim: [740, 400], from: [0, -150], wait: 0, ms: 700, gap: 1500 },
+    // the hero still dissolves into its clip 1s after the detail opens; the scroll waits out
+    // that first second and then a beat and a half of the clip actually running
+    { t: 12.7, at: 'watch',     scroll: 430, aim: [740, 400], from: [0, -150], wait: 0, ms: 700, gap: 2600 },
     // the finger lands at 18.2 and holds to 19.3, so the press is seen well before the screen goes
     { t: 18.3, at: 'watch',     hit: '[data-go="location"]', wait: 600, gap: 1800 },
     // g/o index the step's own groups, which survives markup edits that a selector would not
     { t: 23.0, at: 'location',  g: 0, o: 0, gap: 1300 },     // Indoor
     { t: 28.7, at: 'location',  g: 1, o: 1, gap: 1200 },     // Standard
-    { t: 34.6, at: 'condition', g: 0, o: 1, gap: 1500 },     // About the Same as Usual
+    { t: 34.6, at: 'condition', g: 0, o: 1, gap: 2600 },     // About the Same as Usual
     // the body map runs its own loop on arrival; the take waits for it before answering None
     { t: 40.1, at: 'injury',    g: 0, o: 0, gap: 3800 },     // None — and no marker on the map
     { t: 46.2, at: 'level',     g: 0, o: 1, gap: 1500 },     // Standard
