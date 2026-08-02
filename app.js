@@ -27,8 +27,7 @@ const fit = () => {
   // shot clear of it, or the part being composed is the part hidden behind the controls.
   // Measured here rather than by a ResizeObserver: those deliver during the rendering steps,
   // which a background tab does not run, and the layout would silently stay wrong.
-  const bar = document.body.classList.contains('is-desk')
-    ? document.getElementById('deskbar').offsetHeight + 40 : 0;
+  const bar = document.getElementById('deskbar').offsetHeight + 40;
   const W = full ? innerWidth : fitEl.clientWidth - 24;
   const H = (full ? innerHeight : fitEl.clientHeight - 24) - bar;
   const w = Math.max(120, Math.min(W, H * AR));
@@ -613,9 +612,12 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     }).join('');
   }
 
+  /* The preview simulates light landing on the desk. With the footage off there is no desk to
+     land on, so the web view is the design as drawn — same flow, same motion, no projection. */
   on.onchange = () => {
-    body.classList.toggle('is-preview', on.checked);
-    body.classList.toggle('is-real', real.checked && on.checked);   // real view lives inside it
+    const proj = on.checked && body.classList.contains('is-desk');
+    body.classList.toggle('is-preview', proj);
+    body.classList.toggle('is-real', real.checked && proj);   // real view lives inside it
     apply();
   };
   on.dispatchEvent(new Event('change'));   // the panel ships checked, so honour it at boot
@@ -641,7 +643,8 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   };
 
   const unlit = document.getElementById('unlitOn');
-  unlit.onchange = () => body.classList.toggle('is-unlit', unlit.checked && on.checked);
+  unlit.onchange = () =>
+    body.classList.toggle('is-unlit', unlit.checked && body.classList.contains('is-preview'));
   [ambient, gain, dose].forEach(el => el.oninput = apply);
   apply();
 }
@@ -795,10 +798,16 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     }
   });
 
+  /* Off is the web view: the design flat, no plate, no projection look. Auto play still runs —
+     the clip keeps playing as the clock so the walkthrough lands on the same seconds it does
+     over the footage, which is the whole point of recording this to composite onto it. */
   const deskOn = document.getElementById('deskOn');
   deskOn.onchange = () => {
     body.classList.toggle('is-desk', deskOn.checked);
-    if (!deskOn.checked) vid.pause();
+    if (!deskOn.checked && !document.getElementById('autoOn').checked) vid.pause();
+    document.getElementById('previewOn').dispatchEvent(new Event('change'));
+    document.getElementById('unlitOn').dispatchEvent(new Event('change'));
+    recrop?.();
     fit();
   };
   deskOn.dispatchEvent(new Event('change'));
@@ -962,9 +971,10 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     // press where the finger actually is, not where the control is: the disc is riding the
     // tracked tip, and snapping it to the button would be a jump nothing in the shot made
     const [x, y] = tipAt(b.t) || b.aim || designPos(el);
+    // the line the finger came along — or, with no finger to track, the offset the beat names
     if (b.from) {
-      const p0 = tipAt(b.t - LEAD);          // the line the finger came along
-      if (p0) trailTo?.(p0[0], p0[1], x, y);
+      const [x0, y0] = tipAt(b.t - LEAD) || [x + b.from[0], y + b.from[1]];
+      trailTo?.(x0, y0, x, y);
     }
     press?.(x, y);
     // the press has to be seen before the screen answers it, or the UI arrives ahead of the
@@ -987,8 +997,12 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     return unproject(r.left + r.width / 2 + (u - 960) * s,
                      r.top + r.height / 2 + (v - 506) * s);
   };
-  // the tracked fingertip at a moment, in design coordinates, or null when no hand is in shot
+  /* the tracked fingertip at a moment, in design coordinates, or null when no hand is in shot.
+     Null in the web view too: the tip is a position in the plate, and where that falls on the
+     frame is the rig's answer. Flat and unrigged there is no such point, so beats aim at the
+     control they press instead. */
   const tipAt = t => {
+    if (!document.body.classList.contains('is-desk')) return null;
     const p = hand?.[Math.round(t * 10)];
     return p && plateToDesign(p[0] / 1000 * 1920, p[1] / 1000 * 1012);
   };
@@ -1001,9 +1015,16 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     requestAnimationFrame(follow);
     if (!auto.checked) return;
     const t = vid.currentTime;
-    const p = BEATS.some(b => t > b.t - LEAD && t < b.t + HOLD) && tipAt(t);
-    if (!p) return cursorShow?.(false);
-    aim?.(...p);
+    const desk = document.body.classList.contains('is-desk');
+    // with the footage on, the disc rides the tip for the whole reach — approach included. In
+    // the web view there is nothing to approach with, so the beat drops it on the control it
+    // presses and the loop only takes it away again afterwards.
+    const live = BEATS.some(b => t > b.t - (desk ? LEAD : 0) && t < b.t + HOLD);
+    if (desk) {
+      const p = live && tipAt(t);
+      return p ? aim?.(...p) : cursorShow?.(false);
+    }
+    if (!live) cursorShow?.(false);
   })();
 
   /* Auto play frames the projection, not the room: push the shot in until the frame's own
@@ -1011,7 +1032,8 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
      frame's matrix rather than its bounding rect, which is the shot transform's own output. */
   const FILL = 0.74;
   recrop = () => {
-    if (!auto.checked) {
+    // nothing to reframe in the web view — the frame is the shot there, and --s already fits it
+    if (!auto.checked || !document.body.classList.contains('is-desk')) {
       ['--k', '--kx', '--ky'].forEach(p => shot.style.removeProperty(p));
       return;
     }
@@ -1092,7 +1114,8 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
      motion showed as a second hand — the plate carried its own copy underneath. The plate is
      hand-free now, so drift only moves the one hand slightly; the tolerance is tight anyway. */
   const sync = () => {
-    if (!box.checked) return;
+    // in the web view the clip is only a clock; there is no plate for the hand to sit on
+    if (!box.checked || !body.classList.contains('is-desk')) return hv.pause();
     if (Math.abs(hv.currentTime - vid.currentTime) > 0.04) hv.currentTime = vid.currentTime;
     if (vid.paused !== hv.paused) vid.paused ? hv.pause() : hv.play().catch(() => {});
   };
@@ -1346,6 +1369,23 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
   ok('hero is 360×519.5 r40', is('.hero', 360, 519.5));
   ok('Total card is 360×171', is('.total', 360, 171));
   ok('graph bars are 105 / 210', is('.tbar--stretch', 105) && is('.tbar--learn', 210));
+
+  /* 웹 뷰: the footage off leaves the design as designed — flat, unrigged, no projection look —
+     and auto play still has a clock, because the clip keeps running as one. A beat fired here
+     has no tracked fingertip to aim at, so it has to fall back to the control it presses. */
+  {
+    const deskBox = document.getElementById('deskOn');
+    const rig = ['--rx', '--ry', '--rz', '--zoom'];
+    deskBox.checked = false; deskBox.dispatchEvent(new Event('change'));
+    const st = getComputedStyle(stage);
+    const m = new DOMMatrix(st.transform);
+    ok('the web view lays the frame flat',
+       rig.every(p => ['0deg', '1'].includes(st.getPropertyValue(p).trim())) &&
+       m.m12 === 0 && m.m21 === 0 && m.m41 === 0 && m.m42 === 0);
+    ok('and drops the projection look along with the desk it was landing on',
+       !document.body.classList.contains('is-preview') && st.filter === 'none');
+    deskBox.checked = true; deskBox.dispatchEvent(new Event('change'));
+  }
 
   ok('Total starts at the pack minutes', totalMin.textContent === String(STRETCH + LEARN));
   ok('run row starts as a placeholder', runLabel.textContent === '');

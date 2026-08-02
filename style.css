@@ -54,7 +54,7 @@ img{display:block}
 .fit{position:relative;display:grid;place-items:center;width:100%;flex:1;min-height:0}
 /* the colour panel is fixed and reserves no space; the transport panel is handled in fit(),
    which has to measure it anyway */
-body.is-desk{padding:0 260px 0 20px}
+body{padding:0 260px 0 20px}
 /* the shot: a fixed-aspect window sized by fit(), everything inside it is what gets recorded.
    The frame and the A4 guide are pinned to the centre by hand rather than centred by a grid:
    both overflow the canvas (663 and 1499 tall against ~500), and a grid row grows to its
@@ -99,6 +99,12 @@ body.is-align .stage{pointer-events:none}   /* dragging must not press the UI un
   transform-origin:center;
   box-shadow:0 40px 120px rgba(0,0,0,.6);
 }
+/* 웹 뷰 — the same design, laid flat. The rig exists to put the frame onto the desk; with the
+   footage off there is no desk to put it onto, and a straight-on recording is what a corner pin
+   takes as its source. Declared on .stage, not on .canvas where the rig lives, because the rig
+   is written there as inline style and an inherited value loses to a declaration on the element
+   itself — but only to one, so this cannot go on the parent. */
+body:not(.is-desk) .stage{--tx:0px;--ty:0px;--rx:0deg;--ry:0deg;--rz:0deg;--zoom:1}
 
 /* ── desk plate ──────────────────────────────────────────────
    The footage of the real desk, sized to cover the canvas. It is a sibling under the frame
@@ -119,7 +125,7 @@ body.is-desk .deskvid{display:block}
   transform:translate(var(--vx,0px),var(--vy,0px)) scale(var(--vz,1));
 }
 body.is-desk.is-hand .handlayer{display:block}
-body.is-desk .hint{display:none}   /* the shot wants the height more than the caption does */
+.hint{display:none}   /* the transport panel sits where it did; the shot wants the height more */
 body.is-desk .stage{box-shadow:none}
 
 /* ── A4 sync guide ───────────────────────────────────────────
