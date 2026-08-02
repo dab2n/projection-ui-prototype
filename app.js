@@ -361,7 +361,7 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   const PACKS = [
     { img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%', by: ['Devon', 'avatar-devon.jpg'] },
     { img: 'more-footwork.png', title: 'Footwork for Small Spaces',    kind: 'Creator Pack', len: '15m', pos: '50% 50%', by: ['Sena',  'avatar-sena.jpg'] },
-    { img: 'pack-thumb.png',    title: 'Brind the Ring Home',          kind: 'Creator Pack', len: '7m',  pos: '50% 10%', by: ['Casey', 'avatar-laan.png'], hot: true, go: 'watch' },
+    { img: 'pack-thumb.png',    title: 'Bring the Ring Home',          kind: 'Creator Pack', len: '7m',  pos: '50% 10%', by: ['Casey', 'avatar-laan.png'], hot: true, go: 'watch' },
     { img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 50%', by: ['Mara',  'avatar-mara.jpg'] },
     { img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 50%', by: ['Noel',  'avatar-noel.jpg'] },
   ];
