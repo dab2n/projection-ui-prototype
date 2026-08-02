@@ -105,7 +105,8 @@ function show(i) {
 /* restart the staggered entrance — the animation only fires once per element
    otherwise, so strip and re-add it on every screen change. */
 function replay(el) {
-  el.querySelectorAll('[data-anim], .tbar, .bar').forEach(n => {
+  // .packcard is in here because the deck deals its cards one by one and carries no data-anim
+  el.querySelectorAll('[data-anim], .packcard, .tbar, .bar').forEach(n => {
     n.style.animation = 'none';
     void n.offsetWidth;                   // force reflow
     n.style.animation = '';
@@ -207,6 +208,15 @@ PARTS.forEach(p => {
   hits.append(b);
 });
 
+/* the detail frame fades its content into its own top edge, but only once there is something
+   above the fold to fade — see .watch-scroll.is-scrolled */
+{
+  const sc = document.querySelector('.watch-scroll');
+  const mark = () => sc.classList.toggle('is-scrolled', sc.scrollTop > 2);
+  sc.addEventListener('scroll', mark);
+  onShow.push(mark);                       // show() rewinds it to the top on the way in
+}
+
 const syncMarkers = () => hits.querySelectorAll('.hit').forEach(h =>
   h.classList.toggle('is-on', chipFor(h.dataset.part).classList.contains('is-on')));
 onSelect.push(syncMarkers);
@@ -220,12 +230,26 @@ onSelect.push(syncMarkers);
   const { width: W, height: H } = canvas;
   const FLOOR = 18, GAMMA = 0.55;   // tune: FLOOR = how much off-white is background
 
+  /* The clip loops, and the last frame is nowhere near the first, so the wrap landed as a cut.
+     The opening frame is kept aside and mixed back in over the last stretch — the figure
+     dissolves into its own start instead of snapping there. */
+  const TAIL = 0.9;
+  const head = document.createElement('canvas');
+  head.width = W; head.height = H;
+  const hctx = head.getContext('2d');
+  let got = false;
+
   let looping = false, nudge = 0;
   const key = () => {
     // self-heal: a spell with the tab hidden leaves the clip paused, and nothing else here
     // would ever start it again. Checked a few times a second, not every frame.
     if (video.paused && ++nudge % 20 === 0) video.play().catch(() => {});
     if (video.readyState >= 2) {
+      const d = video.duration || 0;
+      // 0 at the start of the tail, 1 at the wrap — how much of the opening frame is showing
+      const mix = d && video.currentTime > d - TAIL
+        ? Math.min(1, (video.currentTime - (d - TAIL)) / TAIL) : 0;
+
       ctx.drawImage(video, 0, 0, W, H);
       const img = ctx.getImageData(0, 0, W, H);
       const p = img.data;
@@ -234,10 +258,22 @@ onSelect.push(syncMarkers);
         // so anything within FLOOR of white drops out and the rest is curved up so the
         // pale head and arms stay readable. Colours are left alone — the clip already
         // carries the gradient the design wants.
-        const d = (255 - Math.min(p[i], p[i + 1], p[i + 2]) - FLOOR) / (255 - FLOOR);
-        p[i + 3] = d <= 0 ? 0 : Math.min(255, 255 * Math.pow(d, GAMMA));
+        const v = (255 - Math.min(p[i], p[i + 1], p[i + 2]) - FLOOR) / (255 - FLOOR);
+        p[i + 3] = v <= 0 ? 0 : Math.min(255, 255 * Math.pow(v, GAMMA)) * (1 - mix);
       }
       ctx.putImageData(img, 0, 0);
+
+      // the keyed opening frame, taken once the clip is actually at its start
+      if (!got && video.currentTime < 0.2) {
+        hctx.clearRect(0, 0, W, H);
+        hctx.drawImage(canvas, 0, 0);
+        got = true;
+      }
+      if (mix && got) {
+        ctx.globalAlpha = mix;
+        ctx.drawImage(head, 0, 0);
+        ctx.globalAlpha = 1;
+      }
     }
     requestAnimationFrame(key);
   };
@@ -376,6 +412,7 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   const tpl  = document.getElementById('packTpl');
   const slots = PACKS.map((p, i) => {
     const slot = tpl.content.firstElementChild.cloneNode(true);
+    slot.style.setProperty('--j', i);          // its place in the deal, left to right
     const img = slot.querySelector('.packcard-thumb > img');
     img.src = `assets/${p.img}`;
     img.alt = p.title;
@@ -950,7 +987,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
     { t: 34.6, at: 'condition', g: 0, o: 1, gap: 2600 },     // About the Same as Usual
     // the body map runs its own loop on arrival; the take waits for it before answering None
     { t: 40.1, at: 'injury',    g: 0, o: 0, gap: 3800 },     // None — and no marker on the map
-    { t: 46.2, at: 'level',     g: 0, o: 1, gap: 1500 },     // Standard
+    { t: 46.2, at: 'level',     g: 0, o: 1, gap: 2500 },     // Standard
     { t: 51.2, at: 'level',     g: 1, o: 0, gap: 1200 },     // Quiet On
     // the last stretch is one long touch, so both taps land inside it: 4 → 5 → 6 rounds
     /* two taps inside one hold. Close enough that the number tween and the bars' .5s width

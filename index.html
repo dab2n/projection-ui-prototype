@@ -48,7 +48,9 @@
       </div>
 
       <!-- every card in the carousel is this one component, filled from PACKS in app.js -->
-      <div class="deck" id="deck" data-anim style="--i:2">
+      <!-- no data-anim on the deck itself: the cards come in one at a time from below, and a
+           rise on the container as well would carry them all up together first -->
+      <div class="deck" id="deck">
         <!-- light pool behind the middle card. It stays put while cards travel through it,
              so it never rides along with a swipe. blur.svg carries the layer blur; the
              backdrop blur next to it is the part an <img> can't do. -->
@@ -65,7 +67,7 @@
                   <img class="avatar" alt="">
                   <span></span>
                 </div>
-                <div class="packcard-hot"><img src="assets/icon-fire.svg" alt=""><span>HOT</span></div>
+                <div class="packcard-hot"><img src="assets/icon-fire-flat.svg" alt=""><span>HOT</span></div>
               </div>
               <div class="packcard-info">
                 <div class="packcard-text">

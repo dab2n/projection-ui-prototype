@@ -391,11 +391,12 @@ body.is-preview .stage{
 .hit.is-on .hit-marker{opacity:1;transform:scale(1);animation:markerPulse 2.4s ease-in-out infinite .35s}
 .hit.is-on::before{opacity:0}
 @keyframes markerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-.figure-ring{position:absolute;left:153.68px;top:474.03px;width:337.13px;height:45.84px;animation:ring 3.2s ease-in-out infinite}
+/* The ring is the floor the figure stands on, and floors do not tilt. It used to rock ±0.9°,
+   which read as the whole scene wobbling rather than as anything you could do. It sits still
+   now and the hint is left to the axis icon: a small slide either side of centre, which is the
+   one thing the control actually offers — turning the figure. */
+.figure-ring{position:absolute;left:153.68px;top:474.03px;width:337.13px;height:45.84px}
 .figure-axis{position:absolute;left:310.08px;top:504.23px;width:24.09px;height:24.09px;animation:axis 3.2s ease-in-out infinite}
-/* same duration and phase as the axis icon: the ring tilts as the icon slides, so the two read
-   as one gesture. Two different periods drifting past each other was the uncomfortable part. */
-@keyframes ring{0%,100%{transform:rotate(-.9deg)}50%{transform:rotate(.9deg)}}
 @keyframes axis{0%,100%{transform:translateX(-4px)}50%{transform:translateX(4px)}}
 .floorglow--figure{left:-13px;top:449.3px;width:677.94px;height:593.15px}
 
@@ -543,6 +544,17 @@ body.is-preview .stage{
   transition:transform .55s var(--ease),opacity .55s var(--ease),filter .55s var(--ease);
 }
 .slot[data-far]{opacity:0;pointer-events:none}
+/* the shelf deals itself: each card comes up from below in turn rather than the deck arriving
+   as one block. On .packcard and not .slot — the slot's transform is the carousel's position,
+   and an entrance written over it would fight the swipe. The light pool behind them only
+   fades, since it is pinned to the middle slot and must not travel. */
+@keyframes deal{from{opacity:0;transform:translateY(38px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.screen.is-active .deck .packcard{
+  animation:deal .5s var(--ease) both;
+  animation-delay:calc(var(--j,0) * 80ms + 180ms);
+}
+.screen.is-active .deck-glow,.screen.is-active .deck-haze{animation:fade .6s var(--ease) both .18s}
 
 .packcard{
   width:100%;
@@ -563,10 +575,11 @@ body.is-preview .stage{
   position:absolute;right:12px;top:12px;display:flex;align-items:center;gap:4px;
   padding:5px 10px;border-radius:80px;backdrop-filter:blur(6px);
   background:linear-gradient(rgba(255,255,255,.2),rgba(255,255,255,.2)),rgba(43,28,18,.61);
-  color:var(--white);font-weight:400;font-size:16px;letter-spacing:-.4px;
+  color:var(--white);font-weight:400;font-size:16px;letter-spacing:-.4px;line-height:1;
 }
-/* the project's own fire icon, not the 🔥 emoji it used to render */
-.packcard-hot img{width:15px;height:15px}
+/* the project's own fire icon, not the 🔥 emoji it used to render. Height only: the flat icon
+   carries the flame's real proportion, and pinning both axes to a square squashed it. */
+.packcard-hot img{height:16px;width:auto}
 .avatar{width:24px;height:24px;border-radius:50%;object-fit:cover}
 .packcard-info{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px}
 .packcard-text .t2{margin:0;max-width:183px;display:block}
@@ -697,6 +710,14 @@ body.is-preview .stage{
   padding-bottom:96px;                 /* the last row has to clear the pinned Start button */
 }
 .watch-scroll::-webkit-scrollbar{display:none}
+/* Content used to be guillotined at the frame's top edge — a hard line straight across whatever
+   was passing under it. It dissolves into that edge instead. Only once something is actually
+   scrolled: at rest the first thing in the frame is the title, and fading that would be a
+   defect rather than a transition. */
+.watch-scroll.is-scrolled{
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.45) 14px,#000 34px);
+  mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.45) 14px,#000 34px);
+}
 /* 40px below the info block: the stats frame sits at y=324 in the design */
 .watch-stats{margin:32px 0 0;padding:8px 40px 0;display:flex;align-items:center;justify-content:center;gap:4px}
 .watch-stats > div{display:flex;flex-direction:column;gap:6px;width:93px;text-align:center}
