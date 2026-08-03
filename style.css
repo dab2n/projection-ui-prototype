@@ -601,7 +601,7 @@ body.is-preview .stage{
 }
 /* 사진 위에 앉지만 값은 카드 위 글자와 같이 간다 — Figma 는 #222A2A 로 그렸는데, 나머지가
    전부 회색으로 내려온 판에서 이 이름만 잉크로 남아 혼자 튀었다. */
-.packcard-creator{display:flex;align-items:center;gap:8px;font-weight:500;font-size:17px;line-height:1;color:var(--ink-2)}
+.packcard-creator{display:flex;align-items:center;gap:8px;font-weight:500;font-size:17px;line-height:1;color:var(--on-photo,var(--ink-2))}
 .avatar-wrap{width:33px;height:33px;flex:none;border-radius:50%;overflow:hidden;
   background:var(--white);box-shadow:0 0 0 .3px #E1E1E1}
 .avatar{width:100%;height:100%;object-fit:cover}
@@ -1059,6 +1059,7 @@ body.is-paper :is(.flowbar-steps li.is-now,.flowbar-next.is-ready){color:var(--w
    위계는 유지: 제목이 가장 안 쏘고(=진하고), 설명은 절반쯤 쏜다. */
 body.is-paper{
   --ink-2:#BEC3D0;                    /* 카드 제목 — 책상색보다 한 뼘 어둡다 */
+  --on-photo:#DCE0E8;                 /* 사진 위 글자 — 채도 높은 썸네일에서는 더 밝아야 읽힌다 */
   --n700:#BEC3D0;                     /* 탭 */
   --n500:#D8DBE3; --n600:#D8DBE3;     /* 설명·메타 */
   --n400:#E6E8ED;                     /* 구분 도트 */
@@ -1066,6 +1067,10 @@ body.is-paper{
 /* 아이콘은 PNG 라 토큰이 못 닿는다. 잉크가 #4F4F4F 이므로 흰 카드 위에서 .34 면 --ink-2 자리 */
 body.is-paper .card-ico{opacity:.34}
 body.is-paper .step img{opacity:.36}
+/* 빨간 칠도 판 위에 얹힌 빛이라 꽉 차 있을 이유가 없다 — 선택된 카드와 같은 세기로 */
+body.is-paper :is(.tbar--stretch,.tbar--learn,.strike,.bar){opacity:.9}
+/* 'You Can Choose' 는 --n400(구분 도트 값)을 쓰고 있어 흰 판 위에서 사라졌다 */
+body.is-paper :is(.tbar--run,.bar--run){color:var(--ink-2);font-weight:500}
 
 /* ── 사진·영상 ──
    투사면에 얹히는 그림이라 불투명할 수가 없다. 어두운 사진일수록 더 낮게 — 검정은 빔이
@@ -1073,26 +1078,21 @@ body.is-paper .step img{opacity:.36}
    히어로만 opacity 가 아니라 filter 다: 스틸→클립 크로스디졸브가 이 둘의 opacity 를
    애니메이션하므로, 여기서 opacity 를 박으면 그 규칙을 이겨 스틸이 안 사라진다. */
 body.is-paper .packcard-thumb > img{opacity:var(--dim,.8)}
-body.is-paper :is(.hero-still,.hero-clip){filter:opacity(.8)}
-body.is-paper :is(.more-img img,.rel img,.watch-creator img){opacity:.7}
+/* 밝기를 먼저 올리고 투명도를 건다 — 인물의 갈색 옷이 그냥 흐려지기만 하면 탁한 갈색이
+   그대로 남는다. filter 순서가 곧 적용 순서다. */
+body.is-paper :is(.hero-still,.hero-clip){filter:brightness(1.1) opacity(.7)}
+body.is-paper .rel img{opacity:.5}      /* 실루엣에 가까운 어두운 썸네일 */
+body.is-paper .more-img img{opacity:.6}
+body.is-paper .watch-creator img{opacity:.7}
 body.is-paper :is(.assist .fig,.assist .fig-sel){opacity:.8}
 /* 어두운 인물 사진이 흰 판 위에 앉는다 — 판이 불투명하므로 뒤의 카드 사진은 안 비친다 */
 body.is-paper .avatar{opacity:.55}
 /* joined 프로필 셋은 겹쳐 하나의 그림이다. 낱장마다 주면 서로 비치므로 묶음째 한 번만 */
-body.is-paper .stack{opacity:.8}
+body.is-paper .stack{opacity:.55}
 
-/* 히어로 카드 테두리를 녹인다. 두 방향 그라디언트를 교차시켜 바깥 14px 을 알파로 흘린다 —
-   빔의 가장자리는 딱 떨어지지 않는다. */
-body.is-paper .hero{
-  -webkit-mask-image:
-    linear-gradient(to right,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%),
-    linear-gradient(to bottom,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);
-  mask-image:
-    linear-gradient(to right,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%),
-    linear-gradient(to bottom,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);
-  -webkit-mask-composite:source-in;
-  mask-composite:intersect;
-}
+/* 히어로 카드의 테두리. 가장자리만 흐리는 페더 대신 판 전체를 살짝 투명하게 둔다 —
+   경계가 흐려지는 건 같지만 가장자리가 뭉개지지 않는다. */
+body.is-paper .hero{opacity:.9}
 /* 실루엣은 밝은 면 위에서 색이 빠져 보인다 — 원본 클립이 어두운 판을 전제로 그려진
    옅은 주황이기 때문. 알파는 그대로 두고 색만 올린다. */
 body.is-paper .figure-body{filter:saturate(1.75) contrast(1.12)}
