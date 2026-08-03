@@ -79,10 +79,12 @@ ws.onmessage = e => {
   m.error ? p.no(new Error(m.method + ' ' + m.error.message)) : p.ok(m.result);
 };
 let session;
-const cdp = (method, params = {}) => new Promise((ok, no) => {
+const cdp = (method, params = {}, ms = 0) => new Promise((ok, no) => {
   const id = ++seq;
   waiting.set(id, { ok, no });
   ws.send(JSON.stringify({ id, method, params, sessionId: session }));
+  // 뒤늦게 답이 와도 waiting 에서 빠진 뒤라 그냥 버려진다
+  if (ms) setTimeout(() => { if (waiting.delete(id)) no(new Error(method + ' 무응답')); }, ms);
 });
 
 const { targetId } = await cdp('Target.createTarget', { url: 'about:blank' });
@@ -138,7 +140,13 @@ await evalIn(`(() => {
     .fit{position:fixed!important;left:0;top:0;width:${W}px!important;height:${H}px!important}
     .canvas{position:fixed!important;left:0!important;top:0!important;
       width:${W}px!important;height:${H}px!important;margin:0!important;
-      box-shadow:none!important;--s:${(H / 663).toFixed(6)}!important}\`;
+      box-shadow:none!important;--s:${(H / 663).toFixed(6)}!important}
+    /* 비트 사이 정지 구간에서는 화면에 움직이는 게 없어 컴포지터가 새 프레임을 안 내놓고,
+       그러면 captureScreenshot 이 다음 프레임을 기다리다 그대로 물린다. 1px 짜리 안 보이는
+       애니메이션 하나로 프레임을 계속 돌게 둔다. */
+    body::after{content:'';position:fixed;left:0;top:0;width:1px;height:1px;
+      background:currentColor;animation:xtick 1s steps(2) infinite}
+    @keyframes xtick{from{opacity:.01}to{opacity:0}}\`;
   document.head.append(s);
   dispatchEvent(new Event('resize'));
 })()`);
@@ -181,18 +189,35 @@ const push = buf => ff.stdin.write(buf) ? Promise.resolve()
 await evalIn('window.__take(), 1');
 await sleep(500 * SLOW);
 
+/* captureScreenshot 은 다음 프레임이 나올 때까지 기다린다. 비트 사이의 긴 정지 구간에서는
+   페이지가 새 프레임을 안 내놓아 그대로 영영 멈추는 일이 있다 — 실제로 45% 에서 한 번 물렸다.
+   그래서 응답에 시한을 두고 세 번 찔러본 뒤, 그래도 없으면 직전 프레임을 한 번 더 쓴다.
+   어차피 정지 구간이라 같은 그림이고, 프레임 수와 간격은 흐트러지지 않는다. */
+const shoot = async () => {
+  for (let i = 0; i < 3; i++) {
+    try {
+      return (await cdp('Page.captureScreenshot',
+        { format: 'png', optimizeForSpeed: true, fromSurface: true, captureBeyondViewport: false },
+        3000)).data;
+    } catch { /* 다시 */ }
+  }
+  return null;
+};
+
 const budget = SLOW * 1000 / FPS;
 const t0 = Date.now();
-let late = 0;
+let late = 0, held = 0, last = null;
 for (let k = 0; k < frames; k++) {
   const wait = t0 + k * budget - Date.now();
   if (wait > 0) await sleep(wait); else late = Math.max(late, -wait);
-  const { data } = await cdp('Page.captureScreenshot',
-    { format: 'png', optimizeForSpeed: true, fromSurface: true, captureBeyondViewport: false });
-  await push(Buffer.from(data, 'base64'));
+  const data = await shoot();
+  if (data) last = Buffer.from(data, 'base64'); else held++;
+  if (!last) throw new Error('첫 프레임부터 스크린샷이 안 나온다');
+  await push(last);
   if (k % FPS === 0) process.stdout.write(`\r  ${k}/${frames}  ${(k / FPS).toFixed(0)}s`);
 }
 process.stdout.write('\r' + ' '.repeat(30) + '\r');
+if (held) say(`⚠ ${held}프레임은 응답이 없어 직전 프레임을 다시 썼다`);
 
 ff.stdin.end();
 await new Promise(r => ff.on('close', r));
