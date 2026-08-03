@@ -33,6 +33,8 @@ const OUT   = arg('out', 'out/PAPER_2K');
 const HTTP  = +arg('port', 5599);
 const CDPP  = +arg('cdpport', 9333);
 const LOOK  = arg('look', 'paper');
+const FEATH = +arg('feather', 0);         // 0 이면 테두리 페더판을 안 만든다
+const PAPER = arg('paper', '#C4C8D5');    // 페더판 프리뷰를 깔아볼 책상 색
 const CHROME = arg('chrome', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 
 const root = new URL('..', import.meta.url).pathname;
@@ -228,6 +230,38 @@ rmSync(profile, { recursive: true, force: true });
 
 say(`✓ ${OUT}.mov  (ProRes 422 — 에펙에 넣을 것)`);
 say(`✓ ${OUT}.mp4  (확인용)`);
+
+/* ── 테두리 페더판 ── 판은 화면을 꽉 채운 사각형이라, 책상 색을 아무리 맞춰도 남는 오차가
+   경계선으로 읽힌다. 바깥 --feather px 를 알파로 흘려보내면 선이 아예 없어진다. 빔 자체가
+   가장자리가 무르다는 점에서도 맞다.
+
+   이미 뽑은 .mov 에 알파만 얹는다 — 페더 구간은 어차피 단색 판이라 CSS 로 굽든 여기서
+   얹든 결과가 같고, 두 판이 프레임 단위로 정확히 같다는 게 보장된다. RGB 는 건드리지
+   않으므로 스트레이트 알파다: 에펙에서 Interpret Footage → Alpha → Straight (Unmatted). */
+if (FEATH) {
+  const run = a => new Promise((ok, no) => {
+    const p = spawn('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', ...a],
+                    { cwd: root, stdio: ['ignore', 'inherit', 'inherit'] });
+    p.on('close', c => c ? no(new Error('ffmpeg ' + c)) : ok());
+  });
+  // 흰 사각형을 F/2 만큼 안쪽에 그리고 sigma F/4 로 흐린다 → 가장자리에서 0, F 안쪽에서 1
+  const mask = `${OUT}_mask.png`;
+  await run(['-f', 'lavfi', '-i', `color=c=black:s=${W}x${H}:d=1`,
+    '-vf', `drawbox=x=${FEATH / 2}:y=${FEATH / 2}:w=${W - FEATH}:h=${H - FEATH}:color=white:t=fill,`
+         + `gblur=sigma=${FEATH / 4}`, '-frames:v', '1', mask]);
+  // 마스크는 한 장이라 무한 루프로 물린다 — 끝을 -frames:v 로 못박지 않으면 ffmpeg 가
+  // 영영 안 끝난다. -shortest 는 필터그래프에서는 이 조합을 끊어주지 못한다.
+  await run(['-i', `${OUT}.mov`, '-loop', '1', '-framerate', String(FPS), '-i', mask,
+    '-filter_complex', '[0][1]alphamerge', '-frames:v', String(frames),
+    '-c:v', 'prores_ks', '-profile:v', '4444', '-pix_fmt', 'yuva444p10le',
+    '-vendor', 'apl0', `${OUT}_edge.mov`]);
+  await run(['-i', `${OUT}_edge.mov`, '-f', 'lavfi', '-i', `color=c=${PAPER}:s=${W}x${H}:r=${FPS}`,
+    '-filter_complex', '[1][0]overlay=shortest=1,format=yuv420p', '-frames:v', String(frames),
+    '-c:v', 'libx264', '-crf', '17', '-preset', 'medium', `${OUT}_edge.mp4`]);
+  rmSync(join(root, mask), { force: true });
+  say(`✓ ${OUT}_edge.mov  (ProRes 4444 — 테두리 ${FEATH}px 페더, 알파는 Straight/Unmatted)`);
+  say(`✓ ${OUT}_edge.mp4  (확인용 — 책상색 ${PAPER} 위에 얹어본 것)`);
+}
 say(late > budget * 0.1
   ? `⚠ 한 장 찍는 게 예산(${budget | 0}ms)보다 최대 ${late | 0}ms 늦었다 = 내용 ${(late / SLOW).toFixed(0)}ms 드리프트. --slow 를 올려라`
   : `  드리프트 최대 ${(late / SLOW).toFixed(1)}ms — 무시해도 된다`);
