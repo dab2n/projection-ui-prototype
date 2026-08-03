@@ -4,8 +4,12 @@
    ============================================================ */
 :root{
   /* Neutral — Figma variables */
-  --white:#ffffff; --n50:#fafafa;  --n100:#f2f2f2; --n400:#a3a3a3; --n500:#757575;
-  --n600:#525252;  --n700:#3b3b3b; --n800:#222a2a; --n900:#141a1a; --black:#050a0a;
+  /* 카드 위에 앉는 회색들. 원래 값(#3b3b3b / #525252 / #757575)은 흰 카드 위에서 11:1 을
+     넘어 잉크처럼 박혔다 — 투사면에 얹히는 UI 는 그렇게 진할 수가 없다. 흰 카드 대비
+     4.2 / 2.8 / 2.8 로 낮춰 잡고, 위계는 그대로 둔다. 밝은 판(--n50/--n100)과, 흰 카드가
+     아니라 사진 위에 앉는 --n800(카드 제작자 이름)은 안 건드린다. */
+  --white:#ffffff; --n50:#fafafa;  --n100:#f2f2f2; --n400:#bebebe; --n500:#9a9a9a;
+  --n600:#9a9a9a;  --n700:#7d7d7d; --n800:#222a2a; --n900:#141a1a; --black:#050a0a;
   --brand:#fa3030;                                  /* Brand/Newton Red */
 
   /* projection surface — driven by the colour panel, #141414 is the design default */
@@ -1037,7 +1041,7 @@ body.is-paper .stage{box-shadow:none}
 /* 플로우바의 비활성 항목은 흰색 40%다 — 어두운 판에서는 그게 Neutral/500 으로 앉지만,
    밝은 투사면 위에서는 바탕보다 밝은 쪽으로 흐려져 거의 안 보인다. 밝기를 낮추는 대신
    바탕보다 어두운 회색으로 바꾼다. 현재 단계와 Done 은 흰색 그대로 둔다. */
-body.is-paper :is(.flowbar-steps li,.flowbar-next){color:#8A929E;opacity:1}
+body.is-paper :is(.flowbar-steps li,.flowbar-next){color:#A2AAB6;opacity:1}
 body.is-paper :is(.flowbar-steps li.is-now,.flowbar-next.is-ready){color:var(--white)}
 /* 실루엣은 밝은 면 위에서 색이 빠져 보인다 — 원본 클립이 어두운 판을 전제로 그려진
    옅은 주황이기 때문. 알파는 그대로 두고 색만 올린다. */
