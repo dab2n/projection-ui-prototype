@@ -890,6 +890,16 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   show(Math.max(0, order.indexOf(want)));
 }
 
+/* ── 종이 뷰: ?look=paper ────────────────────────────────────
+   합성용 룩. 책상 영상을 끄고 단색 투사면 위에 UI만 남긴다 — 값은 전부 style.css 의
+   body.is-paper 에 있다. 익스포터가 이 URL 을 연다. */
+if (new URLSearchParams(location.search).get('look') === 'paper') {
+  document.body.classList.add('is-paper');
+  const desk = document.getElementById('deskOn');
+  desk.checked = false;
+  desk.dispatchEvent(new Event('change'));   // 프리뷰·핸드 레이어까지 같이 내린다
+}
+
 /* ── prototyping cursor & touch ripples ──────────────────────────────────
    Recording aid, not part of the projected UI. The disc chases the pointer on its own frame
    loop with exponential smoothing, so what gets recorded is a gliding cursor rather than the
