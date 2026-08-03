@@ -357,11 +357,13 @@ body.is-preview .stage{
 
 .card--icon{flex-direction:row;align-items:center;justify-content:flex-start;gap:12px}
 /* 아이콘은 PNG 라 글자 토큰이 안 걸린다 — 카드 위 글자와 같은 값으로 읽히도록 투명도로
-   맞춘다. 잉크가 #4F4F4F 이므로 흰 카드 위에서 .76 이면 #7A7A7A, --ink-2 와 같은 자리다.
-   선택되면 흰색으로 뒤집히므로 그때는 원래 세기로 돌린다. */
-.card-ico{width:34px;height:34px;object-fit:contain;opacity:.76;transition:filter .3s var(--ease)}
-.card.is-on .card-ico{opacity:1}
-.card.is-on .card-ico{filter:brightness(0) invert(1)}
+   맞춘다. 값은 filter 하나로만 준다 — opacity 와 filter 를 같이 쓰면 선택되는 순간
+   opacity 는 즉시 1 로 뛰는데 filter 는 .3s 에 걸쳐 흰색이 되므로, 그 사이 300ms 동안
+   아직 하얘지지 않은 잉크가 100% 로 드러난다(검은 한 프레임). 두 상태 모두
+   brightness(0) invert(1) brightness(x) 꼴이라 x 만 움직이고, 회색에서 흰색으로 곧장 간다. */
+.card-ico{width:34px;height:34px;object-fit:contain;filter:brightness(0) invert(1) brightness(.35);
+  transition:filter .3s var(--ease)}
+.card.is-on .card-ico{filter:brightness(0) invert(1) brightness(1)}
 
 .list{display:flex;flex-direction:column;gap:4px}
 .col{position:absolute;top:240px;width:360px}
@@ -1064,8 +1066,9 @@ body.is-paper{
   --n500:#D8DBE3; --n600:#D8DBE3;     /* 설명·메타 */
   --n400:#E6E8ED;                     /* 구분 도트 */
 }
-/* 아이콘은 PNG 라 토큰이 못 닿는다. 잉크가 #4F4F4F 이므로 흰 카드 위에서 .34 면 --ink-2 자리 */
-body.is-paper .card-ico{opacity:.34}
+/* 아이콘은 PNG 라 토큰이 못 닿는다. 실루엣을 흰색으로 뒤집은 뒤 밝기로 값을 잡는다 —
+   .76 이면 #C2C2C2, --ink-2 자리다. */
+body.is-paper .card-ico{filter:brightness(0) invert(1) brightness(.76)}
 body.is-paper .step img{opacity:.36}
 /* 빨간 칠도 판 위에 얹힌 빛이라 꽉 차 있을 이유가 없다 — 선택된 카드와 같은 세기로 */
 body.is-paper :is(.tbar--stretch,.tbar--learn,.strike,.bar){opacity:.9}
