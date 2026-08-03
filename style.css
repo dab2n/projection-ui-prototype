@@ -6,8 +6,7 @@
   /* Neutral — Figma variables */
   /* 카드 위에 앉는 회색들. 원래 값(#3b3b3b / #525252 / #757575)은 흰 카드 위에서 11:1 을
      넘어 잉크처럼 박혔다 — 투사면에 얹히는 UI 는 그렇게 진할 수가 없다. 흰 카드 대비
-     4.2 / 2.8 / 2.8 로 낮춰 잡고, 위계는 그대로 둔다. 밝은 판(--n50/--n100)과, 흰 카드가
-     아니라 사진 위에 앉는 --n800(카드 제작자 이름)은 안 건드린다. */
+     4.2 / 2.8 / 2.8 로 낮춰 잡고, 위계는 그대로 둔다. 밝은 판(--n50/--n100)과, 밝은 판(--n50/--n100)은 안 건드린다. */
   --white:#ffffff; --n50:#fafafa;  --n100:#f2f2f2; --n400:#bebebe; --n500:#9a9a9a;
   --n600:#9a9a9a;  --n700:#7d7d7d; --n800:#222a2a; --n900:#141a1a; --black:#050a0a;
   --brand:#fa3030;                                  /* Brand/Newton Red */
@@ -600,7 +599,9 @@ body.is-preview .stage{
   position:absolute;left:18px;right:18px;top:18px;height:33px;
   display:flex;align-items:center;justify-content:space-between;
 }
-.packcard-creator{display:flex;align-items:center;gap:8px;font-weight:500;font-size:17px;line-height:1;color:var(--n800)}
+/* 사진 위에 앉지만 값은 카드 위 글자와 같이 간다 — Figma 는 #222A2A 로 그렸는데, 나머지가
+   전부 회색으로 내려온 판에서 이 이름만 잉크로 남아 혼자 튀었다. */
+.packcard-creator{display:flex;align-items:center;gap:8px;font-weight:500;font-size:17px;line-height:1;color:var(--ink-2)}
 .avatar{width:33px;height:33px;flex:none;border-radius:50%;object-fit:cover;box-shadow:0 0 0 .3px #E1E1E1}
 /* 그려진 대로 두 겹: #C7BBB1 75% 위에 흰색 20%. 칩이 사진 위에 앉으므로 비쳐 보이는 쪽이
    지켜야 할 부분이라 한 색으로 합치지 않는다. 글자와 불꽃은 브랜드 레드다. */
