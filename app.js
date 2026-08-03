@@ -891,13 +891,19 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
 }
 
 /* ── 종이 뷰: ?look=paper ────────────────────────────────────
-   합성용 룩. 책상 영상을 끄고 단색 투사면 위에 UI만 남긴다 — 값은 전부 style.css 의
+   합성용 룩. 책상 영상을 끄고 단색 투사면 위에 UI만 남긴다 — 나머지 값은 style.css 의
    body.is-paper 에 있다. 익스포터가 이 URL 을 연다. */
 if (new URLSearchParams(location.search).get('look') === 'paper') {
+  const PAPER = '#B3BCCA';                   // 투사면 = 책상 색. 책상이 바뀌면 여기만 바꾼다
   document.body.classList.add('is-paper');
   const desk = document.getElementById('deskOn');
   desk.checked = false;
   desk.dispatchEvent(new Event('change'));   // 프리뷰·핸드 레이어까지 같이 내린다
+  /* 배경색은 피커를 통해 넣는다. paint() 가 --bg 를 .stage 에 인라인으로 쓰는데, 인라인은
+     상속값이 아무리 중요해도 못 이긴다 — CSS 에 값을 두면 조용히 무시당한다. */
+  const hex = document.getElementById('pickerHex');
+  hex.value = PAPER;
+  hex.dispatchEvent(new Event('input'));
 }
 
 /* ── prototyping cursor & touch ripples ──────────────────────────────────

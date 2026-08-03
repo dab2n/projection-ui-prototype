@@ -153,6 +153,9 @@ await evalIn(`(() => {
 
 // 폰트와 영상이 다 올라오기 전에 찍으면 첫 몇 초가 대체 폰트와 빈 프레임이다
 await evalIn(`document.fonts.ready.then(() => 1)`);
+// fonts.ready 는 대체 폰트로 그려도 resolve 한다. 7분 렌더를 대체 폰트로 날리지 않게 확인한다
+if (!await evalIn(`document.fonts.check('700 40px Supreme')`))
+  throw new Error('Supreme 이 안 올라왔다 — fontshare 연결 확인');
 await evalIn(`Promise.all([...document.querySelectorAll('.hero-clip,.figure-src')].map(v =>
   v.readyState >= 3 ? 1 : new Promise(r => v.addEventListener('canplay', r, { once: true })))).then(() => 1)`);
 await sleep(1500);
