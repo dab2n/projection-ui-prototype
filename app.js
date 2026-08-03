@@ -1548,9 +1548,13 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
   {
     const c = document.querySelectorAll('.deck .slot')[deckOpens].querySelector('.packcard');
     const s = getComputedStyle(c);
-    ok('the pack card is the 377 × 308.8 r40 the deck was drawn with',
-       parseFloat(s.width) === 377 && Math.abs(parseFloat(s.height) - 308.81) < 1 &&
-       s.borderRadius === '40px');
+    ok('the pack card is the 377.31 × 308.81 r44.92 the deck was drawn with',
+       Math.abs(parseFloat(s.width) - 377.31) < 1 && Math.abs(parseFloat(s.height) - 308.81) < 1 &&
+       parseFloat(s.borderRadius) === 44.92);
+    const th = getComputedStyle(c.querySelector('.packcard-thumb'));
+    ok('and its thumbnail is 212.91 tall at r42.67, inset 4.49 all round',
+       Math.abs(parseFloat(th.height) - 212.91) < .5 && parseFloat(th.borderRadius) === 42.67 &&
+       parseFloat(s.paddingTop) === 4.49);
   }
   ok('Total card is 360×171', is('.total', 360, 171));
   ok('graph bars are 105 / 210', is('.tbar--stretch', 105) && is('.tbar--learn', 210));
