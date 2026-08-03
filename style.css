@@ -357,7 +357,11 @@ body.is-preview .stage{
 .card.is-on::after{opacity:1;transform:scale(1);transition-delay:.06s}
 
 .card--icon{flex-direction:row;align-items:center;justify-content:flex-start;gap:12px}
-.card-ico{width:34px;height:34px;object-fit:contain;transition:filter .3s var(--ease)}
+/* 아이콘은 PNG 라 글자 토큰이 안 걸린다 — 카드 위 글자와 같은 값으로 읽히도록 투명도로
+   맞춘다. 잉크가 #4F4F4F 이므로 흰 카드 위에서 .76 이면 #7A7A7A, --ink-2 와 같은 자리다.
+   선택되면 흰색으로 뒤집히므로 그때는 원래 세기로 돌린다. */
+.card-ico{width:34px;height:34px;object-fit:contain;opacity:.76;transition:filter .3s var(--ease)}
+.card.is-on .card-ico{opacity:1}
 .card.is-on .card-ico{filter:brightness(0) invert(1)}
 
 .list{display:flex;flex-direction:column;gap:4px}
@@ -527,7 +531,7 @@ body.is-preview .stage{
 .pill i{font-style:normal;color:var(--n600)}
 .stepper-ctl{display:flex;align-items:center;justify-content:center;gap:93px;width:100%}
 .step{width:28px;height:28px;border-radius:50%;transition:transform .2s var(--ease)}
-.step img{width:28px;height:28px}
+.step img{width:28px;height:28px;opacity:.8}   /* 같은 이유 — 카드 위 회색에 맞춘다 */
 .step:active{transform:scale(.9)}
 .stepper-val{font-weight:700;font-size:40px;line-height:1;letter-spacing:-1.6px;color:var(--ink-2);font-family:inherit}
 
