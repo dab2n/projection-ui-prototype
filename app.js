@@ -228,7 +228,10 @@ onSelect.push(syncMarkers);
   const canvas = document.querySelector('.figure-body');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const { width: W, height: H } = canvas;
-  const FLOOR = 18, GAMMA = 0.55;   // tune: FLOOR = how much off-white is background
+  const FLOOR = 24, GAMMA = 0.55;   // tune: FLOOR = how much off-white is background
+  /* 밝은 투사면 위에서는 반쯤 뚫린 화소가 바탕색을 먹어 뿌옇게 보인다. 배경으로 판정된
+     화소(v<=0)는 건드리지 않고, 남은 화소만 더 실하게 올린다 — 형태는 그대로 두고 안이 찬다. */
+  const SOLID = 1.9;
 
   /* The clip loops, and the last frame is nowhere near the first, so the wrap landed as a cut.
      The opening frame is kept aside and mixed back in over the last stretch — the figure
@@ -259,7 +262,7 @@ onSelect.push(syncMarkers);
         // pale head and arms stay readable. Colours are left alone — the clip already
         // carries the gradient the design wants.
         const v = (255 - Math.min(p[i], p[i + 1], p[i + 2]) - FLOOR) / (255 - FLOOR);
-        p[i + 3] = v <= 0 ? 0 : Math.min(255, 255 * Math.pow(v, GAMMA)) * (1 - mix);
+        p[i + 3] = v <= 0 ? 0 : Math.min(255, 255 * Math.pow(v, GAMMA) * SOLID) * (1 - mix);
       }
       ctx.putImageData(img, 0, 0);
 
@@ -398,7 +401,7 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
     { img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%', by: ['Devon', 'avatar-devon.jpg'] },
     { img: 'more-footwork.png', title: 'Footwork for Small Spaces',    kind: 'Creator Pack', len: '15m', pos: '50% 50%', by: ['Sena',  'avatar-sena.jpg'] },
     { img: 'pack-thumb.png',    title: 'Bring the Ring Home',          kind: 'Creator Pack', len: '7m',  pos: '50% 10%', by: ['Casey', 'avatar-laan.png'], hot: true, go: 'watch' },
-    { img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 50%', by: ['Mara',  'avatar-mara.jpg'] },
+    { img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 50%', by: ['Junho', 'avatar-junho.jpg'] },
     { img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 50%', by: ['Noel',  'avatar-noel.jpg'] },
   ];
   /* The deck opens on The Boxer's Steps, not on the pack that leads anywhere: the first screen
@@ -1002,13 +1005,13 @@ if (new URLSearchParams(location.search).get('look') === 'paper') {
     { t: 28.7, at: 'location',  g: 1, o: 1, gap: 1200 },     // Standard
     { t: 34.6, at: 'condition', g: 0, o: 1, gap: 2600 },     // About the Same as Usual
     // the body map runs its own loop on arrival; the take waits for it before answering None
-    { t: 40.1, at: 'injury',    g: 0, o: 0, gap: 3800 },     // None — and no marker on the map
+    { t: 40.1, at: 'injury',    g: 0, o: 0, gap: 2500 },     // None — and no marker on the map
     { t: 46.2, at: 'level',     g: 0, o: 1, gap: 2500 },     // Standard
     { t: 51.2, at: 'level',     g: 1, o: 0, gap: 1200 },     // Quiet On
     // the last stretch is one long touch, so both taps land inside it: 4 → 5 → 6 rounds
     /* two taps inside one hold. Close enough that the number tween and the bars' .5s width
        transition retarget mid-flight, so 4 → 6 is one continuous move rather than two. */
-    { t: 58.15, at: 'main',     hit: '.step[data-step-delta="1"]', wait: 200, gap: 1700 },
+    { t: 58.15, at: 'main',     hit: '.step[data-step-delta="1"]', wait: 200, gap: 2700 },
     { t: 58.50, at: 'main',     hit: '.step[data-step-delta="1"]', wait: 200, gap: 350 },
   ];
 
@@ -1555,6 +1558,18 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
     ok('and its thumbnail is 212.91 tall at r42.67, inset 4.49 all round',
        Math.abs(parseFloat(th.height) - 212.91) < .5 && parseFloat(th.borderRadius) === 42.67 &&
        parseFloat(s.paddingTop) === 4.49);
+    /* the row inside the thumbnail, which has been drawn wrong more than once: 18 in from the
+       thumbnail on three sides, a 33 avatar, 17 type, 8 between them, centred on each other. */
+    /* computed style and not getBoundingClientRect: the slot carries the carousel's own
+       rotateY and translateZ, so a rect off any card but the middle one is foreshortened. */
+    const top = getComputedStyle(c.querySelector('.packcard-top'));
+    const cre = getComputedStyle(c.querySelector('.packcard-creator'));
+    const av  = getComputedStyle(c.querySelector('.avatar'));
+    ok('the creator row is 33 tall, 18 in from the thumbnail, 17px type 8 from a 33 avatar',
+       parseFloat(top.top) === 18 && parseFloat(top.left) === 18 && parseFloat(top.right) === 18 &&
+       parseFloat(top.height) === 33 && parseFloat(cre.fontSize) === 17 &&
+       parseFloat(av.width) === 33 && parseFloat(av.height) === 33 &&
+       parseFloat(cre.columnGap) === 8 && cre.alignItems === 'center');
   }
   ok('Total card is 360×171', is('.total', 360, 171));
   ok('graph bars are 105 / 210', is('.tbar--stretch', 105) && is('.tbar--learn', 210));

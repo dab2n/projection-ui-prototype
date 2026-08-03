@@ -16,7 +16,7 @@
      --white and --black keep their literal meaning (type on the red fill stays white). */
   --surface:var(--white);   /* card and panel fills */
   --ink:var(--white);       /* type sitting on the projection background */
-  --ink-2:var(--black);     /* type sitting on a surface */
+  --ink-2:var(--n700);      /* type sitting on a surface — 순검정이 아니라 진회색 */
 
   /* 직사각형_Selected + 정사각형_selected share one gradient and the "selected" effect */
   --sel:linear-gradient(180deg,#fa3030 53.869%,#fe6e3c 85.083%,#fec389 104.71%,#d1feff 104.72%);
@@ -586,18 +586,18 @@ body.is-preview .stage{
 .packcard-thumb{position:relative;height:212.91px;border-radius:42.67px;overflow:hidden}
 /* per-pack crop: PACKS sets --pos so a face is never cut off by the wide thumb box */
 .packcard-thumb > img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 22%)}
-/* 썸네일 안쪽 여백 18. 제작자 칩과 HOT 칩은 높이가 달라도(32.7 vs 31.03) 같은 축에
-   중심이 맞아 있어서, 위 여백이 18.12 와 18.95 로 갈린다 — 그려진 대로 둔다. */
-.packcard-creator{
-  position:absolute;left:18.12px;top:18.12px;display:flex;align-items:center;gap:14.5px;
-  font-weight:500;font-size:18px;line-height:1;color:var(--n800);
+/* 썸네일 컴포넌트 기준 좌·우·위 18. 안에 든 것은 332.39 × 33 짜리 한 줄이고, 제작자와
+   HOT 은 그 줄의 양 끝이다 — 각각 따로 붙이면 높이가 다른 둘(33 vs 31.03)의 중심이 어긋난다. */
+.packcard-top{
+  position:absolute;left:18px;right:18px;top:18px;height:33px;
+  display:flex;align-items:center;justify-content:space-between;
 }
-.avatar{width:32.7px;height:32.7px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 .3px #E1E1E1}
+.packcard-creator{display:flex;align-items:center;gap:8px;font-weight:500;font-size:17px;line-height:1;color:var(--n800)}
+.avatar{width:33px;height:33px;flex:none;border-radius:50%;object-fit:cover;box-shadow:0 0 0 .3px #E1E1E1}
 /* 그려진 대로 두 겹: #C7BBB1 75% 위에 흰색 20%. 칩이 사진 위에 앉으므로 비쳐 보이는 쪽이
    지켜야 할 부분이라 한 색으로 합치지 않는다. 글자와 불꽃은 브랜드 레드다. */
 .packcard-hot{
-  position:absolute;right:17.97px;top:18.95px;
-  width:71.37px;height:31.03px;border-radius:15.52px;
+  flex:none;width:71.37px;height:31.03px;border-radius:15.52px;
   display:flex;align-items:center;justify-content:center;gap:7px;
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   background:linear-gradient(rgba(255,255,255,.2),rgba(255,255,255,.2)),rgba(199,187,177,.75);
@@ -1034,3 +1034,12 @@ body.is-paper{
    덜어내는 그림자라 투사면에는 있을 수 없고, 여백에 검은 번짐만 남긴다. */
 body.is-paper .canvas{background:var(--bg);box-shadow:none}
 body.is-paper .stage{box-shadow:none}
+/* 플로우바의 비활성 항목은 흰색 40%다 — 어두운 판에서는 그게 Neutral/500 으로 앉지만,
+   밝은 투사면 위에서는 바탕보다 밝은 쪽으로 흐려져 거의 안 보인다. 밝기를 낮추는 대신
+   바탕보다 어두운 회색으로 바꾼다. 현재 단계와 Done 은 흰색 그대로 둔다. */
+body.is-paper :is(.flowbar-steps li,.flowbar-next){color:#8A929E;opacity:1}
+body.is-paper :is(.flowbar-steps li.is-now,.flowbar-next.is-ready){color:var(--white)}
+body.is-paper .flowbar-next:not(.is-ready) img{filter:none;opacity:.6}
+/* 실루엣은 밝은 면 위에서 색이 빠져 보인다 — 원본 클립이 어두운 판을 전제로 그려진
+   옅은 주황이기 때문. 알파는 그대로 두고 색만 올린다. */
+body.is-paper .figure-body{filter:saturate(1.75) contrast(1.12)}
