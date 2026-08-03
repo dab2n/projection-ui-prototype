@@ -398,11 +398,11 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
      deck reads as one person's five packs. The three landscape thumbs are already the 1.8:1 the
      box is, so they need no crop of their own. */
   const PACKS = [
-    { img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%', by: ['Devon', 'avatar-devon.jpg'] },
+    { dim: .6, img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%', by: ['Devon', 'avatar-devon.jpg'] },
     { img: 'more-footwork.png', title: 'Footwork for Small Spaces',    kind: 'Creator Pack', len: '15m', pos: '50% 50%', by: ['Sena',  'avatar-sena.jpg'] },
     { img: 'pack-thumb.png',    title: 'Bring the Ring Home',          kind: 'Creator Pack', len: '7m',  pos: '50% 10%', by: ['Casey', 'avatar-laan.png'], hot: true, go: 'watch' },
-    { img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 50%', by: ['Junho', 'avatar-junho.jpg'] },
-    { img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 50%', by: ['Noel',  'avatar-noel.jpg'] },
+    { dim: .6, img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 50%', by: ['Junho', 'avatar-junho.jpg'] },
+    { dim: .7, img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 50%', by: ['Noel',  'avatar-noel.jpg'] },
   ];
   /* The deck opens on The Boxer's Steps, not on the pack that leads anywhere: the first screen
      is a shelf, and the first touch in the footage is the swipe off it. OPENS is the one with a
@@ -416,13 +416,16 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   const slots = PACKS.map((p, i) => {
     const slot = tpl.content.firstElementChild.cloneNode(true);
     slot.style.setProperty('--j', i);          // its place in the deal, left to right
+    // 어두운 사진은 더 흐리게. 빔은 검정을 못 쏘므로, 어두운 화소가 많은 그림을 그대로 두면
+    // 투사면에 구멍이 난 것처럼 읽힌다 — dim 이 없으면 종이 뷰의 기본값(.8)이 쓰인다.
+    if (p.dim) slot.style.setProperty('--dim', p.dim);
     const img = slot.querySelector('.packcard-thumb > img');
     img.src = `assets/${p.img}`;
     img.alt = p.title;
     img.style.setProperty('--pos', p.pos);
     slot.querySelector('.t2').textContent = p.title;
     const [name, face] = p.by;
-    slot.querySelector('.packcard-creator span').textContent = name;
+    slot.querySelector('.packcard-creator .name').textContent = name;
     slot.querySelector('.packcard-creator .avatar').src = `assets/${face}`;
     const [kind, len] = slot.querySelectorAll('.meta span');
     kind.textContent = p.kind;
@@ -1345,7 +1348,7 @@ if (location.search.includes('selftest')) (async () => {   // async: one assert 
      directly left of home — otherwise the first touch opens nothing */
   ok('the pack that opens sits one swipe left of it', deckOpens === deckHome - 1);
   ok('every card names its own creator',
-     new Set(cards.map(c => c.querySelector('.packcard-creator span').textContent)).size === cards.length);
+     new Set(cards.map(c => c.querySelector('.packcard-creator .name').textContent)).size === cards.length);
   // the blur has to land between the side cards and the middle one, or it has nothing to blur
   ok('the deck blur sits under the middle card and over the rest',
      getComputedStyle(document.querySelector('.deck-haze')).zIndex === '7' &&
