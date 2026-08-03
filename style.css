@@ -891,7 +891,7 @@ body.is-preview .stage{
   display:flex;align-items:center;gap:2px;font-weight:700;font-size:15.732px;letter-spacing:-.414px;
   color:var(--ink);opacity:.4;transition:transform .2s var(--ease),opacity .3s var(--ease);
 }
-.flowbar-next img{width:10px;height:10px;filter:brightness(0) invert(1)}
+.flowbar-next .arrow{width:10px;height:10px;overflow:visible}
 .flowbar-next.is-ready{opacity:1}
 
 /* ── projection background picker ────────────────────────── */
@@ -1039,7 +1039,6 @@ body.is-paper .stage{box-shadow:none}
    바탕보다 어두운 회색으로 바꾼다. 현재 단계와 Done 은 흰색 그대로 둔다. */
 body.is-paper :is(.flowbar-steps li,.flowbar-next){color:#8A929E;opacity:1}
 body.is-paper :is(.flowbar-steps li.is-now,.flowbar-next.is-ready){color:var(--white)}
-body.is-paper .flowbar-next:not(.is-ready) img{filter:none;opacity:.6}
 /* 실루엣은 밝은 면 위에서 색이 빠져 보인다 — 원본 클립이 어두운 판을 전제로 그려진
    옅은 주황이기 때문. 알파는 그대로 두고 색만 올린다. */
 body.is-paper .figure-body{filter:saturate(1.75) contrast(1.12)}

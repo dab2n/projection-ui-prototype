@@ -366,7 +366,14 @@
       <ol class="flowbar-steps">
         <li>Location</li><li>Condition</li><li>Injury check</li><li>Level/Mode</li><li>Main Workout</li>
       </ol>
-      <button class="flowbar-next" id="btnNext">Next <img src="assets/arrow-right.svg" alt=""></button>
+      <button class="flowbar-next" id="btnNext">Next <!-- 인라인 SVG: 화살표가 글자 색을 그대로
+        따라간다. <img> 였을 때는 필터로 흰색을 칠하고 있어서, 비활성 상태에서 글자만
+        회색이 되고 화살표는 흰색으로 남았다. -->
+        <svg class="arrow" viewBox="0 0 5.38217 4.96821" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M3.47311 4.55417L4.96815 2.48411L3.47311 0.414043M4.96815 2.48411H0.414013"
+                fill="none" stroke="currentColor" stroke-width="0.828025"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg></button>
     </nav>
 
   </div>
