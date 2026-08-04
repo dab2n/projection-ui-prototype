@@ -1211,5 +1211,6 @@ body.is-nudge .nudge{opacity:1;visibility:visible;transition-delay:0s}
 
 /* 넛지가 떠 있는 동안 플로우는 없다 — 아직 아무것도 열지 않은 상태다 */
 body.is-nudge :is(.screen,.appbar,.flowbar){opacity:0!important;visibility:hidden}
-/* 넛지 카드의 사진도 투사면 위의 그림이다 — 나머지 사진들과 같은 세기로 */
-body.is-paper .ncard-thumb img{opacity:.82}
+/* 넛지 카드의 사진은 원본 세기 그대로 간다. 어두운 데만 바닥을 깔아 올린다 —
+   전체 투명도로 낮추면 검정은 여전히 상대적으로 가장 어둡고 사진만 바랜다. */
+body.is-paper .ncard--front .ncard-thumb img{filter:url(#liftdark)}
