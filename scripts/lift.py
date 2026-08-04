@@ -16,7 +16,16 @@
 """
 import os, subprocess, sys
 
-FLOOR, TCUT, S0, S1 = 0.30, 0.36, 0.60, 0.92
+FLOOR, TCUT, S0, S1 = 0.30, 0.45, 0.40, 1.05
+# 올리는 빛의 색. 세 채널을 똑같이 더하면 갈색이 회색으로 빠져 원래 갈색과 경계가 진다.
+# 붉은 쪽을 더 얹어 '옅은 갈색'으로 올라가게 한다.
+TINT = (1.00, 0.90, 0.80)
+
+
+def ss(t):
+    """경계를 부드럽게. 선형 램프는 끝점에서 기울기가 꺾여 그 선이 그대로 보인다."""
+    t = 0.0 if t < 0 else (1.0 if t > 1 else t)
+    return t * t * (3 - 2 * t)
 
 IMAGES = """
 assist-boost.png assist-boost-sel.png assist-load.png assist-load-sel.png
@@ -55,12 +64,13 @@ def lift_image(name):
         if lum >= TCUT:
             continue
         mx, mn = max(r, g, b), min(r, g, b)
-        s = 0.0 if mx == 0 else (mx - mn) / mx
-        neutral = 1.0 if s <= S0 else (0.0 if s >= S1 else (S1 - s) / (S1 - S0))
-        if neutral <= 0:
+        sat = 0.0 if mx == 0 else (mx - mn) / mx
+        k = FLOOR * ss((TCUT - lum) / TCUT) * ss((S1 - sat) / (S1 - S0)) * 255
+        if k <= 0:
             continue
-        k = FLOOR * ((TCUT - lum) / TCUT) * neutral * 255
-        raw[i] = min(255, int(r + k)); raw[i + 1] = min(255, int(g + k)); raw[i + 2] = min(255, int(b + k))
+        raw[i] = min(255, int(r + k * TINT[0]))
+        raw[i + 1] = min(255, int(g + k * TINT[1]))
+        raw[i + 2] = min(255, int(b + k * TINT[2]))
         n += 1
     # 알파가 있는 PNG 는 알파를 잃는다. 여기 목록은 전부 불투명 사진이라 문제없다.
     subprocess.run(['ffmpeg', '-v', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24',
@@ -68,23 +78,26 @@ def lift_image(name):
     return 100 * n / (len(raw) // 3)
 
 
-def geq_channel(ch):
-    """geq 는 채널마다 식을 따로 받는다. 위 파이썬 루프와 같은 계산을 한 줄로 편 것."""
+def geq_channel(ch, tint):
+    """geq 는 채널마다 식을 따로 받는다. 위 파이썬 루프와 같은 계산을 한 줄로 편 것.
+       st/ld 는 geq 의 지역변수 — 같은 식을 세 번 쓰지 않으려고 담아둔다."""
     lum = '(0.2126*r(X,Y)+0.7152*g(X,Y)+0.0722*b(X,Y))'
     mx = 'max(r(X,Y),max(g(X,Y),b(X,Y)))'
     mn = 'min(r(X,Y),min(g(X,Y),b(X,Y)))'
     sat = f'(({mx}-{mn})/max({mx},1))'
-    shadow = f'clip(({TCUT * 255}-{lum})/{TCUT * 255},0,1)'
-    neutral = f'clip(({S1}-{sat})/{S1 - S0},0,1)'
-    return f'min(255,{ch}(X,Y)+{FLOOR * 255}*{shadow}*{neutral})'
+    return (f'st(0,clip(({TCUT * 255}-{lum})/{TCUT * 255},0,1));'
+            f'st(1,clip(({S1}-{sat})/{S1 - S0},0,1));'
+            f'min(255,{ch}(X,Y)+{FLOOR * 255 * tint}'
+            f'*ld(0)*ld(0)*(3-2*ld(0))*ld(1)*ld(1)*(3-2*ld(1)))')
 
 
 def lift_video(name):
     src, dst = os.path.join(src_dir, name), os.path.join(out_dir, name)
     # 식 안의 쉼표를 따옴표로 감싸지 않으면 ffmpeg 이 필터 인자 구분자로 읽고 뻗는다
-    geq = "format=rgb24,geq=r='%s':g='%s':b='%s'" % tuple(geq_channel(c) for c in 'rgb')
+    geq = "format=rgb24,geq=r='%s':g='%s':b='%s'" % tuple(
+        geq_channel(c, t) for c, t in zip('rgb', TINT))
     subprocess.run(['ffmpeg', '-v', 'error', '-i', src, '-vf', geq,
-                    '-c:v', 'libx264', '-crf', '17', '-preset', 'medium',
+                    '-c:v', 'libx264', '-crf', '14', '-preset', 'medium',
                     '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', '-y', dst], check=True)
 
 
