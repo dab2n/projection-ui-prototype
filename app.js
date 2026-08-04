@@ -28,6 +28,7 @@ const playNudge = () => {
 };
 // 넛지가 떠 있는 동안 프레임을 누르면 처음부터 다시 — 모션을 다시 보려고 새로고침할 일 없게
 nudge.addEventListener('click', playNudge);
+window.__nudge = playNudge;                  // 익스포터가 이 시점부터 찍는다
 
 /* Hooks the later blocks fill in — the prototyping disc, the carousel and the auto crop, all
    driven from auto play. Declared up here because fit() reaches for recrop on the first call,

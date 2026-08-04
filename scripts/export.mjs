@@ -37,6 +37,7 @@ const OUT   = arg('out', 'out/PAPER_2K');
 const HTTP  = +arg('port', 5599);
 const CDPP  = +arg('cdpport', 9333);
 const LOOK  = arg('look', 'paper');
+const SCENE = arg('scene', '');           // 'nudge' 면 테이크 대신 넛지 씬을 찍는다
 const FEATH = +arg('feather', 0);         // 0 이면 테두리 페더판을 안 만든다
 const PAPER = arg('paper', '#C9C9CA');    // 페더판 프리뷰를 깔아볼 책상 색
 const CHROME = arg('chrome', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
@@ -119,7 +120,7 @@ await cdp('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
   HTMLMediaElement.prototype.play = function () { this.playbackRate = 1 / N; return play.call(this); };
 })();` });
 
-const url = `http://127.0.0.1:${HTTP}/index.html?look=${LOOK}`;
+const url = `http://127.0.0.1:${HTTP}/index.html?look=${LOOK}${SCENE ? '&scene=' + SCENE : ''}`;
 say(`○ ${url}  →  ${W}×${H} @${FPS}fps  (${SLOW}× 슬로모 렌더)`);
 const loaded = new Promise(ok => {
   ws.addEventListener('message', e => {
@@ -175,7 +176,8 @@ if (raf < 5) throw new Error(`rAF 가 안 돈다 (300ms 에 ${raf}프레임)`);
 
 await cdp('Animation.setPlaybackRate', { playbackRate: 1 / SLOW });
 
-const dur = +arg('dur', 0) || (await evalIn(`__beats.reduce((s, b) => s + (b.gap ?? 1200), 0) / 1000`)) + TAIL;
+const dur = +arg('dur', 0) || (SCENE ? 6
+  : (await evalIn(`__beats.reduce((s, b) => s + (b.gap ?? 1200), 0) / 1000`)) + TAIL);
 const frames = Math.round(dur * FPS);
 say(`○ 테이크 ${dur.toFixed(2)}초 = ${frames}프레임 · 예상 ${(frames * SLOW / FPS / 60).toFixed(1)}분`);
 
@@ -195,8 +197,12 @@ const push = buf => ff.stdin.write(buf) ? Promise.resolve()
 
 /* ── 테이크 시작 ── runTake 는 첫 500ms 를 그냥 흘려보내고 나서 되감으므로, 그만큼
    (페이지 시간으로) 기다렸다가 첫 화면이 슬라이드인 하는 프레임부터 찍는다. */
-await evalIn('window.__take(), 1');
-await sleep(500 * SLOW);
+if (SCENE === 'nudge') {
+  await evalIn('window.__nudge(), 1');       // 빈 책상부터 — 되감을 게 없으니 곧바로 찍는다
+} else {
+  await evalIn('window.__take(), 1');
+  await sleep(500 * SLOW);
+}
 
 /* captureScreenshot 은 다음 프레임이 나올 때까지 기다린다. 비트 사이의 긴 정지 구간에서는
    페이지가 새 프레임을 안 내놓아 그대로 영영 멈추는 일이 있다 — 실제로 45% 에서 한 번 물렸다.

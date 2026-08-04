@@ -1130,21 +1130,26 @@ body.is-nudge .nudge{opacity:1;visibility:visible;transition-delay:0s}
   transition:transform .85s var(--ease),opacity .75s var(--ease),filter .55s var(--ease);
 }
 .nudge.is-open .nudge-icon{filter:drop-shadow(0 5px 9px rgba(0,0,0,.10))}
-.nudge-icon .nb{
+.nudge-icon .nb,.nudge-mark{
   position:absolute;inset:-40px;
-  background:url(assets/app-icon.svg) no-repeat center/302px 257.5px;
+  background:url(assets/app-card.svg) no-repeat center/302px 257.5px;
   transition:filter .55s var(--ease);
 }
-/* 아래로 갈수록 흐린 겹이 드러난다. 마스크는 '위는 남기고 아래를 지운다'뿐이라
-   겹치는 구간에서도 알파 합이 항상 1이다 — 서로 페이드시키면 그 구간이 반투명해진다.
-   블러 40px = 피그마의 76.1을 이 배율(300/569)로 옮긴 값. */
-.nb1{filter:blur(7px)}
-.nb2{filter:blur(18px)}
-.nb3{filter:blur(40px)}
-.nb0{--m:linear-gradient(#000 48%,transparent 59%)}
-.nb1{--m:linear-gradient(transparent 20%,#000 32%,#000 59%,transparent 68%)}
-.nb2{--m:linear-gradient(transparent 34%,#000 46%,#000 68%,transparent 77%)}
-.nb3{--m:linear-gradient(transparent 52%,#000 64%)}
+/* 심볼은 판과 같은 522×445 뷰박스로 잘라낸 별도 파일이다 — 좌표가 같으니 겹치면 제자리다.
+   빛을 쏘는 건 판이고 심볼은 판이 안 쏘는 자리다. 판이 흩어져도 글자가 흐려지진 않는다. */
+.nudge-mark{background-image:url(assets/app-mark.svg)}
+/* 아래로 갈수록 흐린 겹이 드러난다. 다섯 단으로 나눈 건 단 사이가 보이지 않게 하려는 것 —
+   단이 적으면 흩어지는 게 아니라 겹쳐 보인다. 위쪽도 잘라야 블러가 윗변 위로 번지지 않는다.
+   맨 아래 34px = 피그마의 76.1을 이 배율(300/569)로 옮긴 값에서 한 단 낮춘 값. */
+.nb1{filter:blur(4px)}
+.nb2{filter:blur(10px)}
+.nb3{filter:blur(20px)}
+.nb4{filter:blur(34px)}
+.nb0{--m:linear-gradient(#000 53%,transparent 62%)}
+.nb1{--m:linear-gradient(transparent 34%,#000 41%,#000 62%,transparent 69%)}
+.nb2{--m:linear-gradient(transparent 40%,#000 48%,#000 69%,transparent 75%)}
+.nb3{--m:linear-gradient(transparent 47%,#000 55%,#000 75%,transparent 81%)}
+.nb4{--m:linear-gradient(transparent 53%,#000 62%)}
 .nb{-webkit-mask:var(--m);mask:var(--m)}
 
 .nudge.is-lit .nudge-icon{opacity:1;transform:none}
@@ -1166,7 +1171,7 @@ body.is-nudge .nudge{opacity:1;visibility:visible;transition-delay:0s}
   border-radius:39.3px;padding:3.93px;              /* 팩 카드의 44.92 / 4.49 를 0.8746 배 */
   box-shadow:0 0 9px rgba(0,0,0,.12);               /* 앞뒤가 구분될 만큼만 */
   transform-origin:50% 50%;opacity:0;
-  transition:transform .85s var(--spring),opacity .01s;
+  transition:transform .55s var(--spring),opacity .01s;
 }
 .ncard--front{left:-154.5px;top:-205.6px;transform:translate(139px,83px) scale(.6)}
 .ncard--back {left:-267.8px;top:-193.5px;transform:translate(252px,71px) scale(.45)}
@@ -1174,11 +1179,14 @@ body.is-nudge .nudge{opacity:1;visibility:visible;transition-delay:0s}
    반투명한 알림 카드 너머로 뒷장이 비쳐 보인다.
    딜레이는 알림이 제자리에 앉을 때까지 기다리는 시간이고, opacity 에도 같이 걸린다. */
 .nudge.is-open .ncard{opacity:1}
-.nudge.is-open .ncard--front{transform:none;transition-delay:.45s}
-.nudge.is-open .ncard--back {transform:scale(.73) rotate(-4.5deg);transition-delay:.62s}
+.nudge.is-open .ncard--front{transform:none;transition-delay:.38s}
+.nudge.is-open .ncard--back {transform:scale(.73) rotate(-4.5deg);transition-delay:.5s}
 
 .ncard-thumb{position:relative;border-radius:37.3px;overflow:hidden;height:186.2px}
 .ncard-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+/* 원본은 세로 사진이라 한가운데를 잘라내면 반바지만 남는다 — 글러브가 있는 위쪽을 잡는다 */
+.ncard--back .ncard-thumb img{object-position:50% 12%}
+.ncard--front .ncard-thumb img{transform:scale(1.08)}
 .ncard-info{height:76px;display:flex;flex-direction:column;justify-content:center;gap:5px;
   padding:0 13px 4px 15.6px}
 .ncard-info b{font-weight:700;font-size:19px;line-height:1.2;letter-spacing:-1px;color:var(--ink-2)}
@@ -1189,10 +1197,15 @@ body.is-nudge .nudge{opacity:1;visibility:visible;transition-delay:0s}
 .nudge-cta{
   position:absolute;left:0;right:0;top:498px;
   display:flex;align-items:center;justify-content:center;gap:17px;
-  opacity:0;transform:translateY(16px);
-  transition:opacity .45s var(--ease),transform .55s var(--ease);
 }
-.nudge.is-open .nudge-cta{opacity:1;transform:none;transition-delay:1s}
+.nudge-cta span,.nudge-cta img{opacity:0}
+.nudge-cta span{transform:translateY(16px);
+  transition:opacity .45s var(--ease),transform .55s var(--ease)}
+.nudge.is-open .nudge-cta span{opacity:1;transform:none;transition-delay:.85s}
+/* 글자 쪽에서 슥 — 자리는 이미 잡혀 있고 그 안에서 밀려나온다 */
+.nudge-cta img{transform:translateX(-24px);
+  transition:opacity .3s var(--ease),transform .5s var(--spring)}
+.nudge.is-open .nudge-cta img{opacity:1;transform:none;transition-delay:1.25s}
 .nudge-cta span{font-weight:700;font-size:35px;line-height:1.2;letter-spacing:-1.2px;color:var(--ink)}
 .nudge-cta img{width:29px;height:29px;display:block}
 
