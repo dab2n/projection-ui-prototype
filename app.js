@@ -421,11 +421,11 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
      deck reads as one person's five packs. The three landscape thumbs are already the 1.8:1 the
      box is, so they need no crop of their own. */
   const PACKS = [
-    { dim: .78, img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%', by: ['Devon', 'avatar-devon.jpg'] },
+    { img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%', by: ['Devon', 'avatar-devon.jpg'] },
     { img: 'more-footwork.png', title: 'Footwork for Small Spaces',    kind: 'Creator Pack', len: '15m', pos: '50% 50%', by: ['Sena',  'avatar-sena.jpg'] },
     { img: 'pack-thumb.png',    title: 'Bring the Ring Home',          kind: 'Creator Pack', len: '7m',  pos: '50% 10%', by: ['Casey', 'avatar-laan.png'], hot: true, go: 'watch' },
-    { dim: .78, img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 50%', by: ['Junho', 'avatar-junho.jpg'] },
-    { dim: .85, img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 50%', by: ['Noel',  'avatar-noel.jpg'] },
+    { img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 50%', by: ['Junho', 'avatar-junho.jpg'] },
+    { img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 50%', by: ['Noel',  'avatar-noel.jpg'] },
   ];
   /* The deck opens on The Boxer's Steps, not on the pack that leads anywhere: the first screen
      is a shelf, and the first touch in the footage is the swipe off it. OPENS is the one with a
@@ -439,9 +439,6 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
   const slots = PACKS.map((p, i) => {
     const slot = tpl.content.firstElementChild.cloneNode(true);
     slot.style.setProperty('--j', i);          // its place in the deal, left to right
-    // 어두운 사진은 더 흐리게. 빔은 검정을 못 쏘므로, 어두운 화소가 많은 그림을 그대로 두면
-    // 투사면에 구멍이 난 것처럼 읽힌다 — dim 이 없으면 종이 뷰의 기본값(.8)이 쓰인다.
-    if (p.dim) slot.style.setProperty('--dim', p.dim);
     const img = slot.querySelector('.packcard-thumb > img');
     img.src = `assets/${p.img}`;
     img.alt = p.title;
@@ -930,9 +927,10 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
    body.is-paper 에 있다. 익스포터가 이 URL 을 연다. */
 if (new URLSearchParams(location.search).get('look') === 'paper') {
   /* 투사면 = 책상 색. 책상이 바뀌면 여기만 바꾼다.
-     책상의 중앙값은 #C5C6CE(H233 L79% S8.4%)지만 여기 깔린 건 그 명도만 남긴 거의 무채색이다 —
-     에펙에서 채도를 올릴 때 판까지 파랗게 딸려 올라가면 책상과 어긋나기 때문. */
-  const PAPER = '#C9C9CA';
+     책상의 중앙값은 #C5C6CE(H233 L79% S8.4%)지만 여기 깔린 건 그 명도만 남긴 완전 무채색이다 —
+     에펙에서 채도를 200까지 올릴 때 판까지 파랗게 딸려 올라가면 책상과 어긋나기 때문.
+     한 뼘 밝은 건 그 위에 얹히는 게 전부 빛이라, 판이 낮으면 어두운 사진이 구멍처럼 보여서다. */
+  const PAPER = '#CECECE';
   document.body.classList.add('is-paper');
   const desk = document.getElementById('deskOn');
   desk.checked = false;
@@ -942,6 +940,17 @@ if (new URLSearchParams(location.search).get('look') === 'paper') {
   const hex = document.getElementById('pickerHex');
   hex.value = PAPER;
   hex.dispatchEvent(new Event('input'));
+
+  /* 사진·영상은 어두운 자리를 끌어올려 구워둔 판으로 갈아끼운다 (scripts/lift.py).
+     아이콘은 CSS 필터로 값을 잡으므로 빼고, 실루엣은 키잉해서 한 색으로 칠하므로 뺀다. */
+  const NOLIFT = /icon-|silhouette|-lift\./;
+  document.querySelectorAll('.stage img[src],.stage video[src]').forEach(el => {
+    const src = el.getAttribute('src');
+    if (!src.startsWith('assets/') || src.endsWith('.svg') || NOLIFT.test(src)) return;
+    el.src = src.replace('assets/', 'assets/lift/');
+    // <video> 는 src 를 갈아끼워도 스스로 다시 물어오지 않는다 — readyState 0 에 머문다
+    if (el.load) el.load();
+  });
 }
 
 /* ── prototyping cursor & touch ripples ──────────────────────────────────
