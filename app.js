@@ -943,7 +943,7 @@ if (new URLSearchParams(location.search).get('look') === 'paper') {
 
   /* 사진·영상은 어두운 자리를 끌어올려 구워둔 판으로 갈아끼운다 (scripts/lift.py).
      아이콘은 CSS 필터로 값을 잡으므로 빼고, 실루엣은 키잉해서 한 색으로 칠하므로 뺀다. */
-  const NOLIFT = /icon-|silhouette|-lift\./;
+  const NOLIFT = /icon-|silhouette/;
   document.querySelectorAll('.stage img[src],.stage video[src]').forEach(el => {
     const src = el.getAttribute('src');
     if (!src.startsWith('assets/') || src.endsWith('.svg') || NOLIFT.test(src)) return;
