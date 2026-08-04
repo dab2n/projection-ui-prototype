@@ -38,7 +38,7 @@ const HTTP  = +arg('port', 5599);
 const CDPP  = +arg('cdpport', 9333);
 const LOOK  = arg('look', 'paper');
 const FEATH = +arg('feather', 0);         // 0 이면 테두리 페더판을 안 만든다
-const PAPER = arg('paper', '#C5C6CE');    // 페더판 프리뷰를 깔아볼 책상 색
+const PAPER = arg('paper', '#C9C9CA');    // 페더판 프리뷰를 깔아볼 책상 색
 const CHROME = arg('chrome', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 
 const root = new URL('..', import.meta.url).pathname;

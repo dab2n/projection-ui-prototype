@@ -928,7 +928,10 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
    합성용 룩. 책상 영상을 끄고 단색 투사면 위에 UI만 남긴다 — 나머지 값은 style.css 의
    body.is-paper 에 있다. 익스포터가 이 URL 을 연다. */
 if (new URLSearchParams(location.search).get('look') === 'paper') {
-  const PAPER = '#C5C6CE';                   // 투사면 = 책상 색. 책상이 바뀌면 여기만 바꾼다
+  /* 투사면 = 책상 색. 책상이 바뀌면 여기만 바꾼다.
+     책상의 중앙값은 #C5C6CE(H233 L79% S8.4%)지만 여기 깔린 건 그 명도만 남긴 거의 무채색이다 —
+     에펙에서 채도를 올릴 때 판까지 파랗게 딸려 올라가면 책상과 어긋나기 때문. */
+  const PAPER = '#C9C9CA';
   document.body.classList.add('is-paper');
   const desk = document.getElementById('deskOn');
   desk.checked = false;

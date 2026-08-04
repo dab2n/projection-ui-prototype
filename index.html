@@ -55,10 +55,14 @@
           <div class="ncard-thumb"><img src="assets/rel-boxer.png" alt=""></div>
           <div class="ncard-info"><b>The Boxer’s Steps</b><i>Pro Pack &middot; 7m</i></div>
         </div>
-        <!-- the bloom is the icon itself, blurred: a plain ellipse can't carry the four-stop
-             ramp that reads as the mark's own light spilling onto the desk -->
-        <img class="nudge-bloom" src="assets/app-icon.svg" alt="">
-        <img class="nudge-icon" src="assets/app-icon.svg" alt="">
+        <!-- 알림 카드. 그라디언트 블러(위 0 → 아래 76.1)는 CSS 한 줄로 안 되므로 같은 그림을
+             네 겹 쌓고 아래로 갈수록 흐린 겹이 드러나게 한다. 가장 흐린 겹이 맨 아래에
+             마스크 없이 깔려 있어 어디서도 알파가 비지 않는다.
+             카드가 펼쳐지면 네 겹의 블러가 전부 0으로 가고, 같은 그림 넷이 겹친 = 선명한
+             한 장이 된다 — 두 장면 사이를 갈아끼우지 않고 하나로 잇는 방법이다. -->
+        <div class="nudge-icon">
+          <i class="nb nb3"></i><i class="nb nb2"></i><i class="nb nb1"></i><i class="nb nb0"></i>
+        </div>
       </div>
       <div class="nudge-cta">
         <span>Your Turn Has Arrived</span>
