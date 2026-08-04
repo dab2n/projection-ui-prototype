@@ -7,6 +7,24 @@ const appbar  = document.getElementById('appbar');
 const flowbar = document.getElementById('flowbar');
 const steps   = [...flowbar.querySelectorAll('li')];
 
+/* ── 넛지 씬 ──────────────────────────────────────────────
+   알림이 뜬 뒤 잠시 있다가 카드가 펼쳐진다. 상태는 클래스 두 개(is-nudge / is-open)뿐이고
+   나머지는 CSS 트랜지션이 잇는다 — 익스포터가 setTimeout 을 늦추면 딜레이도 같이 늦는다. */
+const SCENE   = new URLSearchParams(location.search).get('scene');
+const NUDGE_HOLD = 2600;                  // 알림만 떠 있는 시간
+const nudge = document.getElementById('nudge');
+let nudgeTo = null;
+const playNudge = () => {
+  clearTimeout(nudgeTo);
+  nudge.classList.remove('is-open');
+  document.body.classList.add('is-nudge');
+  // 클래스를 뗀 프레임에 바로 다시 붙이면 브라우저가 둘을 합쳐 트랜지션이 안 난다
+  void nudge.offsetWidth;
+  nudgeTo = setTimeout(() => nudge.classList.add('is-open'), NUDGE_HOLD);
+};
+// 넛지가 떠 있는 동안 프레임을 누르면 처음부터 다시 — 모션을 다시 보려고 새로고침할 일 없게
+nudge.addEventListener('click', playNudge);
+
 /* Hooks the later blocks fill in — the prototyping disc, the carousel and the auto crop, all
    driven from auto play. Declared up here because fit() reaches for recrop on the first call,
    and a `let` further down would still be in its dead zone. */
@@ -803,6 +821,10 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
   const a4 = document.getElementById('a4On');
   a4.onchange = () => body.classList.toggle('is-a4', a4.checked);
   a4.dispatchEvent(new Event('change'));
+
+  const nb = document.getElementById('nudgeOn');
+  nb.onchange = () => nb.checked ? playNudge() : body.classList.remove('is-nudge');
+  if (SCENE === 'nudge') { nb.checked = true; nb.dispatchEvent(new Event('change')); }
 
   /* ── transport ── */
   const mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;

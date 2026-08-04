@@ -39,6 +39,33 @@
     <div class="taps" id="taps"></div>
     <div class="cursor" id="cursor"></div>
 
+    <!-- ─────────────── 넛지 / projection nudge ───────────────
+         Its own scene, not a .screen: the screens are the take's flow and the beats index
+         into them by name, so slipping one in front would shift every beat.
+         Two states on one layer — .is-open swaps them, so every part smart-animates
+         (scale + position) instead of cutting. -->
+    <div class="nudge" id="nudge">
+      <div class="nudge-fan">
+        <!-- the cards start stacked behind the icon and fan out from under it -->
+        <div class="ncard ncard--back">
+          <div class="ncard-thumb"><img src="assets/pack-thumb.png" alt=""></div>
+          <div class="ncard-info"><b>Bring the Ring Home</b><i>Creator Pack &middot; 7m</i></div>
+        </div>
+        <div class="ncard ncard--front">
+          <div class="ncard-thumb"><img src="assets/rel-boxer.png" alt=""></div>
+          <div class="ncard-info"><b>The Boxer’s Steps</b><i>Pro Pack &middot; 7m</i></div>
+        </div>
+        <!-- the bloom is the icon itself, blurred: a plain ellipse can't carry the four-stop
+             ramp that reads as the mark's own light spilling onto the desk -->
+        <img class="nudge-bloom" src="assets/app-icon.svg" alt="">
+        <img class="nudge-icon" src="assets/app-icon.svg" alt="">
+      </div>
+      <div class="nudge-cta">
+        <span>Your Turn Has Arrived</span>
+        <img src="assets/cta-arrow.svg" alt="">
+      </div>
+    </div>
+
 
     <!-- ─────────────── 0. 팩 제안 / Pack suggestion ─────────────── -->
     <section class="screen" data-screen="pack">
@@ -508,6 +535,7 @@
         <option value="0.5625">9:16</option>
       </select></label>
       <label class="picker-check" title="GUI가 A4 가로에 딱 맞는다고 보고, 위아래로 남는 여백을 표시한다"><input type="checkbox" id="a4On"><span>A4 가이드</span></label>
+      <label class="picker-check" title="프로젝션 넛지 씬. 켜면 알림이 뜨고 잠시 뒤 카드가 펼쳐진다 — 다시 누르면 처음부터"><input type="checkbox" id="nudgeOn"><span>넛지</span></label>
     </div>
   </div>
 </aside>

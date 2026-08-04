@@ -1101,3 +1101,76 @@ body.is-paper .hero{opacity:.9}
 /* 실루엣은 밝은 면 위에서 색이 빠져 보인다 — 원본 클립이 어두운 판을 전제로 그려진
    옅은 주황이기 때문. 알파는 그대로 두고 색만 올린다. */
 body.is-paper .figure-body{filter:saturate(1.75) contrast(1.12)}
+
+/* ── 넛지 / projection nudge ─────────────────────────────────
+   두 상태가 한 레이어 위에 있다: 아이콘만 있는 알림, 그리고 카드가 펼쳐진 초대.
+   .is-open 하나로 갈아끼우므로 아이콘은 사라졌다 나타나는 게 아니라 줄어들며 옮겨간다 —
+   피그마의 스마트 애니메이트가 하는 일이 그거다. */
+.nudge{
+  position:absolute;inset:0;z-index:6;overflow:hidden;
+  opacity:0;visibility:hidden;transition:opacity .5s var(--ease),visibility 0s .5s;
+}
+body.is-nudge .nudge{opacity:1;visibility:visible;transition-delay:0s}
+/* 펼칠 때 살짝 튕긴다. 카드가 '차라락' 열리는 건 이 오버슈트 하나로 난다 —
+   과하면 장난감이 되므로 1.32 이상 올리지 않는다. */
+.nudge{--spring:cubic-bezier(.34,1.32,.5,1)}
+
+/* 좌표 원점. 자식은 전부 이 점 기준이라, 무리 전체를 옮길 때 여기만 움직이면 된다. */
+.nudge-fan{position:absolute;left:530px;top:331px;transition:transform .9s var(--spring)}
+body.is-nudge .nudge.is-open .nudge-fan{transform:translateY(-35px)}
+
+.nudge-icon,.nudge-bloom{
+  position:absolute;left:-172px;top:-146px;width:343px;height:auto;
+  transition:transform .9s var(--spring),opacity .9s var(--ease);
+}
+/* 빛은 마크 자신이다 — 같은 SVG를 흐려 깔면 네 스톱짜리 램프가 책상에 그대로 번진다 */
+/* 빛은 아래로 더 흐른다 — 아이콘이 책상 위에 떠 있는 것처럼 보이게 */
+.nudge-bloom{filter:blur(34px) saturate(1.2);opacity:.85;transform:translateY(16px) scale(1.06)}
+.nudge.is-open .nudge-icon{transform:translate(178px,62px) scale(.77)}
+.nudge.is-open .nudge-bloom{transform:translate(178px,72px) scale(.83);opacity:.6}
+
+/* ── 펼쳐지는 카드 ── 닫혀 있을 때는 아이콘 뒤에 겹쳐 접혀 있다 */
+.ncard{
+  position:absolute;background:var(--surface);border-radius:34px;padding:5px;
+  box-shadow:0 0 9px rgba(0,0,0,.12);
+  transform-origin:70% 60%;
+  opacity:0;transform:scale(.34) rotate(0deg);
+  transition:transform .9s var(--spring),opacity .5s var(--ease);
+}
+.ncard--front{left:-185px;top:-124px;width:330px}
+.ncard--back {left:-291px;top:-104px;width:252px}
+.nudge.is-open .ncard{opacity:1}
+.nudge.is-open .ncard--front{transform:translate(0,0) rotate(-1.5deg)}
+.nudge.is-open .ncard--back {transform:translate(0,0) rotate(-8deg)}
+/* 뒷장이 먼저 빠져나가고 앞장이 덮는다 — 동시에 열리면 한 덩어리가 커지는 것처럼 보인다 */
+.nudge.is-open .ncard--back{transition-delay:.04s}
+.nudge.is-open .ncard--front{transition-delay:.1s}
+
+.ncard-thumb{position:relative;border-radius:30px;overflow:hidden;aspect-ratio:1.73}
+.ncard-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.ncard-info{display:flex;flex-direction:column;gap:4px;padding:14px 16px 12px}
+.ncard-info b{font-weight:700;font-size:20px;line-height:1.2;letter-spacing:-1px;color:var(--ink-2)}
+.ncard-info i{font-style:normal;font-weight:400;font-size:13px;line-height:1.2;
+  letter-spacing:-.4px;color:var(--n600)}
+.ncard--back .ncard-info b{font-size:16px;letter-spacing:-.7px}
+.ncard--back .ncard-info i{font-size:11px}
+.ncard--back .ncard-info{padding:11px 12px 9px}
+.ncard--back .ncard-thumb{border-radius:23px}
+.ncard--back{border-radius:26px;padding:4px}
+
+/* ── 문구 ── 카드가 다 자리를 잡은 뒤에 올라온다 */
+.nudge-cta{
+  position:absolute;left:0;right:0;top:492px;
+  display:flex;align-items:center;justify-content:center;gap:22px;
+  opacity:0;transform:translateY(16px);
+  transition:opacity .45s var(--ease),transform .55s var(--ease);
+}
+.nudge.is-open .nudge-cta{opacity:1;transform:none;transition-delay:.42s}
+.nudge-cta span{font-weight:700;font-size:34px;line-height:1.2;letter-spacing:-1.2px;color:var(--ink)}
+.nudge-cta img{width:36px;height:36px;display:block}
+
+/* 넛지가 떠 있는 동안 플로우는 없다 — 아직 아무것도 열지 않은 상태다 */
+body.is-nudge :is(.screen,.appbar,.flowbar){opacity:0!important;visibility:hidden}
+
+/* 넛지 카드의 사진도 투사면 위의 그림이다 — 나머지 사진들과 같은 세기로 */
+body.is-paper .ncard-thumb img{opacity:.82}
