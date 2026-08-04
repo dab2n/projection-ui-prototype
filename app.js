@@ -11,16 +11,20 @@ const steps   = [...flowbar.querySelectorAll('li')];
    알림이 뜬 뒤 잠시 있다가 카드가 펼쳐진다. 상태는 클래스 두 개(is-nudge / is-open)뿐이고
    나머지는 CSS 트랜지션이 잇는다 — 익스포터가 setTimeout 을 늦추면 딜레이도 같이 늦는다. */
 const SCENE   = new URLSearchParams(location.search).get('scene');
-const NUDGE_HOLD = 2600;                  // 알림만 떠 있는 시간
+const NUDGE_LIT  = 400;                   // 빈 책상으로 시작한다 — 알림이 도착하기까지
+const NUDGE_HOLD = 2000;                  // 알림만 떠 있는 시간, 그 뒤 카드가 펼쳐진다
 const nudge = document.getElementById('nudge');
-let nudgeTo = null;
+let nudgeTo = [];
 const playNudge = () => {
-  clearTimeout(nudgeTo);
-  nudge.classList.remove('is-open');
+  nudgeTo.forEach(clearTimeout);
+  nudge.classList.remove('is-lit', 'is-open');
   document.body.classList.add('is-nudge');
   // 클래스를 뗀 프레임에 바로 다시 붙이면 브라우저가 둘을 합쳐 트랜지션이 안 난다
   void nudge.offsetWidth;
-  nudgeTo = setTimeout(() => nudge.classList.add('is-open'), NUDGE_HOLD);
+  nudgeTo = [
+    setTimeout(() => nudge.classList.add('is-lit'), NUDGE_LIT),
+    setTimeout(() => nudge.classList.add('is-open'), NUDGE_LIT + NUDGE_HOLD),
+  ];
 };
 // 넛지가 떠 있는 동안 프레임을 누르면 처음부터 다시 — 모션을 다시 보려고 새로고침할 일 없게
 nudge.addEventListener('click', playNudge);
@@ -824,6 +828,8 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
 
   const nb = document.getElementById('nudgeOn');
   nb.onchange = () => nb.checked ? playNudge() : body.classList.remove('is-nudge');
+  // 다시 = 켜고 처음부터. 끈 상태에서 눌러도 켜지는 게 맞다 — 보려고 누른 거니까
+  document.getElementById('nudgeAgain').onclick = () => { nb.checked = true; playNudge(); };
   if (SCENE === 'nudge') { nb.checked = true; nb.dispatchEvent(new Event('change')); }
 
   /* ── transport ── */
