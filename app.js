@@ -398,11 +398,11 @@ document.querySelectorAll('[data-step-delta]').forEach(btn => {
      deck reads as one person's five packs. The three landscape thumbs are already the 1.8:1 the
      box is, so they need no crop of their own. */
   const PACKS = [
-    { dim: .6, img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%', by: ['Devon', 'avatar-devon.jpg'] },
+    { dim: .78, img: 'more-shadow.png',   title: 'Your First Shadowboxing Flow', kind: 'Creator Pack', len: '23m', pos: '50% 22%', by: ['Devon', 'avatar-devon.jpg'] },
     { img: 'more-footwork.png', title: 'Footwork for Small Spaces',    kind: 'Creator Pack', len: '15m', pos: '50% 50%', by: ['Sena',  'avatar-sena.jpg'] },
     { img: 'pack-thumb.png',    title: 'Bring the Ring Home',          kind: 'Creator Pack', len: '7m',  pos: '50% 10%', by: ['Casey', 'avatar-laan.png'], hot: true, go: 'watch' },
-    { dim: .6, img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 50%', by: ['Junho', 'avatar-junho.jpg'] },
-    { dim: .7, img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 50%', by: ['Noel',  'avatar-noel.jpg'] },
+    { dim: .78, img: 'rel-boxer.png',     title: 'The Boxer’s Steps',            kind: 'Pro Pack',     len: '12m', pos: '50% 50%', by: ['Junho', 'avatar-junho.jpg'] },
+    { dim: .85, img: 'more-round.png',    title: 'The First Round',              kind: 'Creator Pack', len: '31m', pos: '50% 50%', by: ['Noel',  'avatar-noel.jpg'] },
   ];
   /* The deck opens on The Boxer's Steps, not on the pack that leads anywhere: the first screen
      is a shelf, and the first touch in the footage is the swipe off it. OPENS is the one with a
@@ -900,7 +900,7 @@ const onBgChange = [];   // the preview meter listens; the picker fires it on ev
    합성용 룩. 책상 영상을 끄고 단색 투사면 위에 UI만 남긴다 — 나머지 값은 style.css 의
    body.is-paper 에 있다. 익스포터가 이 URL 을 연다. */
 if (new URLSearchParams(location.search).get('look') === 'paper') {
-  const PAPER = '#C4C8D5';                   // 투사면 = 책상 색. 책상이 바뀌면 여기만 바꾼다
+  const PAPER = '#C5C6CE';                   // 투사면 = 책상 색. 책상이 바뀌면 여기만 바꾼다
   document.body.classList.add('is-paper');
   const desk = document.getElementById('deskOn');
   desk.checked = false;

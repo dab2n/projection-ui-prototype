@@ -1071,7 +1071,7 @@ body.is-paper{
 body.is-paper .card-ico{filter:brightness(0) invert(1) brightness(.76)}
 body.is-paper .step img{opacity:.36}
 /* 빨간 칠도 판 위에 얹힌 빛이라 꽉 차 있을 이유가 없다 — 선택된 카드와 같은 세기로 */
-body.is-paper :is(.tbar--stretch,.tbar--learn,.strike,.bar){opacity:.9}
+body.is-paper :is(.tbar--stretch,.tbar--learn,.strike,.bar){opacity:.96}
 /* 'You Can Choose' 는 --n400(구분 도트 값)을 쓰고 있어 흰 판 위에서 사라졌다 */
 body.is-paper :is(.tbar--run,.bar--run){color:var(--ink-2);font-weight:500}
 
@@ -1080,14 +1080,16 @@ body.is-paper :is(.tbar--run,.bar--run){color:var(--ink-2);font-weight:500}
    못 쏘는 색이라 그대로 두면 화면에 구멍이 뚫린 것처럼 보인다.
    히어로만 opacity 가 아니라 filter 다: 스틸→클립 크로스디졸브가 이 둘의 opacity 를
    애니메이션하므로, 여기서 opacity 를 박으면 그 규칙을 이겨 스틸이 안 사라진다. */
-body.is-paper .packcard-thumb > img{opacity:var(--dim,.8)}
+body.is-paper .packcard-thumb > img{opacity:var(--dim,.92)}
 /* 밝기를 먼저 올리고 투명도를 건다 — 인물의 갈색 옷이 그냥 흐려지기만 하면 탁한 갈색이
    그대로 남는다. filter 순서가 곧 적용 순서다. */
 body.is-paper :is(.hero-still,.hero-clip){filter:brightness(1.1) opacity(.7)}
 body.is-paper .rel img{opacity:.5}      /* 실루엣에 가까운 어두운 썸네일 */
 body.is-paper .more-img img{opacity:.6}
 body.is-paper .watch-creator img{opacity:.7}
-body.is-paper :is(.assist .fig,.assist .fig-sel){opacity:.8}
+body.is-paper .assist .fig{opacity:.8}
+/* 선택된 카드의 그라디언트는 사진이 아니라 빛 자체다 — 원본 채도 그대로 쨍하게 둔다 */
+body.is-paper .assist .fig-sel{opacity:1}
 /* 어두운 인물 사진이 흰 판 위에 앉는다 — 판이 불투명하므로 뒤의 카드 사진은 안 비친다 */
 body.is-paper .avatar{opacity:.55}
 /* joined 프로필 셋은 겹쳐 하나의 그림이다. 낱장마다 주면 서로 비치므로 묶음째 한 번만 */

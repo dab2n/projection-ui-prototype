@@ -2,7 +2,7 @@
 /* 프로토타입 테이크를 2K 영상으로 뽑는다. 화면녹화가 아니라 익스포터다 — 프레임을 한 장씩
    찍어 ffmpeg 에 바로 밀어넣으므로 드롭이 없고, 해상도는 디스플레이와 무관하다.
 
-     node scripts/export.mjs                    # 2560×1440 / 30fps
+     node scripts/export.mjs                    # 2560×1810 (A4 가로 × 1.08) / 30fps
      node scripts/export.mjs --w 3840 --slow 28 # 4K
 
    원리: DOM 은 three.js 처럼 가상 시계를 꽂을 수가 없다(CSS 애니메이션은 컴포지터 시계로
@@ -25,7 +25,11 @@ import { join } from 'node:path';
 
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > -1 ? process.argv[i + 1] : d; };
 const W     = +arg('w', 2560);
-const H     = +arg('h', Math.round(W * 9 / 16));
+/* 대지는 A4 가로판보다 pad 배 크다. 프레임(1060×663)은 A4 의 폭에 맞고, 남는 테두리가
+   에펙에서 마스크에 페더를 먹일 여유다 — 여백이 없으면 페더가 UI 를 갉아먹는다. */
+const PAD   = +arg('pad', 1.08);
+const A4W   = W / PAD;                    // A4 가로판의 폭 = 프레임의 폭
+const H     = +arg('h', Math.round(A4W * 210 / 297 * PAD / 2) * 2);
 const FPS   = +arg('fps', 30);
 const SLOW  = +arg('slow', 16);
 const TAIL  = +arg('tail', 2.6);          // 마지막 비트 뒤로 붙잡고 있는 초
@@ -34,7 +38,7 @@ const HTTP  = +arg('port', 5599);
 const CDPP  = +arg('cdpport', 9333);
 const LOOK  = arg('look', 'paper');
 const FEATH = +arg('feather', 0);         // 0 이면 테두리 페더판을 안 만든다
-const PAPER = arg('paper', '#C4C8D5');    // 페더판 프리뷰를 깔아볼 책상 색
+const PAPER = arg('paper', '#C5C6CE');    // 페더판 프리뷰를 깔아볼 책상 색
 const CHROME = arg('chrome', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 
 const root = new URL('..', import.meta.url).pathname;
@@ -142,7 +146,7 @@ await evalIn(`(() => {
     .fit{position:fixed!important;left:0;top:0;width:${W}px!important;height:${H}px!important}
     .canvas{position:fixed!important;left:0!important;top:0!important;
       width:${W}px!important;height:${H}px!important;margin:0!important;
-      box-shadow:none!important;--s:${(H / 663).toFixed(6)}!important}
+      box-shadow:none!important;--s:${(A4W / 1060).toFixed(6)}!important}
     /* 비트 사이 정지 구간에서는 화면에 움직이는 게 없어 컴포지터가 새 프레임을 안 내놓고,
        그러면 captureScreenshot 이 다음 프레임을 기다리다 그대로 물린다. 1px 짜리 안 보이는
        애니메이션 하나로 프레임을 계속 돌게 둔다. */
