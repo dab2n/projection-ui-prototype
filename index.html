@@ -52,7 +52,8 @@
           <div class="ncard-info"><b>Bring the Ring Home</b><i>Creator Pack &middot; 7m</i></div>
         </div>
         <div class="ncard ncard--front">
-          <div class="ncard-thumb"><img src="assets/rel-boxer.png" alt=""></div>
+          <!-- 어두운 데만 올려 구운 판. 런타임 필터로 걸면 카드가 커지는 동안 다시 래스터되며 한 프레임 튄다 -->
+          <div class="ncard-thumb"><img src="assets/rel-boxer-lift.png" alt=""></div>
           <div class="ncard-info"><b>The Boxer’s Steps</b><i>Pro Pack &middot; 7m</i></div>
         </div>
         <!-- 알림 카드. 그라디언트 블러(위 0 → 아래 76.1)는 CSS 한 줄로 안 되므로 같은 그림을
@@ -571,17 +572,6 @@
     <feComposite in="toned" in2="SourceGraphic" operator="in"/>
   </filter>
 
-  <!-- 그림자만 들어올리는 톤커브. 넛지 가운데 카드의 검은 머리·네이비가 그대로면 투사면에
-       구멍이 뚫린 것처럼 보인다. 밝기를 통째로 올리면 사진이 바래므로, 아래쪽만 바닥을
-       깔고 0.5 위로는 원본 그대로 지나가게 둔다.
-       tableValues 는 입력 0/.2/.4/.6/.8/1 에 대한 출력이다. -->
-  <filter id="liftdark" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-    <feComponentTransfer>
-      <feFuncR type="table" tableValues="0.28 0.33 0.44 0.61 0.80 1"/>
-      <feFuncG type="table" tableValues="0.28 0.33 0.44 0.61 0.80 1"/>
-      <feFuncB type="table" tableValues="0.28 0.33 0.44 0.61 0.80 1"/>
-    </feComponentTransfer>
-  </filter>
 </svg>
 
 <script src="app.js"></script>

@@ -1159,7 +1159,7 @@ body.is-nudge .nudge{opacity:1;visibility:visible;transition-delay:0s}
 .nudge.is-open .nb{filter:none}
 /* 물러나는 건 빨리 끝나야 한다 — 알림이 아직 가운데 있는데 카드가 나오면, 뒤에서
    빠져나오는 게 아니라 옆에서 튀어나온 것으로 보인다 */
-.nudge.is-open .nudge-icon{transition-duration:.55s}
+.nudge.is-open .nudge-icon{transition-duration:.34s}
 
 /* ── 뒤에 접혀 있던 카드 두 장 ──
    캐러셀의 팩 카드와 같은 판이고 크기만 다르다. 그래서 뒷장은 값을 따로 잡지 않고
@@ -1173,7 +1173,7 @@ body.is-nudge .nudge{opacity:1;visibility:visible;transition-delay:0s}
   transform-origin:50% 50%;opacity:0;
   transition:transform .55s var(--spring),opacity .01s;
 }
-.ncard--front{left:-154.5px;top:-205.6px;transform:translate(139px,83px) scale(.6)}
+.ncard--front{left:-154.5px;top:-205.6px;transform:translate(139px,83px) scale(.55)}
 .ncard--back {left:-267.8px;top:-193.5px;transform:translate(252px,71px) scale(.45)}
 /* 알림 카드 뒤에 완전히 숨어 있으므로 즉시 켜도 팝이 안 보인다. 같이 페이드시키면
    반투명한 알림 카드 너머로 뒷장이 비쳐 보인다.
@@ -1211,6 +1211,8 @@ body.is-nudge .nudge{opacity:1;visibility:visible;transition-delay:0s}
 
 /* 넛지가 떠 있는 동안 플로우는 없다 — 아직 아무것도 열지 않은 상태다 */
 body.is-nudge :is(.screen,.appbar,.flowbar){opacity:0!important;visibility:hidden}
-/* 넛지 카드의 사진은 원본 세기 그대로 간다. 어두운 데만 바닥을 깔아 올린다 —
-   전체 투명도로 낮추면 검정은 여전히 상대적으로 가장 어둡고 사진만 바랜다. */
-body.is-paper .ncard--front .ncard-thumb img{filter:url(#liftdark)}
+/* 앞장 사진의 그림자 들어올리기는 에셋에 구워져 있다(rel-boxer-lift.png) — 채도가 높은
+   자리는 건드리지 않고 중성에 가까운 어두운 자리만 올린 판이다.
+   뒷장은 반대로 한 뼘 내려앉는다. 앞뒤가 같은 세기면 두 장이 한 판처럼 붙어 보인다. */
+.ncard--back .ncard-thumb::after{content:'';position:absolute;inset:0;
+  background:rgba(0,0,0,.09);pointer-events:none}
